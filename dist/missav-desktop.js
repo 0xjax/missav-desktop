@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.0.1
+// @version      1.1.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -66,8 +66,14 @@
 		if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", callback);
 		else callback();
 	};
-	var keyValues = { "block-ads": "去广告" };
-	var keyDefaults = { "block-ads": true };
+	var keyValues = {
+		"block-ads": "去广告",
+		"lang-pref": "语言偏好"
+	};
+	var keyDefaults = {
+		"block-ads": true,
+		"lang-pref": true
+	};
 	function createSettingPanel() {
 		const panel = Object.assign(document.createElement("div"), {
 			id: "setting-panel",
@@ -203,10 +209,74 @@
 			observeAds();
 		});
 	}
+	var LANGS = [
+		"cn",
+		"en",
+		"ja",
+		"ko",
+		"ms",
+		"th",
+		"de",
+		"fr",
+		"vi",
+		"id",
+		"pt"
+	];
+	var LANG_NAMES = {
+		简体中文: "cn",
+		English: "en",
+		日本語: "ja",
+		한국의: "ko",
+		Melayu: "ms",
+		ไทย: "th",
+		Deutsch: "de",
+		Français: "fr",
+		"Tiếng Việt": "vi",
+		"Bahasa Indonesia": "id",
+		Português: "pt"
+	};
+	function parsePath(pathname) {
+		const segs = pathname.split("/").filter(Boolean);
+		let shard = null;
+		let lang = null;
+		if (segs[0] && /^dm\d+$/.test(segs[0])) shard = segs.shift();
+		if (segs[0] && LANGS.includes(segs[0])) lang = segs.shift();
+		return {
+			shard,
+			lang,
+			rest: segs
+		};
+	}
+	function watchSwitcher() {
+		document.addEventListener("click", (e) => {
+			const a = e.target.closest?.("a[href]");
+			if (!a) return;
+			const lang = LANG_NAMES[a.textContent?.trim() ?? ""];
+			if (!lang) return;
+			if (parsePath(new URL(a.href, location.origin).pathname).lang === lang && LANGS.includes(lang)) GM_setValue$1("pref-lang", lang);
+		}, true);
+	}
+	function preferLang() {
+		watchSwitcher();
+		const pref = GM_getValue$1("pref-lang", null);
+		if (!pref || !LANGS.includes(pref)) return;
+		const { shard, lang, rest } = parsePath(location.pathname);
+		if (lang === pref) return;
+		const key = `lang-redirected:${pref}:${location.pathname}`;
+		if (sessionStorage.getItem(key)) return;
+		sessionStorage.setItem(key, "1");
+		const target = "/" + [
+			shard,
+			pref,
+			...rest
+		].filter(Boolean).join("/");
+		location.replace(target + location.search + location.hash);
+	}
 	(function() {
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
 		registerSettingMenu();
 		if (GM_getValue$1("block-ads", true)) blockAds();
+		if (GM_getValue$1("lang-pref", true)) preferLang();
 	})();
 })();

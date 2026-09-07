@@ -4,11 +4,13 @@ import { waitDOMContentLoaded } from './utils/wait.ts'
 // 新增设置项：在 keyValues 加键（键名即存储 key，值为面板显示文案）
 const keyValues: Record<string, string> = {
   'block-ads': '去广告',
+  'lang-pref': '语言偏好',
 }
 
 // 设置项默认值，未列出的键默认为 false
 const keyDefaults: Record<string, boolean> = {
   'block-ads': true,
+  'lang-pref': true,
 }
 
 function createSettingPanel(): HTMLElement {
