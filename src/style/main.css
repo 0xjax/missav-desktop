@@ -41,6 +41,16 @@
   cursor: pointer;
 }
 
+#setting-panel button#setting-export {
+  margin-right: 8px;
+  background: #444;
+}
+
+#setting-panel button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 #shortcut-help {
   position: fixed;
   top: 50%;

@@ -1,5 +1,6 @@
 import { GM_getValue, GM_setValue, GM_registerMenuCommand } from './utils/gm.ts'
 import { waitDOMContentLoaded } from './utils/wait.ts'
+import { exportBackup } from './modules/backup-export.ts'
 
 // 新增设置项：在 keyValues 加键（键名即存储 key，值为面板显示文案）
 const keyValues: Record<string, string> = {
@@ -8,6 +9,7 @@ const keyValues: Record<string, string> = {
   'search-pref': '搜索偏好',
   'shortcut-keys': '快捷操作',
   'fast-save': '收藏片单增强',
+  'auto-backup': '自动备份（每 7 天）',
 }
 
 // 设置项默认值，未列出的键默认为 false
@@ -17,6 +19,7 @@ const keyDefaults: Record<string, boolean> = {
   'search-pref': true,
   'shortcut-keys': true,
   'fast-save': true,
+  'auto-backup': true,
 }
 
 function createSettingPanel(): HTMLElement {
@@ -34,6 +37,7 @@ function createSettingPanel(): HTMLElement {
           .join('')}
       </div>
       <div class="setting-actions">
+        <button id="setting-export" type="button">导出收藏片单备份</button>
         <button id="setting-save" type="button">保存</button>
       </div>
     `,
@@ -46,6 +50,16 @@ function createSettingPanel(): HTMLElement {
   checkboxes.forEach((checkbox) => {
     const key = checkbox.dataset.key as string
     checkbox.checked = GM_getValue(key, keyDefaults[key] ?? false)
+  })
+
+  const exportBtn = panel.querySelector('#setting-export') as
+    | HTMLButtonElement
+    | null
+  exportBtn?.addEventListener('click', () => {
+    exportBtn.disabled = true
+    exportBackup().finally(() => {
+      exportBtn.disabled = false
+    })
   })
 
   panel.querySelector('#setting-save')?.addEventListener('click', () => {

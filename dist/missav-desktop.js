@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.8.0
+// @version      1.9.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -68,19 +68,193 @@
 		if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", callback);
 		else callback();
 	};
+	var LANG_RE = /^(cn|en|ja|ko|ms|th|de|fr|vi|id|pt)$/;
+	function currentLang() {
+		return location.pathname.split("/").filter(Boolean).find((s) => LANG_RE.test(s)) ?? null;
+	}
+	function toast(msg) {
+		let box = document.getElementById("mx-toast-box");
+		if (!box) {
+			box = Object.assign(document.createElement("div"), { id: "mx-toast-box" });
+			document.body.appendChild(box);
+		}
+		const el = Object.assign(document.createElement("div"), {
+			className: "mx-toast",
+			textContent: msg
+		});
+		box.appendChild(el);
+		setTimeout(() => el.classList.add("mx-toast-out"), 1800);
+		setTimeout(() => {
+			el.remove();
+			if (!box.children.length) box.remove();
+		}, 2200);
+	}
+	var TOAST_CHANNEL = "gm:mx-toast";
+	var lastToastTs = 0;
+	function toastBroadcast(msg) {
+		toast(msg);
+		lastToastTs = Date.now();
+		localStorage.setItem(TOAST_CHANNEL, JSON.stringify({
+			text: msg,
+			ts: lastToastTs
+		}));
+	}
+	function listenToastChannel() {
+		window.addEventListener("storage", (e) => {
+			if (e.key !== TOAST_CHANNEL || !e.newValue) return;
+			try {
+				const { text, ts } = JSON.parse(e.newValue);
+				if (ts <= lastToastTs) return;
+				lastToastTs = ts;
+				toast(text);
+			} catch {}
+		});
+	}
+	var exporting = false;
+	var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+	async function fetchDoc(url) {
+		const res = await fetch(url, { credentials: "include" });
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const html = await res.text();
+		return new DOMParser().parseFromString(html, "text/html");
+	}
+	function parseVideos(doc) {
+		const items = [];
+		const seen = new Set();
+		doc.querySelectorAll(".thumbnail a[href]").forEach((a) => {
+			const href = a.getAttribute("href") || "";
+			const m = href.match(/\/([a-z0-9-]+)\/?$/i);
+			if (!m) return;
+			const id = m[1];
+			if (seen.has(id)) return;
+			seen.add(id);
+			const title = a.querySelector("img")?.getAttribute("alt")?.trim() || a.textContent?.trim() || id;
+			items.push({
+				id,
+				title,
+				url: href
+			});
+		});
+		return items;
+	}
+	async function crawlVideos(baseUrl) {
+		const all = [];
+		const seen = new Set();
+		for (let page = 1; page <= 100; page++) {
+			const fresh = parseVideos(await fetchDoc(`${baseUrl}?page=${page}`)).filter((i) => !seen.has(i.id));
+			fresh.forEach((i) => {
+				seen.add(i.id);
+				all.push(i);
+			});
+			if (fresh.length === 0) break;
+			await sleep(400);
+		}
+		return all;
+	}
+	async function crawlPlaylists(lang) {
+		const doc = await fetchDoc(`${location.origin}/${lang}/playlists`);
+		const map = new Map();
+		doc.querySelectorAll("a[href*=\"/playlists/\"]").forEach((a) => {
+			const href = a.getAttribute("href") || "";
+			const m = href.match(/\/playlists\/([a-z0-9]+)\/?$/i);
+			if (!m || m[1] === "create" || map.has(m[1])) return;
+			map.set(m[1], {
+				name: a.querySelector("p")?.textContent?.trim() || m[1],
+				url: href
+			});
+		});
+		const playlists = [];
+		for (const [key, { name, url }] of map) {
+			toast(`导出片单：${name}`);
+			playlists.push({
+				key,
+				name,
+				videos: await crawlVideos(url)
+			});
+			await sleep(400);
+		}
+		return playlists;
+	}
+	function downloadJson(data, filename) {
+		const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+		const a = Object.assign(document.createElement("a"), {
+			href: URL.createObjectURL(blob),
+			download: filename
+		});
+		a.click();
+		setTimeout(() => URL.revokeObjectURL(a.href), 5e3);
+	}
+	async function crawlAll() {
+		const lang = currentLang() ?? "cn";
+		toast("备份收藏中…");
+		const saved = await crawlVideos(`${location.origin}/${lang}/saved`);
+		toast(`收藏 ${saved.length} 部，备份片单中…`);
+		return {
+			saved,
+			playlists: await crawlPlaylists(lang)
+		};
+	}
+	async function runBackup() {
+		const { saved, playlists } = await crawlAll();
+		const d = new Date();
+		const pad = (n) => String(n).padStart(2, "0");
+		const localDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+		downloadJson({
+			exportedAt: `${localDate}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
+			saved,
+			playlists
+		}, `missav-backup-${localDate}.json`);
+		toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`);
+	}
+	async function exportBackup() {
+		if (exporting) {
+			toast("备份进行中，请稍候");
+			return;
+		}
+		exporting = true;
+		try {
+			await runBackup();
+		} catch (err) {
+			toast(`备份失败：${err instanceof Error ? err.message : "网络异常"}`);
+		} finally {
+			exporting = false;
+		}
+	}
+	var LAST_BACKUP_KEY = "last-backup-ts";
+	var AUTO_INTERVAL = 6048e5;
+	function autoBackup() {
+		waitDOMContentLoaded(() => {
+			setTimeout(() => {
+				if (exporting) return;
+				const last = GM_getValue$1(LAST_BACKUP_KEY, 0);
+				if (Date.now() - last < AUTO_INTERVAL) return;
+				GM_setValue$1(LAST_BACKUP_KEY, Date.now());
+				exporting = true;
+				toast("开始自动备份收藏与片单…");
+				runBackup().catch((err) => {
+					GM_setValue$1(LAST_BACKUP_KEY, last);
+					toast(`自动备份失败：${err instanceof Error ? err.message : "网络异常"}`);
+				}).finally(() => {
+					exporting = false;
+				});
+			}, 8e3);
+		});
+	}
 	var keyValues = {
 		"block-ads": "去广告",
 		"lang-pref": "语言偏好",
 		"search-pref": "搜索偏好",
 		"shortcut-keys": "快捷操作",
-		"fast-save": "收藏片单增强"
+		"fast-save": "收藏片单增强",
+		"auto-backup": "自动备份（每 7 天）"
 	};
 	var keyDefaults = {
 		"block-ads": true,
 		"lang-pref": true,
 		"search-pref": true,
 		"shortcut-keys": true,
-		"fast-save": true
+		"fast-save": true,
+		"auto-backup": true
 	};
 	function createSettingPanel() {
 		const panel = Object.assign(document.createElement("div"), {
@@ -93,6 +267,7 @@
         `).join("")}
       </div>
       <div class="setting-actions">
+        <button id="setting-export" type="button">导出收藏片单备份</button>
         <button id="setting-save" type="button">保存</button>
       </div>
     `
@@ -101,6 +276,13 @@
 		checkboxes.forEach((checkbox) => {
 			const key = checkbox.dataset.key;
 			checkbox.checked = GM_getValue$1(key, keyDefaults[key] ?? false);
+		});
+		const exportBtn = panel.querySelector("#setting-export");
+		exportBtn?.addEventListener("click", () => {
+			exportBtn.disabled = true;
+			exportBackup().finally(() => {
+				exportBtn.disabled = false;
+			});
 		});
 		panel.querySelector("#setting-save")?.addEventListener("click", () => {
 			checkboxes.forEach((checkbox) => {
@@ -279,10 +461,6 @@
 			...rest
 		].filter(Boolean).join("/");
 		location.replace(target + location.search + location.hash);
-	}
-	var LANG_RE = /^(cn|en|ja|ko|ms|th|de|fr|vi|id|pt)$/;
-	function currentLang() {
-		return location.pathname.split("/").filter(Boolean).find((s) => LANG_RE.test(s)) ?? null;
 	}
 	function watchParamLinks() {
 		document.addEventListener("click", (e) => {
@@ -470,44 +648,6 @@
 	function alpine() {
 		return window.Alpine;
 	}
-	function toast(msg) {
-		let box = document.getElementById("mx-toast-box");
-		if (!box) {
-			box = Object.assign(document.createElement("div"), { id: "mx-toast-box" });
-			document.body.appendChild(box);
-		}
-		const el = Object.assign(document.createElement("div"), {
-			className: "mx-toast",
-			textContent: msg
-		});
-		box.appendChild(el);
-		setTimeout(() => el.classList.add("mx-toast-out"), 1800);
-		setTimeout(() => {
-			el.remove();
-			if (!box.children.length) box.remove();
-		}, 2200);
-	}
-	var TOAST_CHANNEL = "gm:mx-toast";
-	var lastToastTs = 0;
-	function toastBroadcast(msg) {
-		toast(msg);
-		lastToastTs = Date.now();
-		localStorage.setItem(TOAST_CHANNEL, JSON.stringify({
-			text: msg,
-			ts: lastToastTs
-		}));
-	}
-	function listenToastChannel() {
-		window.addEventListener("storage", (e) => {
-			if (e.key !== TOAST_CHANNEL || !e.newValue) return;
-			try {
-				const { text, ts } = JSON.parse(e.newValue);
-				if (ts <= lastToastTs) return;
-				lastToastTs = ts;
-				toast(text);
-			} catch {}
-		});
-	}
 	var SAVED_CACHE_KEY = "saved-cache";
 	function readCache() {
 		return GM_getValue$1(SAVED_CACHE_KEY, {});
@@ -668,5 +808,6 @@
 		if (GM_getValue$1("search-pref", true)) searchPref();
 		if (GM_getValue$1("shortcut-keys", true)) shortcuts();
 		if (GM_getValue$1("fast-save", true)) fastSave();
+		if (GM_getValue$1("auto-backup", true)) autoBackup();
 	})();
 })();

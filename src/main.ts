@@ -9,6 +9,7 @@ import { preferLang } from './modules/lang-pref.js'
 import { searchPref } from './modules/search-pref.js'
 import { shortcuts } from './modules/shortcuts.js'
 import { fastSave } from './modules/fast-save.js'
+import { autoBackup } from './modules/backup-export.js'
 ;(function () {
   if (window.top !== window.self) {
     return
@@ -24,4 +25,5 @@ import { fastSave } from './modules/fast-save.js'
   if (GM_getValue('search-pref', true)) searchPref()
   if (GM_getValue('shortcut-keys', true)) shortcuts()
   if (GM_getValue('fast-save', true)) fastSave()
+  if (GM_getValue('auto-backup', true)) autoBackup()
 })()
