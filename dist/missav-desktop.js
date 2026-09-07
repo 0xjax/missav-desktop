@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.1.0
+// @version      1.1.1
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -39,22 +39,24 @@
 		if (w && typeof w[name] === "function") return w[name];
 	}
 	function GM_getValue$1(key, defaultValue) {
+		const stored = localStorage.getItem(`gm:${key}`);
+		const backup = stored === null ? defaultValue : JSON.parse(stored);
 		const fn = rawFn("GM_getValue", _GM_getValue);
 		if (fn) try {
-			return fn(key, defaultValue);
+			const value = fn(key, defaultValue);
+			if (value === void 0 || value === defaultValue && stored !== null) return backup;
+			return value;
 		} catch {
-			return defaultValue;
+			return backup;
 		}
-		const stored = localStorage.getItem(`gm:${key}`);
-		return stored === null ? defaultValue : JSON.parse(stored);
+		return backup;
 	}
 	function GM_setValue$1(key, value) {
+		localStorage.setItem(`gm:${key}`, JSON.stringify(value));
 		const fn = rawFn("GM_setValue", _GM_setValue);
 		if (fn) try {
 			fn(key, value);
-			return;
 		} catch {}
-		localStorage.setItem(`gm:${key}`, JSON.stringify(value));
 	}
 	function GM_registerMenuCommand$1(name, callback) {
 		const fn = rawFn("GM_registerMenuCommand", _GM_registerMenuCommand);
