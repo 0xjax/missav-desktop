@@ -9,7 +9,7 @@ const keyValues: Record<string, string> = {
   'search-pref': '搜索偏好',
   'shortcut-keys': '快捷操作',
   'fast-save': '收藏片单增强',
-  'auto-backup': '自动备份（每 7 天）',
+  'auto-backup': '自动备份（每 3 天）',
   'sources': '多源显示切换',
   'playlist-panel': '片单面板优化',
 }

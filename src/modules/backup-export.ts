@@ -308,9 +308,9 @@ export function exportBackup(): void {
   })
 }
 
-// ---- 自动备份：距上次超过 7 天则在打开页面时自动导出 ----
+// ---- 自动备份：距上次超过 3 天则在打开页面时自动导出 ----
 
-const AUTO_INTERVAL = 7 * 24 * 3600 * 1000
+const AUTO_INTERVAL = 3 * 24 * 3600 * 1000
 
 export function autoBackup(): void {
   waitDOMContentLoaded(() => {

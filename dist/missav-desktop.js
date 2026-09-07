@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.13.0
+// @version      1.13.1
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -427,7 +427,7 @@
 			});
 		});
 	}
-	var AUTO_INTERVAL = 6048e5;
+	var AUTO_INTERVAL = 2592e5;
 	function autoBackup() {
 		waitDOMContentLoaded(() => {
 			setTimeout(() => {
@@ -452,7 +452,7 @@
 		"search-pref": "搜索偏好",
 		"shortcut-keys": "快捷操作",
 		"fast-save": "收藏片单增强",
-		"auto-backup": "自动备份（每 7 天）",
+		"auto-backup": "自动备份（每 3 天）",
 		"sources": "多源显示切换",
 		"playlist-panel": "片单面板优化"
 	};
