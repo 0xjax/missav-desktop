@@ -37,7 +37,7 @@ function createSettingPanel(): HTMLElement {
           .join('')}
       </div>
       <div class="setting-actions">
-        <button id="setting-export" type="button">导出收藏片单备份</button>
+        <button id="setting-export" type="button">导出备份</button>
         <button id="setting-save" type="button">保存</button>
       </div>
     `,
@@ -52,14 +52,8 @@ function createSettingPanel(): HTMLElement {
     checkbox.checked = GM_getValue(key, keyDefaults[key] ?? false)
   })
 
-  const exportBtn = panel.querySelector('#setting-export') as
-    | HTMLButtonElement
-    | null
-  exportBtn?.addEventListener('click', () => {
-    exportBtn.disabled = true
-    exportBackup().finally(() => {
-      exportBtn.disabled = false
-    })
+  panel.querySelector('#setting-export')?.addEventListener('click', () => {
+    exportBackup()
   })
 
   panel.querySelector('#setting-save')?.addEventListener('click', () => {

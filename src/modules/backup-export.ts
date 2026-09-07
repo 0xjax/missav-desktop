@@ -101,6 +101,73 @@ function downloadJson(data: unknown, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000)
 }
 
+// ---- 快照留存：最近 3 份完整备份，可随时选择导出 ----
+
+interface Snapshot {
+  ts: number
+  saved: VideoItem[]
+  playlists: PlaylistData[]
+}
+
+const SNAPSHOTS_KEY = 'backup-snapshots'
+const LAST_BACKUP_KEY = 'last-backup-ts'
+const MAX_SNAPSHOTS = 3
+
+function readSnapshots(): Snapshot[] {
+  return GM_getValue<Snapshot[]>(SNAPSHOTS_KEY, [])
+}
+
+function fmtTs(ts: number): string {
+  const d = new Date(ts)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function snapshotStat(s: Snapshot): string {
+  const videos = s.playlists.reduce((n, p) => n + p.videos.length, 0)
+  return `收藏 ${s.saved.length} 部 · 片单 ${s.playlists.length} 个 / 共 ${videos} 部`
+}
+
+function saveSnapshot(s: Snapshot): void {
+  const list = [s, ...readSnapshots()].slice(0, MAX_SNAPSHOTS)
+  GM_setValue(SNAPSHOTS_KEY, list)
+  GM_setValue(LAST_BACKUP_KEY, s.ts)
+}
+
+// 备份抓取耗时较长，期间挂 beforeunload：
+// 关标签会弹浏览器原生"离开页面？"确认，确认离开则抛弃本次备份
+function preventUnload(e: BeforeUnloadEvent): void {
+  e.preventDefault()
+  e.returnValue = ''
+}
+
+async function runBackup(): Promise<void> {
+  window.addEventListener('beforeunload', preventUnload)
+  try {
+    const { saved, playlists } = await crawlAll()
+    const snap: Snapshot = { ts: Date.now(), saved, playlists }
+    saveSnapshot(snap)
+    downloadSnapshot(snap)
+    toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`)
+  } finally {
+    window.removeEventListener('beforeunload', preventUnload)
+  }
+}
+
+function downloadSnapshot(s: Snapshot): void {
+  const d = new Date(s.ts)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const localDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  downloadJson(
+    {
+      exportedAt: `${localDate}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
+      saved: s.saved,
+      playlists: s.playlists,
+    },
+    `missav-backup-${localDate}.json`,
+  )
+}
+
 async function crawlAll(): Promise<{
   saved: VideoItem[]
   playlists: PlaylistData[]
@@ -113,25 +180,19 @@ async function crawlAll(): Promise<{
   return { saved, playlists }
 }
 
-async function runBackup(): Promise<void> {
-  const { saved, playlists } = await crawlAll()
-  // 文件名与导出时间用本地时区（toISOString 是 UTC，跨零点会差一天）
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  const localDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-  const localIso = `${localDate}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-  downloadJson(
-    { exportedAt: localIso, saved, playlists },
-    `missav-backup-${localDate}.json`,
-  )
-  toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`)
-}
-
-// 手动导出（设置面板按钮）
-export async function exportBackup(): Promise<void> {
+async function crawlFresh(): Promise<void> {
   if (exporting) {
     toast('备份进行中，请稍候')
     return
+  }
+  // 距上次完成不足 10 分钟时二次确认
+  const last = GM_getValue<number>(LAST_BACKUP_KEY, 0)
+  const gapMin = Math.round((Date.now() - last) / 60000)
+  if (gapMin < 10) {
+    const ok = window.confirm(
+      `距离上次备份仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新抓取吗？`,
+    )
+    if (!ok) return
   }
   exporting = true
   try {
@@ -143,9 +204,60 @@ export async function exportBackup(): Promise<void> {
   }
 }
 
+// ---- 导出备份选择面板 ----
+
+export function exportBackup(): void {
+  if (document.getElementById('backup-panel')) return
+  const snapshots = readSnapshots()
+  const panel = Object.assign(document.createElement('div'), {
+    id: 'backup-panel',
+    innerHTML: `
+      <div class="setting-title">导出备份</div>
+      <div class="backup-hint">抓取最新数据约需 1–3 分钟，期间请勿关闭本标签页</div>
+      <div class="setting-actions backup-latest">
+        <button id="backup-latest-btn" type="button">抓取最新数据</button>
+      </div>
+      ${
+        snapshots.length
+          ? `<div class="backup-list">${snapshots
+              .map(
+                (s, i) => `
+            <div class="backup-row">
+              <span>${fmtTs(s.ts)}<br>${snapshotStat(s)}</span>
+              <button type="button" data-i="${i}">下载</button>
+            </div>`,
+              )
+              .join('')}</div>`
+          : '<div class="backup-hint">暂无历史备份</div>'
+      }
+      <div class="setting-actions">
+        <button id="backup-close" type="button">关闭</button>
+      </div>
+    `,
+  })
+  document.body.appendChild(panel)
+
+  panel.querySelector('#backup-latest-btn')?.addEventListener('click', () => {
+    panel.remove()
+    crawlFresh()
+  })
+  panel.querySelector('#backup-close')?.addEventListener('click', () => {
+    panel.remove()
+  })
+  panel.querySelectorAll<HTMLButtonElement>('.backup-row button').forEach((b) => {
+    b.addEventListener('click', () => {
+      const s = readSnapshots()[Number(b.dataset.i)]
+      if (s) {
+        downloadSnapshot(s)
+        toast('已导出历史备份')
+      }
+      panel.remove()
+    })
+  })
+}
+
 // ---- 自动备份：距上次超过 7 天则在打开页面时自动导出 ----
 
-const LAST_BACKUP_KEY = 'last-backup-ts'
 const AUTO_INTERVAL = 7 * 24 * 3600 * 1000
 
 export function autoBackup(): void {

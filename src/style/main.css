@@ -51,6 +51,67 @@
   cursor: default;
 }
 
+/* 备份选择面板，复用设置面板风格 */
+#backup-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 99999;
+  min-width: 300px;
+  padding: 16px;
+  background: #1e1e1e;
+  color: #eee;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
+  font-size: 14px;
+}
+
+#backup-panel .setting-title {
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+#backup-panel .backup-hint {
+  margin-bottom: 10px;
+  color: #999;
+  font-size: 12px;
+}
+
+#backup-panel .backup-list {
+  margin: 10px 0;
+}
+
+#backup-panel .backup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid #333;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#backup-panel button {
+  padding: 4px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #f06292;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#backup-panel #backup-close {
+  background: #444;
+}
+
+#backup-panel .backup-latest {
+  text-align: left;
+}
+
 #shortcut-help {
   position: fixed;
   top: 50%;
