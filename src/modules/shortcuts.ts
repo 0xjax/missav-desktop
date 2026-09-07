@@ -1,6 +1,7 @@
 import { GM_getValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
+import { toggleSettingPanel } from '../setting.ts'
 
 function isTyping(): boolean {
   const el = document.activeElement
@@ -65,6 +66,37 @@ function togglePlay(): void {
   else video.pause()
 }
 
+const shortcutList: [string, string][] = [
+  ['Space', '播放 / 暂停'],
+  ['S', '收藏 / 取消收藏'],
+  ['P', '展开 / 收起片单'],
+  ['/', '聚焦搜索框'],
+  ['B', '打开我的收藏'],
+  ['H', '打开观看历史'],
+  [',', '脚本设置'],
+  ['?', '快捷键帮助'],
+]
+
+function toggleHelpPanel(): void {
+  const exist = document.getElementById('shortcut-help')
+  if (exist) {
+    exist.remove()
+    return
+  }
+  const panel = Object.assign(document.createElement('div'), {
+    id: 'shortcut-help',
+    innerHTML: `
+      <div class="help-title">快捷键</div>
+      <div class="help-list">
+        ${shortcutList
+          .map(([key, desc]) => `<kbd>${key}</kbd><span>${desc}</span>`)
+          .join('')}
+      </div>
+    `,
+  })
+  document.body.appendChild(panel)
+}
+
 export function shortcuts(): void {
   waitDOMContentLoaded(() => {
     // 夺回空格键：站点的弹窗广告绑在 window 的 keyup.space 上，
@@ -88,9 +120,17 @@ export function shortcuts(): void {
         case 'KeyS':
           clickByAlpineAction('toggleSave')
           break
+        case 'KeyP':
+          clickByAlpineAction('togglePlaylist')
+          break
         case 'Slash':
           e.preventDefault()
-          focusSearch()
+          // Shift+/ 即 ?，弹快捷键帮助
+          if (e.shiftKey) toggleHelpPanel()
+          else focusSearch()
+          break
+        case 'Comma':
+          toggleSettingPanel()
           break
         case 'KeyB':
           gotoPage('/saved')

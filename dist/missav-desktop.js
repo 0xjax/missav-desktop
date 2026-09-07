@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.3.0
+// @version      1.4.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -391,6 +391,33 @@
 		if (video.paused) video.play();
 		else video.pause();
 	}
+	var shortcutList = [
+		["Space", "播放 / 暂停"],
+		["S", "收藏 / 取消收藏"],
+		["P", "展开 / 收起片单"],
+		["/", "聚焦搜索框"],
+		["B", "打开我的收藏"],
+		["H", "打开观看历史"],
+		[",", "脚本设置"],
+		["?", "快捷键帮助"]
+	];
+	function toggleHelpPanel() {
+		const exist = document.getElementById("shortcut-help");
+		if (exist) {
+			exist.remove();
+			return;
+		}
+		const panel = Object.assign(document.createElement("div"), {
+			id: "shortcut-help",
+			innerHTML: `
+      <div class="help-title">快捷键</div>
+      <div class="help-list">
+        ${shortcutList.map(([key, desc]) => `<kbd>${key}</kbd><span>${desc}</span>`).join("")}
+      </div>
+    `
+		});
+		document.body.appendChild(panel);
+	}
 	function shortcuts() {
 		waitDOMContentLoaded(() => {
 			window.addEventListener("keyup", (e) => {
@@ -407,9 +434,16 @@
 					case "KeyS":
 						clickByAlpineAction("toggleSave");
 						break;
+					case "KeyP":
+						clickByAlpineAction("togglePlaylist");
+						break;
 					case "Slash":
 						e.preventDefault();
-						focusSearch();
+						if (e.shiftKey) toggleHelpPanel();
+						else focusSearch();
+						break;
+					case "Comma":
+						toggleSettingPanel();
 						break;
 					case "KeyB":
 						gotoPage("/saved");

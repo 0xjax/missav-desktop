@@ -59,7 +59,7 @@ function createSettingPanel(): HTMLElement {
   return panel
 }
 
-function toggleSettingPanel(): void {
+export function toggleSettingPanel(): void {
   const exist = document.getElementById('setting-panel')
   if (exist) {
     exist.remove()
