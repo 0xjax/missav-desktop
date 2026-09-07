@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.7.0
+// @version      1.8.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}.mx-toast{z-index:99999;color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;position:fixed;bottom:32px;left:50%;transform:translate(-50%);box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -471,13 +471,42 @@
 		return window.Alpine;
 	}
 	function toast(msg) {
+		let box = document.getElementById("mx-toast-box");
+		if (!box) {
+			box = Object.assign(document.createElement("div"), { id: "mx-toast-box" });
+			document.body.appendChild(box);
+		}
 		const el = Object.assign(document.createElement("div"), {
 			className: "mx-toast",
 			textContent: msg
 		});
-		document.body.appendChild(el);
+		box.appendChild(el);
 		setTimeout(() => el.classList.add("mx-toast-out"), 1800);
-		setTimeout(() => el.remove(), 2200);
+		setTimeout(() => {
+			el.remove();
+			if (!box.children.length) box.remove();
+		}, 2200);
+	}
+	var TOAST_CHANNEL = "gm:mx-toast";
+	var lastToastTs = 0;
+	function toastBroadcast(msg) {
+		toast(msg);
+		lastToastTs = Date.now();
+		localStorage.setItem(TOAST_CHANNEL, JSON.stringify({
+			text: msg,
+			ts: lastToastTs
+		}));
+	}
+	function listenToastChannel() {
+		window.addEventListener("storage", (e) => {
+			if (e.key !== TOAST_CHANNEL || !e.newValue) return;
+			try {
+				const { text, ts } = JSON.parse(e.newValue);
+				if (ts <= lastToastTs) return;
+				lastToastTs = ts;
+				toast(text);
+			} catch {}
+		});
 	}
 	var SAVED_CACHE_KEY = "saved-cache";
 	function readCache() {
@@ -551,7 +580,7 @@
 			data.loading = false;
 			if (r.ok) {
 				if (dvdId) writeCache(dvdId, target);
-				toast(target ? "已收藏" : "已取消收藏");
+				toastBroadcast(target ? "已收藏" : "已取消收藏");
 			} else {
 				data.saved = !target;
 				if (r.status === 401) openLoginModal(data);
@@ -587,7 +616,7 @@
 			dvdId,
 			key: item.key
 		}).then((r) => {
-			if (r.ok) toast(target ? "已加入片单" : "已移出片单");
+			if (r.ok) toastBroadcast(target ? "已加入片单" : "已移出片单");
 			else {
 				item.is_added = !target;
 				if (r.status === 401) openLoginModal(data);
@@ -600,6 +629,7 @@
 	}
 	function fastSave() {
 		waitDOMContentLoaded(() => {
+			listenToastChannel();
 			const timer = setInterval(() => {
 				const alp = alpine();
 				const btn = [...document.querySelectorAll("button")].find((b) => alpineAction(b, "toggleSave"));
