@@ -1,6 +1,5 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
-import { waitDOMContentLoaded } from '../utils/wait.ts'
 
 // 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中文字幕），
 // URL 后缀即源标识。详情页拉一次搜索页解析同源列表，在标题下方
@@ -97,8 +96,12 @@ function renderSwitcher(
 }
 
 export function sources(): void {
-  waitDOMContentLoaded(async () => {
-    // 详情页特征：有收藏按钮
+  // 脚本在 document-start 运行：等 DOMContentLoaded 会让插入发生在首帧之后，
+  // 造成高度 0 突变。改用 MutationObserver 在收藏按钮（详情页标志）
+  // 解析出来的同一帧内插入切换行，消除布局跳动。
+  let done = false
+  const init = (): boolean => {
+    if (done) return true
     const isVideoPage = [...document.querySelectorAll('button')].some((b) =>
       b
         .getAttributeNames()
@@ -108,13 +111,13 @@ export function sources(): void {
             (b.getAttribute(n) || '').includes('toggleSave'),
         ),
     )
-    if (!isVideoPage) return
+    if (!isVideoPage) return false
+    done = true
+
     const id = location.pathname.split('/').filter(Boolean).pop() || ''
     const parsed = parseVideoId(id)
-    if (!parsed) return
+    if (!parsed) return true
 
-    // 当前源从 URL 即可判断，立即渲染占位行，高度固定不跳动；
-    // 搜索结果返回后只追加其他源徽章
     const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix)!
     const current: Source = {
       id,
@@ -129,18 +132,28 @@ export function sources(): void {
     const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL
     if (cacheFresh) renderSwitcher(cached.list, id, false)
 
-    try {
-      const lang = currentLang() ?? 'cn'
-      const list = await fetchSources(parsed.base, lang)
-      if (!list.length) list.push(current)
-      writeCache(parsed.base, list)
-      // 缓存命中时只有内容变化才重渲染，无变化零感知
-      if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) {
-        renderSwitcher(list, id, false)
+    ;(async () => {
+      try {
+        const lang = currentLang() ?? 'cn'
+        const list = await fetchSources(parsed.base, lang)
+        if (!list.length) list.push(current)
+        writeCache(parsed.base, list)
+        // 缓存命中时只有内容变化才重渲染，无变化零感知
+        if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) {
+          renderSwitcher(list, id, false)
+        }
+      } catch {
+        // 拉取失败：有缓存用缓存，否则只保留当前源标识
+        if (!cacheFresh) renderSwitcher([current], id, false)
       }
-    } catch {
-      // 拉取失败：有缓存用缓存，否则只保留当前源标识
-      if (!cacheFresh) renderSwitcher([current], id, false)
-    }
+    })()
+    return true
+  }
+
+  if (init()) return
+  const obs = new MutationObserver(() => {
+    if (init()) obs.disconnect()
   })
+  obs.observe(document.documentElement, { childList: true, subtree: true })
+  setTimeout(() => obs.disconnect(), 15000)
 }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.11.2
+// @version      1.11.3
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -962,11 +962,14 @@
 		if (!row.isConnected) h1.after(row);
 	}
 	function sources() {
-		waitDOMContentLoaded(async () => {
-			if (![...document.querySelectorAll("button")].some((b) => b.getAttributeNames().some((n) => n.startsWith("@click") && (b.getAttribute(n) || "").includes("toggleSave")))) return;
+		let done = false;
+		const init = () => {
+			if (done) return true;
+			if (![...document.querySelectorAll("button")].some((b) => b.getAttributeNames().some((n) => n.startsWith("@click") && (b.getAttribute(n) || "").includes("toggleSave")))) return false;
+			done = true;
 			const id = location.pathname.split("/").filter(Boolean).pop() || "";
 			const parsed = parseVideoId(id);
-			if (!parsed) return;
+			if (!parsed) return true;
 			const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix);
 			const current = {
 				id,
@@ -978,16 +981,28 @@
 			const cached = readCache()[parsed.base];
 			const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL;
 			if (cacheFresh) renderSwitcher(cached.list, id, false);
-			try {
-				const lang = currentLang() ?? "cn";
-				const list = await fetchSources(parsed.base, lang);
-				if (!list.length) list.push(current);
-				writeCache(parsed.base, list);
-				if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) renderSwitcher(list, id, false);
-			} catch {
-				if (!cacheFresh) renderSwitcher([current], id, false);
-			}
+			(async () => {
+				try {
+					const lang = currentLang() ?? "cn";
+					const list = await fetchSources(parsed.base, lang);
+					if (!list.length) list.push(current);
+					writeCache(parsed.base, list);
+					if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) renderSwitcher(list, id, false);
+				} catch {
+					if (!cacheFresh) renderSwitcher([current], id, false);
+				}
+			})();
+			return true;
+		};
+		if (init()) return;
+		const obs = new MutationObserver(() => {
+			if (init()) obs.disconnect();
 		});
+		obs.observe(document.documentElement, {
+			childList: true,
+			subtree: true
+		});
+		setTimeout(() => obs.disconnect(), 15e3);
 	}
 	(function() {
 		if (window.top !== window.self) return;
