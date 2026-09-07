@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.11.5
+// @version      1.11.6
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -404,7 +404,8 @@
 		"bit.ly",
 		"mycomic.com",
 		"jerkdolls.com",
-		"theporndude.com"
+		"theporndude.com",
+		"tsyndicate.com"
 	];
 	var AD_SELECTORS = [
 		"[id^=\"ts_ms_\"]",
@@ -457,11 +458,24 @@
 		if (wrapper && matchAdMenu(wrapper.querySelector("a") ?? el)) wrapper.remove();
 		else removeWithWrapper(el);
 	}
+	function isEmptyAdWrapper(el) {
+		if (el.tagName !== "DIV") return false;
+		const cls = (el.className || "").toString();
+		if (!/\bspace-y-\d/.test(cls) || !/\bmb-\d/.test(cls)) return false;
+		if (el.children.length > 0 || el.textContent?.trim()) return false;
+		return !el.getAttributeNames().some((n) => n.startsWith("x-") || n.startsWith("@"));
+	}
+	function removeEmptyAdWrappers(root) {
+		root.querySelectorAll("div[class*=\"space-y-\"]").forEach((el) => {
+			if (isEmptyAdWrapper(el)) el.remove();
+		});
+	}
 	function scanAndRemove(root) {
-		root.querySelectorAll(`iframe[src], a[href], ${AD_SELECTORS.join(", ")}`).forEach((el) => {
+		root.querySelectorAll(`iframe[src], script[src], a[href], ${AD_SELECTORS.join(", ")}`).forEach((el) => {
 			if (matchAdMenu(el)) removeAdMenu(el);
 			else if (matchAdEl(el)) removeAd(el);
 		});
+		removeEmptyAdWrappers(root === document ? document.body : root);
 		if (root === document) scanFloatingAds();
 	}
 	function observeAds() {
@@ -476,7 +490,10 @@
 					else if (matchAdEl(el)) removeAd(el);
 					else scanAndRemove(el);
 				});
-				if (hasAdded) scanFloatingAds();
+				if (hasAdded) {
+					scanFloatingAds();
+					removeEmptyAdWrappers(document.body);
+				}
 			} catch (e) {
 				console.error("[missav-desktop] 去广告观察器异常:", e);
 			}

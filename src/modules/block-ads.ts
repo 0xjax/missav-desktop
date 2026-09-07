@@ -11,6 +11,8 @@ const AD_HOSTS = [
   'mycomic.com',
   'jerkdolls.com',
   'theporndude.com',
+  // 详情页/页脚广告位的 SDK 脚本源
+  'tsyndicate.com',
 ]
 
 // 广告位结构特征（无 src 的广告槽等无法用域名匹配的情况）
@@ -91,13 +93,31 @@ function removeAdMenu(el: Element): void {
   else removeWithWrapper(el)
 }
 
+// 广告被删后残留的空占位壳：space-y/mb 间距容器，内容清空后仍留白
+// （页脚上方 250px 广告位、详情页侧栏首卡上方间距都是这种）。
+// 带 x-/@ 属性的是 Alpine 组件容器，可能稍后渲染，跳过防误伤
+function isEmptyAdWrapper(el: Element): boolean {
+  if (el.tagName !== 'DIV') return false
+  const cls = (el.className || '').toString()
+  if (!/\bspace-y-\d/.test(cls) || !/\bmb-\d/.test(cls)) return false
+  if (el.children.length > 0 || el.textContent?.trim()) return false
+  return !el.getAttributeNames().some((n) => n.startsWith('x-') || n.startsWith('@'))
+}
+
+function removeEmptyAdWrappers(root: ParentNode): void {
+  root.querySelectorAll('div[class*="space-y-"]').forEach((el) => {
+    if (isEmptyAdWrapper(el)) el.remove()
+  })
+}
+
 function scanAndRemove(root: ParentNode): void {
   root
-    .querySelectorAll(`iframe[src], a[href], ${AD_SELECTORS.join(', ')}`)
+    .querySelectorAll(`iframe[src], script[src], a[href], ${AD_SELECTORS.join(', ')}`)
     .forEach((el) => {
       if (matchAdMenu(el)) removeAdMenu(el)
       else if (matchAdEl(el)) removeAd(el)
     })
+  removeEmptyAdWrappers(root === document ? document.body : root)
   if (root === document) scanFloatingAds()
 }
 
@@ -115,8 +135,12 @@ function observeAds(): void {
           else scanAndRemove(el)
         })
       }
-      // 浮层可能先挂空壳再注入广告链接，有新增节点就复查一次
-      if (hasAdded) scanFloatingAds()
+      // 浮层可能先挂空壳再注入广告链接，有新增节点就复查一次；
+      // 广告被动态清除后残留的空壳也一并扫掉
+      if (hasAdded) {
+        scanFloatingAds()
+        removeEmptyAdWrappers(document.body)
+      }
     } catch (e) {
       console.error('[missav-desktop] 去广告观察器异常:', e)
     }
