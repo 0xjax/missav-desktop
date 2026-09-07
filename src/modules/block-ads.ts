@@ -8,12 +8,24 @@ const AD_HOSTS = [
   'snaptrckr.fun',
   // 页脚/下拉里的小广告：短链与友联伪装的推广站
   'bit.ly',
-  'mycomic.com',
   'jerkdolls.com',
   'theporndude.com',
   // 详情页/页脚广告位的 SDK 脚本源
   'tsyndicate.com',
 ]
+
+// 保留但精简文字的推广链接：不删，只把冗长文案改短
+const RENAME_LINKS: [host: string, text: string][] = [['mycomic.com', '漫画']]
+
+// 命中重命名列表则改写文字并返回 true（调用方跳过后续删除逻辑）
+function renameLink(el: Element): boolean {
+  if (el.tagName !== 'A') return false
+  const href = el.getAttribute('href')
+  const hit = RENAME_LINKS.find(([host]) => href?.includes(host))
+  if (!hit) return false
+  if (el.textContent?.trim() !== hit[1]) el.textContent = hit[1]
+  return true
+}
 
 // 广告位结构特征（无 src 的广告槽等无法用域名匹配的情况）
 const AD_SELECTORS = [
@@ -114,6 +126,7 @@ function scanAndRemove(root: ParentNode): void {
   root
     .querySelectorAll(`iframe[src], script[src], a[href], ${AD_SELECTORS.join(', ')}`)
     .forEach((el) => {
+      if (renameLink(el)) return
       if (matchAdMenu(el)) removeAdMenu(el)
       else if (matchAdEl(el)) removeAd(el)
     })
@@ -130,6 +143,7 @@ function observeAds(): void {
           if (node.nodeType !== Node.ELEMENT_NODE) return
           hasAdded = true
           const el = node as Element
+          if (renameLink(el)) return
           if (matchAdMenu(el)) removeAdMenu(el)
           else if (matchAdEl(el)) removeAd(el)
           else scanAndRemove(el)

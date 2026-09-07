@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.12.0
+// @version      1.12.1
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -488,11 +488,19 @@
 		"myavlive.com",
 		"snaptrckr.fun",
 		"bit.ly",
-		"mycomic.com",
 		"jerkdolls.com",
 		"theporndude.com",
 		"tsyndicate.com"
 	];
+	var RENAME_LINKS = [["mycomic.com", "漫画"]];
+	function renameLink(el) {
+		if (el.tagName !== "A") return false;
+		const href = el.getAttribute("href");
+		const hit = RENAME_LINKS.find(([host]) => href?.includes(host));
+		if (!hit) return false;
+		if (el.textContent?.trim() !== hit[1]) el.textContent = hit[1];
+		return true;
+	}
 	var AD_SELECTORS = [
 		"[id^=\"ts_ms_\"]",
 		"iframe[width=\"1\"][height=\"1\"]:not([src])",
@@ -558,6 +566,7 @@
 	}
 	function scanAndRemove(root) {
 		root.querySelectorAll(`iframe[src], script[src], a[href], ${AD_SELECTORS.join(", ")}`).forEach((el) => {
+			if (renameLink(el)) return;
 			if (matchAdMenu(el)) removeAdMenu(el);
 			else if (matchAdEl(el)) removeAd(el);
 		});
@@ -572,6 +581,7 @@
 					if (node.nodeType !== Node.ELEMENT_NODE) return;
 					hasAdded = true;
 					const el = node;
+					if (renameLink(el)) return;
 					if (matchAdMenu(el)) removeAdMenu(el);
 					else if (matchAdEl(el)) removeAd(el);
 					else scanAndRemove(el);
