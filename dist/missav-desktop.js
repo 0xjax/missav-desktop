@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.1.1
+// @version      1.2.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -70,11 +70,13 @@
 	};
 	var keyValues = {
 		"block-ads": "去广告",
-		"lang-pref": "语言偏好"
+		"lang-pref": "语言偏好",
+		"search-pref": "搜索偏好"
 	};
 	var keyDefaults = {
 		"block-ads": true,
-		"lang-pref": true
+		"lang-pref": true,
+		"search-pref": true
 	};
 	function createSettingPanel() {
 		const panel = Object.assign(document.createElement("div"), {
@@ -274,11 +276,88 @@
 		].filter(Boolean).join("/");
 		location.replace(target + location.search + location.hash);
 	}
+	var LANG_RE = /^(cn|en|ja|ko|ms|th|de|fr|vi|id|pt)$/;
+	function currentLang() {
+		return location.pathname.split("/").filter(Boolean).find((s) => LANG_RE.test(s)) ?? null;
+	}
+	function watchParamLinks() {
+		document.addEventListener("click", (e) => {
+			const a = e.target.closest?.("a[href*=\"/search/\"]");
+			if (!a) return;
+			const params = new URL(a.href, location.origin).searchParams;
+			if (!params.has("filters") && !params.has("sort")) return;
+			GM_setValue$1("search-filters", params.get("filters"));
+			GM_setValue$1("search-sort", params.get("sort"));
+		}, true);
+	}
+	function recordHistory(keyword) {
+		try {
+			const raw = window.Cookies?.get("search_history");
+			const history = raw ? JSON.parse(raw) : [];
+			const i = history.indexOf(keyword);
+			if (i !== -1) history.splice(i, 1);
+			history.unshift(keyword);
+			window.Cookies?.set("search_history", JSON.stringify(history), { expires: 365 });
+		} catch {}
+	}
+	function navigateWithPrefs(keyword) {
+		const kw = encodeURIComponent(keyword.trim().replace("\\", ""));
+		if (!kw) return;
+		recordHistory(kw);
+		const lang = currentLang() ?? GM_getValue$1("pref-lang", null);
+		const filters = GM_getValue$1("search-filters", null);
+		const sort = GM_getValue$1("search-sort", null);
+		const params = new URLSearchParams();
+		if (filters) params.set("filters", filters);
+		if (sort) params.set("sort", sort);
+		const qs = params.toString();
+		location.href = `${lang ? `/${lang}` : ""}/search/${kw}${qs ? `?${qs}` : ""}`;
+	}
+	function interceptSearch() {
+		document.addEventListener("submit", (e) => {
+			const form = e.target;
+			if (!form.getAttribute("@submit.prevent")?.includes("search(")) return;
+			const input = form.querySelector("input[type=\"text\"]");
+			if (!input) return;
+			e.preventDefault();
+			e.stopImmediatePropagation();
+			navigateWithPrefs(input.value);
+		}, true);
+		document.addEventListener("click", (e) => {
+			const a = e.target.closest?.("a[href=\"#\"]");
+			if (!a?.getAttribute("@click.prevent")?.includes("search(")) return;
+			e.preventDefault();
+			e.stopImmediatePropagation();
+			navigateWithPrefs(a.textContent ?? "");
+		}, true);
+	}
+	function applyPrefsToBareSearch() {
+		if (!/\/search\/[^/]+/.test(location.pathname)) return;
+		if (/[?&](filters|sort)=/.test(location.search)) return;
+		const filters = GM_getValue$1("search-filters", null);
+		const sort = GM_getValue$1("search-sort", null);
+		if (!filters && !sort) return;
+		const key = `search-redirected:${filters}:${sort}:${location.pathname}`;
+		if (sessionStorage.getItem(key)) return;
+		sessionStorage.setItem(key, "1");
+		const params = new URLSearchParams();
+		if (filters) params.set("filters", filters);
+		if (sort) params.set("sort", sort);
+		location.replace(`${location.pathname}?${params}${location.hash}`);
+	}
+	function searchPref() {
+		applyPrefsToBareSearch();
+		waitDOMContentLoaded(() => {
+			watchParamLinks();
+			interceptSearch();
+		});
+	}
 	(function() {
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
 		registerSettingMenu();
 		if (GM_getValue$1("block-ads", true)) blockAds();
 		if (GM_getValue$1("lang-pref", true)) preferLang();
+		if (GM_getValue$1("search-pref", true)) searchPref();
 	})();
 })();

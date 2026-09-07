@@ -6,6 +6,7 @@ import { GM_getValue } from './utils/gm.ts'
 import { registerSettingMenu } from './setting.js'
 import { blockAds } from './modules/block-ads.js'
 import { preferLang } from './modules/lang-pref.js'
+import { searchPref } from './modules/search-pref.js'
 ;(function () {
   if (window.top !== window.self) {
     return
@@ -18,4 +19,5 @@ import { preferLang } from './modules/lang-pref.js'
   // 按页面路径在此分发各功能模块
   if (GM_getValue('block-ads', true)) blockAds()
   if (GM_getValue('lang-pref', true)) preferLang()
+  if (GM_getValue('search-pref', true)) searchPref()
 })()
