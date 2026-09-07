@@ -76,16 +76,21 @@ function enhancePanel(fieldset: Element): void {
 
   // 幂等检查：观察器回调在我们的 DOM 改动之后异步触发，若增强已就位
   // 就直接返回，否则会反复重排形成死循环卡死页面
-  const orderSame = rows.every((r, i) => r.el === domOrder[i])
+  const grid = fieldset.querySelector(':scope > .mx-pl-grid')
+  const orderSame = !!grid && rows.every((r, i) => r.el === domOrder[i])
   const spansOk = rows.every((r) => {
     if (r.count === undefined) return true
     return r.el.querySelector('.mx-pl-count')?.textContent === `(${r.count})`
   })
-  if (fieldset.classList.contains('mx-pl-cols') && orderSame && spansOk) return
+  if (orderSame && spansOk) return
 
-  fieldset.classList.add('mx-pl-cols')
+  // 行集中进独立 grid 容器：fieldset 里的 <hr> 分割线和「建立片单」
+  // 保持整行宽度，不参与分列；grid 行主序排列，优先级高的自然置顶
+  const container =
+    grid ??
+    Object.assign(document.createElement('div'), { className: 'mx-pl-grid' })
   for (const r of rows) {
-    fieldset.appendChild(r.el)
+    container.appendChild(r.el)
     const label = r.el.querySelector('label')
     if (!label || r.count === undefined) continue
     let span = r.el.querySelector('.mx-pl-count')
@@ -95,6 +100,7 @@ function enhancePanel(fieldset: Element): void {
     }
     span.textContent = `(${r.count})`
   }
+  if (!grid) fieldset.appendChild(container)
 }
 
 function scan(root: ParentNode): void {

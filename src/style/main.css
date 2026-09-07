@@ -227,21 +227,21 @@ div:has(> iframe[src*="rallytrck"]) {
   display: none;
 }
 
-/* 片单面板：多列布局 + 数量小字 */
-fieldset.mx-pl-cols {
-  columns: 3;
+/* 片单面板：grid 分列（行主序，高优先级置顶）+ 数量小字 */
+.mx-pl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: 1.5rem;
 }
 @media (max-width: 1280px) {
-  fieldset.mx-pl-cols {
-    columns: 2;
+  .mx-pl-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-fieldset.mx-pl-cols > div {
-  break-inside: avoid;
-}
+/* 数量沿用站点 label 的 nord4 浅色，降不透明度作次要信息 */
 .mx-pl-count {
   margin-left: 0.3rem;
   font-size: 0.75rem;
-  opacity: 0.55;
+  color: #d8dee9;
+  opacity: 0.5;
 }
