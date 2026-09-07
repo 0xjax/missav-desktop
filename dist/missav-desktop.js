@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.10.1
+// @version      1.10.2
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -249,7 +249,7 @@
 			toast("备份进行中，请稍候");
 			return;
 		}
-		const last = GM_getValue$1(LAST_MANUAL_KEY, 0);
+		const last = Math.max(GM_getValue$1(LAST_MANUAL_KEY, 0), GM_getValue$1(LAST_BACKUP_KEY, 0));
 		const gapMin = Math.round((Date.now() - last) / 6e4);
 		if (gapMin < 10) {
 			if (!window.confirm(`距离上次抓取仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新抓取吗？`)) return;

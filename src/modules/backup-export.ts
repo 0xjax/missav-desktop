@@ -188,8 +188,11 @@ async function crawlFresh(): Promise<void> {
     toast('备份进行中，请稍候')
     return
   }
-  // 距上次手动抓取不足 10 分钟时二次确认（独立于自动备份时间戳）
-  const last = GM_getValue<number>(LAST_MANUAL_KEY, 0)
+  // 距最近一次抓取（手动或自动备份）不足 10 分钟时二次确认
+  const last = Math.max(
+    GM_getValue<number>(LAST_MANUAL_KEY, 0),
+    GM_getValue<number>(LAST_BACKUP_KEY, 0),
+  )
   const gapMin = Math.round((Date.now() - last) / 60000)
   if (gapMin < 10) {
     const ok = window.confirm(
