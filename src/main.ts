@@ -8,6 +8,7 @@ import { blockAds } from './modules/block-ads.js'
 import { preferLang } from './modules/lang-pref.js'
 import { searchPref } from './modules/search-pref.js'
 import { shortcuts } from './modules/shortcuts.js'
+import { fastSave } from './modules/fast-save.js'
 ;(function () {
   if (window.top !== window.self) {
     return
@@ -22,4 +23,5 @@ import { shortcuts } from './modules/shortcuts.js'
   if (GM_getValue('lang-pref', true)) preferLang()
   if (GM_getValue('search-pref', true)) searchPref()
   if (GM_getValue('shortcut-keys', true)) shortcuts()
+  if (GM_getValue('fast-save', true)) fastSave()
 })()

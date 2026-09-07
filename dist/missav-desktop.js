@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.5.0
+// @version      1.6.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -72,13 +72,15 @@
 		"block-ads": "去广告",
 		"lang-pref": "语言偏好",
 		"search-pref": "搜索偏好",
-		"shortcut-keys": "快捷操作"
+		"shortcut-keys": "快捷操作",
+		"fast-save": "即时收藏"
 	};
 	var keyDefaults = {
 		"block-ads": true,
 		"lang-pref": true,
 		"search-pref": true,
-		"shortcut-keys": true
+		"shortcut-keys": true,
+		"fast-save": true
 	};
 	function createSettingPanel() {
 		const panel = Object.assign(document.createElement("div"), {
@@ -465,6 +467,47 @@
 			});
 		});
 	}
+	function findSaveUrl(btn) {
+		let el = btn;
+		while (el) {
+			const m = (el.getAttribute?.("x-data"))?.match(/https:\/\/[^'"]+\/api\/items\/[^'"]+\/save/);
+			if (m) return m[0];
+			el = el.parentElement;
+		}
+		return null;
+	}
+	function isSaveButton(btn) {
+		return btn.getAttributeNames().some((n) => n.startsWith("@click") && (btn.getAttribute(n) || "").includes("toggleSave"));
+	}
+	function fastSave() {
+		waitDOMContentLoaded(() => {
+			document.addEventListener("click", (e) => {
+				const btn = e.target.closest?.("button");
+				if (!btn || !isSaveButton(btn)) return;
+				const alpine = window.Alpine;
+				const axios = window.axios;
+				if (!alpine || !axios) return;
+				const data = alpine.$data(btn);
+				if (!data || data.user) return;
+				const url = findSaveUrl(btn);
+				if (!url) return;
+				e.preventDefault();
+				e.stopImmediatePropagation();
+				const targetSaved = !data.saved;
+				data.loading = true;
+				(targetSaved ? axios.post(url) : axios.delete(url)).then(() => {
+					data.saved = targetSaved;
+					data.loading = false;
+				}).catch((err) => {
+					data.loading = false;
+					if (err.response?.status === 401) {
+						if (typeof data.requireLogin === "function") data.requireLogin(() => {});
+						else [...document.querySelectorAll("button, a")].find((el) => el.getAttributeNames().some((n) => n.startsWith("@click") && (el.getAttribute(n) || "").includes("showLoginModal")))?.click();
+					}
+				});
+			}, true);
+		});
+	}
 	(function() {
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
@@ -473,5 +516,6 @@
 		if (GM_getValue$1("lang-pref", true)) preferLang();
 		if (GM_getValue$1("search-pref", true)) searchPref();
 		if (GM_getValue$1("shortcut-keys", true)) shortcuts();
+		if (GM_getValue$1("fast-save", true)) fastSave();
 	})();
 })();
