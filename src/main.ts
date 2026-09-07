@@ -2,7 +2,9 @@
 
 import './style/main.css'
 
+import { GM_getValue } from './utils/gm.ts'
 import { registerSettingMenu } from './setting.js'
+import { blockAds } from './modules/block-ads.js'
 ;(function () {
   if (window.top !== window.self) {
     return
@@ -13,4 +15,5 @@ import { registerSettingMenu } from './setting.js'
   registerSettingMenu()
 
   // 按页面路径在此分发各功能模块
+  if (GM_getValue('block-ads', true)) blockAds()
 })()

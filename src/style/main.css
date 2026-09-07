@@ -40,3 +40,9 @@
   color: #fff;
   cursor: pointer;
 }
+
+/* 去广告：document-start 阶段先行隐藏已知广告容器防闪烁，JS 层随后移除 */
+div:has(> iframe[src*="mayzaent"]),
+div:has(> iframe[src*="rallytrck"]) {
+  display: none;
+}

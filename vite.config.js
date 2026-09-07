@@ -9,12 +9,12 @@ export default defineConfig({
                 name: "missav 桌面端",
                 namespace: "https://github.com/jk278/missav-desktop",
                 description: "增强 missav 网站的桌面端浏览体验。",
-                version: "1.0.0",
+                version: "1.0.1",
                 author: "jk278",
                 license: "MIT",
                 "run-at": "document-start",
                 icon: "https://missav.ws/favicon.ico",
-                match: ["https://missav.ws/*"],
+                match: ["https://missav.ws/*", "https://missav.ai/*"],
             },
             build: {
                 fileName: "missav-desktop.js", // 输出文件名
