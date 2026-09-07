@@ -150,6 +150,11 @@
   cursor: default;
 }
 
+.mx-loading {
+  background: transparent;
+  opacity: 0.4;
+}
+
 #shortcut-help {
   position: fixed;
   top: 50%;

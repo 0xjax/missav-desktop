@@ -51,25 +51,29 @@ async function fetchSources(base: string, lang: string): Promise<Source[]> {
   return sources
 }
 
-function renderSwitcher(sources: Source[], currentId: string): void {
+function renderSwitcher(
+  sources: Source[],
+  currentId: string,
+  loading: boolean,
+): void {
   const h1 = document.querySelector('h1')
   if (!h1) return
-  const row = Object.assign(document.createElement('div'), {
-    className: 'mx-sources',
-    innerHTML:
-      '<span class="mx-sources-label">源</span>' +
-      sources
-        .map(
-          (s) =>
-            `<a class="mx-src${s.id === currentId ? ' current' : ''}" ` +
-            `style="background:${s.color}" href="${s.href}">${s.label}</a>`,
-        )
-        .join(''),
-  })
+  const row =
+    document.querySelector('.mx-sources') ??
+    Object.assign(document.createElement('div'), { className: 'mx-sources' })
+  row.innerHTML =
+    '<span class="mx-sources-label">源</span>' +
+    sources
+      .map(
+        (s) =>
+          `<a class="mx-src${s.id === currentId ? ' current' : ''}" ` +
+          `style="background:${s.color}" href="${s.href}">${s.label}</a>`,
+      )
+      .join('') +
+    (loading ? '<span class="mx-src mx-loading">…</span>' : '')
   // 当前源不可点
-  const cur = row.querySelector('.mx-src.current')
-  cur?.removeAttribute('href')
-  h1.after(row)
+  row.querySelector('.mx-src.current')?.removeAttribute('href')
+  if (!row.isConnected) h1.after(row)
 }
 
 export function sources(): void {
@@ -88,14 +92,26 @@ export function sources(): void {
     const id = location.pathname.split('/').filter(Boolean).pop() || ''
     const parsed = parseVideoId(id)
     if (!parsed) return
+
+    // 当前源从 URL 即可判断，立即渲染占位行，高度固定不跳动；
+    // 搜索结果返回后只追加其他源徽章
+    const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix)!
+    const current: Source = {
+      id,
+      label: curDef[1],
+      color: curDef[2],
+      href: location.href,
+    }
+    renderSwitcher([current], id, true)
+
     try {
       const lang = currentLang() ?? 'cn'
       const list = await fetchSources(parsed.base, lang)
-      // 多源才显示切换行；单源但当前带后缀时也显示（补回详情页缺失的标识）
-      if (list.length < 2 && !parsed.suffix) return
-      renderSwitcher(list, id)
+      if (!list.length) list.push(current)
+      renderSwitcher(list, id, false)
     } catch {
-      // 搜索页拉取失败静默降级，不影响详情页
+      // 搜索页拉取失败则只保留当前源标识
+      renderSwitcher([current], id, false)
     }
   })
 }
