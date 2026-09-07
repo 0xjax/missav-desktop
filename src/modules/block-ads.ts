@@ -1,10 +1,25 @@
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 
 // 广告域名黑名单（比站点的 hash 类名稳定），漏广告时在此补充
-const AD_HOSTS = ['mayzaent.com', 'rallytrck.website', 'myavlive.com', 'snaptrckr.fun']
+const AD_HOSTS = [
+  'mayzaent.com',
+  'rallytrck.website',
+  'myavlive.com',
+  'snaptrckr.fun',
+  // 页脚/下拉里的小广告：短链与友联伪装的推广站
+  'bit.ly',
+  'mycomic.com',
+  'jerkdolls.com',
+  'theporndude.com',
+]
 
 // 广告位结构特征（无 src 的广告槽等无法用域名匹配的情况）
-const AD_SELECTORS = ['[id^="ts_ms_"]', 'iframe[width="1"][height="1"]:not([src])']
+const AD_SELECTORS = [
+  '[id^="ts_ms_"]',
+  'iframe[width="1"][height="1"]:not([src])',
+  // 页脚整列纯广告（电报群/漫画/vpn 等），连列带间距整体移除
+  'ul.list-none.text-nord14',
+]
 
 function isAdUrl(url: string | null): boolean {
   return !!url && AD_HOSTS.some((host) => url.includes(host))

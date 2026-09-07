@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.11.3
+// @version      1.11.4
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -400,9 +400,17 @@
 		"mayzaent.com",
 		"rallytrck.website",
 		"myavlive.com",
-		"snaptrckr.fun"
+		"snaptrckr.fun",
+		"bit.ly",
+		"mycomic.com",
+		"jerkdolls.com",
+		"theporndude.com"
 	];
-	var AD_SELECTORS = ["[id^=\"ts_ms_\"]", "iframe[width=\"1\"][height=\"1\"]:not([src])"];
+	var AD_SELECTORS = [
+		"[id^=\"ts_ms_\"]",
+		"iframe[width=\"1\"][height=\"1\"]:not([src])",
+		"ul.list-none.text-nord14"
+	];
 	function isAdUrl(url) {
 		return !!url && AD_HOSTS.some((host) => url.includes(host));
 	}
