@@ -71,7 +71,7 @@ const shortcutList: [string, string][] = [
   ['S', '收藏 / 取消收藏'],
   ['P', '展开 / 收起片单'],
   ['/', '聚焦搜索框'],
-  ['Esc', '退出搜索输入'],
+  ['G', '回到首页'],
   ['B', '打开我的收藏'],
   ['H', '打开观看历史'],
   [',', '脚本设置'],
@@ -140,6 +140,9 @@ export function shortcuts(): void {
           break
         case 'Comma':
           toggleSettingPanel()
+          break
+        case 'KeyG':
+          gotoPage('/')
           break
         case 'KeyB':
           gotoPage('/saved')

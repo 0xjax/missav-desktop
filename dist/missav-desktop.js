@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.4.2
+// @version      1.5.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -398,7 +398,7 @@
 		["S", "收藏 / 取消收藏"],
 		["P", "展开 / 收起片单"],
 		["/", "聚焦搜索框"],
-		["Esc", "退出搜索输入"],
+		["G", "回到首页"],
 		["B", "打开我的收藏"],
 		["H", "打开观看历史"],
 		[",", "脚本设置"],
@@ -453,6 +453,9 @@
 						break;
 					case "Comma":
 						toggleSettingPanel();
+						break;
+					case "KeyG":
+						gotoPage("/");
 						break;
 					case "KeyB":
 						gotoPage("/saved");
