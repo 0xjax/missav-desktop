@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.2.0
+// @version      1.3.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -71,12 +71,14 @@
 	var keyValues = {
 		"block-ads": "去广告",
 		"lang-pref": "语言偏好",
-		"search-pref": "搜索偏好"
+		"search-pref": "搜索偏好",
+		"shortcut-keys": "快捷操作"
 	};
 	var keyDefaults = {
 		"block-ads": true,
 		"lang-pref": true,
-		"search-pref": true
+		"search-pref": true,
+		"shortcut-keys": true
 	};
 	function createSettingPanel() {
 		const panel = Object.assign(document.createElement("div"), {
@@ -352,6 +354,71 @@
 			interceptSearch();
 		});
 	}
+	function isTyping() {
+		const el = document.activeElement;
+		return !!el && ([
+			"INPUT",
+			"TEXTAREA",
+			"SELECT"
+		].includes(el.tagName) || el.isContentEditable);
+	}
+	function clickByAlpineAction(action) {
+		const el = Array.from(document.querySelectorAll("button, a")).find((e) => e.getAttributeNames().some((n) => n.startsWith("@click") && (e.getAttribute(n) || "").includes(action)));
+		if (!el) return false;
+		el.click();
+		return true;
+	}
+	function focusSearch() {
+		const home = document.querySelector("form.w-full input[type=\"text\"]");
+		if (home) {
+			home.focus();
+			home.select();
+			return;
+		}
+		if (clickByAlpineAction("toggleSearch")) setTimeout(() => {
+			const input = Array.from(document.querySelectorAll("form")).find((f) => (f.getAttribute("@submit.prevent") || "").includes("search($refs.search"))?.querySelector("input[type=\"text\"]");
+			input?.focus();
+			input?.select();
+		}, 100);
+	}
+	function gotoPage(path) {
+		const lang = currentLang() ?? GM_getValue$1("pref-lang", null);
+		location.href = `${lang ? `/${lang}` : ""}${path}`;
+	}
+	function togglePlay() {
+		const video = document.querySelector(".plyr video") ?? document.querySelector("video");
+		if (!video) return;
+		if (video.paused) video.play();
+		else video.pause();
+	}
+	function shortcuts() {
+		waitDOMContentLoaded(() => {
+			window.addEventListener("keyup", (e) => {
+				if (e.code === "Space" && !isTyping()) e.stopImmediatePropagation();
+			}, true);
+			window.addEventListener("keydown", (e) => {
+				if (e.ctrlKey || e.metaKey || e.altKey || isTyping()) return;
+				switch (e.code) {
+					case "Space":
+						if (e.target.closest?.(".plyr")) return;
+						e.preventDefault();
+						togglePlay();
+						break;
+					case "KeyS":
+						clickByAlpineAction("toggleSave");
+						break;
+					case "Slash":
+						e.preventDefault();
+						focusSearch();
+						break;
+					case "KeyB":
+						gotoPage("/saved");
+						break;
+					case "KeyH": gotoPage("/history");
+				}
+			});
+		});
+	}
 	(function() {
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
@@ -359,5 +426,6 @@
 		if (GM_getValue$1("block-ads", true)) blockAds();
 		if (GM_getValue$1("lang-pref", true)) preferLang();
 		if (GM_getValue$1("search-pref", true)) searchPref();
+		if (GM_getValue$1("shortcut-keys", true)) shortcuts();
 	})();
 })();

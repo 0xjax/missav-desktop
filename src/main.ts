@@ -7,6 +7,7 @@ import { registerSettingMenu } from './setting.js'
 import { blockAds } from './modules/block-ads.js'
 import { preferLang } from './modules/lang-pref.js'
 import { searchPref } from './modules/search-pref.js'
+import { shortcuts } from './modules/shortcuts.js'
 ;(function () {
   if (window.top !== window.self) {
     return
@@ -20,4 +21,5 @@ import { searchPref } from './modules/search-pref.js'
   if (GM_getValue('block-ads', true)) blockAds()
   if (GM_getValue('lang-pref', true)) preferLang()
   if (GM_getValue('search-pref', true)) searchPref()
+  if (GM_getValue('shortcut-keys', true)) shortcuts()
 })()

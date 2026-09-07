@@ -1,4 +1,5 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
+import { currentLang } from '../utils/lang.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 
 declare global {
@@ -8,15 +9,6 @@ declare global {
       set(name: string, value: string, options?: object): void
     }
   }
-}
-
-const LANG_RE = /^(cn|en|ja|ko|ms|th|de|fr|vi|id|pt)$/
-
-function currentLang(): string | null {
-  return (
-    location.pathname.split('/').filter(Boolean).find((s) => LANG_RE.test(s)) ??
-    null
-  )
 }
 
 // 记忆：点击过滤/排序链接时保存整组参数（链接 href 已包含当前组合，

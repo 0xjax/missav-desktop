@@ -6,6 +6,7 @@ const keyValues: Record<string, string> = {
   'block-ads': '去广告',
   'lang-pref': '语言偏好',
   'search-pref': '搜索偏好',
+  'shortcut-keys': '快捷操作',
 }
 
 // 设置项默认值，未列出的键默认为 false
@@ -13,6 +14,7 @@ const keyDefaults: Record<string, boolean> = {
   'block-ads': true,
   'lang-pref': true,
   'search-pref': true,
+  'shortcut-keys': true,
 }
 
 function createSettingPanel(): HTMLElement {
