@@ -71,10 +71,12 @@ const shortcutList: [string, string][] = [
   ['S', '收藏 / 取消收藏'],
   ['P', '展开 / 收起片单'],
   ['/', '聚焦搜索框'],
+  ['Esc', '退出搜索输入'],
   ['B', '打开我的收藏'],
   ['H', '打开观看历史'],
   [',', '脚本设置'],
   ['?', '快捷键帮助'],
+  ['F', '全屏（站点自带，播放器聚焦时）'],
 ]
 
 function toggleHelpPanel(): void {
@@ -109,6 +111,11 @@ export function shortcuts(): void {
       true,
     )
     window.addEventListener('keydown', (e) => {
+      // Esc 让输入框失焦，否则 / 聚焦搜索后再按 / 只会变成打字
+      if (e.code === 'Escape' && isTyping()) {
+        ;(document.activeElement as HTMLElement).blur()
+        return
+      }
       if (e.ctrlKey || e.metaKey || e.altKey || isTyping()) return
       switch (e.code) {
         case 'Space':

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.4.0
+// @version      1.4.1
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -396,10 +396,12 @@
 		["S", "收藏 / 取消收藏"],
 		["P", "展开 / 收起片单"],
 		["/", "聚焦搜索框"],
+		["Esc", "退出搜索输入"],
 		["B", "打开我的收藏"],
 		["H", "打开观看历史"],
 		[",", "脚本设置"],
-		["?", "快捷键帮助"]
+		["?", "快捷键帮助"],
+		["F", "全屏（站点自带，播放器聚焦时）"]
 	];
 	function toggleHelpPanel() {
 		const exist = document.getElementById("shortcut-help");
@@ -424,6 +426,10 @@
 				if (e.code === "Space" && !isTyping()) e.stopImmediatePropagation();
 			}, true);
 			window.addEventListener("keydown", (e) => {
+				if (e.code === "Escape" && isTyping()) {
+					document.activeElement.blur();
+					return;
+				}
 				if (e.ctrlKey || e.metaKey || e.altKey || isTyping()) return;
 				switch (e.code) {
 					case "Space":
