@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.11.1
+// @version      1.11.2
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -738,11 +738,11 @@
 		return window.Alpine;
 	}
 	var SAVED_CACHE_KEY = "saved-cache";
-	function readCache() {
+	function readCache$1() {
 		return GM_getValue$1(SAVED_CACHE_KEY, {});
 	}
-	function writeCache(dvdId, saved) {
-		const cache = readCache();
+	function writeCache$1(dvdId, saved) {
+		const cache = readCache$1();
 		cache[dvdId] = saved;
 		const keys = Object.keys(cache);
 		if (keys.length > 800) keys.slice(0, 200).forEach((k) => delete cache[k]);
@@ -808,7 +808,7 @@
 		apiFetch(url, target ? "POST" : "DELETE").then((r) => {
 			data.loading = false;
 			if (r.ok) {
-				if (dvdId) writeCache(dvdId, target);
+				if (dvdId) writeCache$1(dvdId, target);
 				toastBroadcast(target ? "已收藏" : "已取消收藏");
 			} else {
 				data.saved = !target;
@@ -867,7 +867,7 @@
 				if (performance.getEntriesByType("resource").some((r) => r.name.includes("/view"))) return;
 				const dvdId = dvdIdOf(btn);
 				if (!dvdId) return;
-				const cache = readCache();
+				const cache = readCache$1();
 				if (dvdId in cache) {
 					const data = alp.$data(btn);
 					if (data && data.saved === false) data.saved = cache[dvdId];
@@ -902,6 +902,21 @@
 		"原版",
 		"#4c566a"
 	];
+	var CACHE_KEY = "sources-cache";
+	var CACHE_TTL = 6048e5;
+	function readCache() {
+		return GM_getValue$1(CACHE_KEY, {});
+	}
+	function writeCache(base, list) {
+		const cache = readCache();
+		cache[base] = {
+			ts: Date.now(),
+			list
+		};
+		const keys = Object.keys(cache);
+		if (keys.length > 500) keys.slice(0, 100).forEach((k) => delete cache[k]);
+		GM_setValue$1(CACHE_KEY, cache);
+	}
 	function parseVideoId(id) {
 		if (id.startsWith("fc2-")) return null;
 		for (const [suffix] of SUFFIXES) if (id.endsWith(suffix)) return {
@@ -960,13 +975,17 @@
 				href: location.href
 			};
 			renderSwitcher([current], id, true);
+			const cached = readCache()[parsed.base];
+			const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL;
+			if (cacheFresh) renderSwitcher(cached.list, id, false);
 			try {
 				const lang = currentLang() ?? "cn";
 				const list = await fetchSources(parsed.base, lang);
 				if (!list.length) list.push(current);
-				renderSwitcher(list, id, false);
+				writeCache(parsed.base, list);
+				if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) renderSwitcher(list, id, false);
 			} catch {
-				renderSwitcher([current], id, false);
+				if (!cacheFresh) renderSwitcher([current], id, false);
 			}
 		});
 	}

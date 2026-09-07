@@ -1,3 +1,4 @@
+import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 
@@ -17,6 +18,25 @@ const SUFFIXES: [suffix: string, label: string, color: string][] = [
   ['-chinese-subtitle', '中文字幕', '#991b1b'],
 ]
 const ORIGINAL: [string, string, string] = ['', '原版', '#4c566a']
+
+// ---- 同源列表缓存：跨页面/跨会话（复观场景），7 天有效 ----
+
+const CACHE_KEY = 'sources-cache'
+const CACHE_TTL = 7 * 24 * 3600 * 1000
+type SourcesCache = Record<string, { ts: number; list: Source[] }>
+
+function readCache(): SourcesCache {
+  return GM_getValue<SourcesCache>(CACHE_KEY, {})
+}
+
+function writeCache(base: string, list: Source[]): void {
+  const cache = readCache()
+  cache[base] = { ts: Date.now(), list }
+  // 限量 500 条，超出丢弃最早的
+  const keys = Object.keys(cache)
+  if (keys.length > 500) keys.slice(0, 100).forEach((k) => delete cache[k])
+  GM_setValue(CACHE_KEY, cache)
+}
 
 function parseVideoId(id: string): { base: string; suffix: string } | null {
   // fc2 等没有多源体系
@@ -104,14 +124,23 @@ export function sources(): void {
     }
     renderSwitcher([current], id, true)
 
+    // 有新鲜缓存则直接渲染完整列表，后台静默校验
+    const cached = readCache()[parsed.base]
+    const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL
+    if (cacheFresh) renderSwitcher(cached.list, id, false)
+
     try {
       const lang = currentLang() ?? 'cn'
       const list = await fetchSources(parsed.base, lang)
       if (!list.length) list.push(current)
-      renderSwitcher(list, id, false)
+      writeCache(parsed.base, list)
+      // 缓存命中时只有内容变化才重渲染，无变化零感知
+      if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) {
+        renderSwitcher(list, id, false)
+      }
     } catch {
-      // 搜索页拉取失败则只保留当前源标识
-      renderSwitcher([current], id, false)
+      // 拉取失败：有缓存用缓存，否则只保留当前源标识
+      if (!cacheFresh) renderSwitcher([current], id, false)
     }
   })
 }
