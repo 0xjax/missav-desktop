@@ -6,6 +6,7 @@ missav 网站桌面端增强油猴脚本，vite + vite-plugin-monkey 构建。
 
 - 包管理用 **bun**，NEVER npm/npx/pnpm
 - `bun run dev` / `build` / `lint`（oxlint）/ `typecheck`（tsc --noEmit）
+- 开发环境搭建与实测流程（调试 Chrome、CDP 脚本用法）：[docs/dev-runbook.md](docs/dev-runbook.md)
 
 ## Conventions
 
