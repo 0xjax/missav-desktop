@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"moduleResolution": "bundler",
+		"types": ["vite/client", "vite-plugin-monkey/client"],
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"jsx": "react",
+		"lib": ["es2021", "dom"],
+		"allowJs": true,
+		"allowImportingTsExtensions": true
+	},
+	"include": ["src/**/*", "types/**/*"],
+	"exclude": ["node_modules"]
+}

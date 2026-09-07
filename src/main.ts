@@ -1,0 +1,16 @@
+// @grant 表示全局作用域运行，而不在隔离沙盒内使用特定 API
+
+import './style/main.css'
+
+import { registerSettingMenu } from './setting.js'
+;(function () {
+  if (window.top !== window.self) {
+    return
+  } // 检查当前执行环境是否为顶级窗口
+
+  console.log('MissAV desktop execute!')
+
+  registerSettingMenu()
+
+  // 按页面路径在此分发各功能模块
+})()

@@ -1,0 +1,25 @@
+import { defineConfig } from "vite";
+import monkey from "vite-plugin-monkey";
+
+export default defineConfig({
+    plugins: [
+        monkey({
+            entry: "src/main.ts",
+            userscript: {
+                name: "missav 桌面端",
+                namespace: "https://github.com/jk278/missav-desktop",
+                description: "增强 missav 网站的桌面端浏览体验。",
+                version: "1.0.0",
+                author: "jk278",
+                license: "MIT",
+                "run-at": "document-start",
+                icon: "https://missav.ws/favicon.ico",
+                match: ["https://missav.ws/*"],
+            },
+            build: {
+                fileName: "missav-desktop.js", // 输出文件名
+                outDir: "dist", // 输出目录
+            },
+        }),
+    ],
+});
