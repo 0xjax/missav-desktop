@@ -10,6 +10,7 @@ const keyValues: Record<string, string> = {
   'shortcut-keys': '快捷操作',
   'fast-save': '收藏片单增强',
   'auto-backup': '自动备份（每 7 天）',
+  'sources': '多源显示切换',
 }
 
 // 设置项默认值，未列出的键默认为 false
@@ -20,6 +21,7 @@ const keyDefaults: Record<string, boolean> = {
   'shortcut-keys': true,
   'fast-save': true,
   'auto-backup': true,
+  'sources': true,
 }
 
 function createSettingPanel(): HTMLElement {

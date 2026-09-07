@@ -116,6 +116,40 @@
   text-align: left;
 }
 
+/* 多源切换行：贴合站点卡片徽标风格 */
+.mx-sources {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.mx-sources-label {
+  color: #d8dee9;
+  opacity: 0.6;
+}
+
+.mx-src {
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: #e5e9f0;
+  text-decoration: none;
+  opacity: 0.65;
+  transition: opacity 0.15s;
+}
+
+.mx-src:hover {
+  opacity: 1;
+}
+
+.mx-src.current {
+  opacity: 1;
+  outline: 1px solid #88c0d0;
+  cursor: default;
+}
+
 #shortcut-help {
   position: fixed;
   top: 50%;

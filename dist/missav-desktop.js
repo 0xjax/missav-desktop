@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.10.2
+// @version      1.11.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#backup-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:300px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#backup-panel .setting-title{margin-bottom:8px;font-size:16px;font-weight:700}#backup-panel .backup-hint{color:#999;margin-bottom:10px;font-size:12px}#backup-panel .backup-list{margin:10px 0}#backup-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;font-size:13px;line-height:1.5;display:flex}#backup-panel .backup-empty{color:#555}#backup-panel button{color:#fff;cursor:pointer;white-space:nowrap;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#backup-panel #backup-close{background:#444}#backup-panel .backup-latest{text-align:left}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#backup-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:300px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#backup-panel .setting-title{margin-bottom:8px;font-size:16px;font-weight:700}#backup-panel .backup-hint{color:#999;margin-bottom:10px;font-size:12px}#backup-panel .backup-list{margin:10px 0}#backup-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;font-size:13px;line-height:1.5;display:flex}#backup-panel .backup-empty{color:#555}#backup-panel button{color:#fff;cursor:pointer;white-space:nowrap;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#backup-panel #backup-close{background:#444}#backup-panel .backup-latest{text-align:left}.mx-sources{justify-content:center;align-items:center;gap:8px;margin-top:8px;font-size:12px;display:flex}.mx-sources-label{color:#d8dee9;opacity:.6}.mx-src{color:#e5e9f0;opacity:.65;border-radius:8px;padding:4px 8px;text-decoration:none;transition:opacity .15s}.mx-src:hover{opacity:1}.mx-src.current{opacity:1;cursor:default;outline:1px solid #88c0d0}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -337,7 +337,8 @@
 		"search-pref": "搜索偏好",
 		"shortcut-keys": "快捷操作",
 		"fast-save": "收藏片单增强",
-		"auto-backup": "自动备份（每 7 天）"
+		"auto-backup": "自动备份（每 7 天）",
+		"sources": "多源显示切换"
 	};
 	var keyDefaults = {
 		"block-ads": true,
@@ -345,7 +346,8 @@
 		"search-pref": true,
 		"shortcut-keys": true,
 		"fast-save": true,
-		"auto-backup": true
+		"auto-backup": true,
+		"sources": true
 	};
 	function createSettingPanel() {
 		const panel = Object.assign(document.createElement("div"), {
@@ -886,6 +888,80 @@
 			}, true);
 		});
 	}
+	var SUFFIXES = [[
+		"-uncensored-leak",
+		"无码影片",
+		"#1e40af"
+	], [
+		"-chinese-subtitle",
+		"中文字幕",
+		"#991b1b"
+	]];
+	var ORIGINAL = [
+		"",
+		"原版",
+		"#4c566a"
+	];
+	function parseVideoId(id) {
+		if (id.startsWith("fc2-")) return null;
+		for (const [suffix] of SUFFIXES) if (id.endsWith(suffix)) return {
+			base: id.slice(0, -suffix.length),
+			suffix
+		};
+		return {
+			base: id,
+			suffix: ""
+		};
+	}
+	async function fetchSources(base, lang) {
+		const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, { credentials: "include" });
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+		const found = new Map();
+		doc.querySelectorAll(".thumbnail a[href]").forEach((a) => {
+			const href = a.getAttribute("href") || "";
+			const id = href.split("/").filter(Boolean).pop() || "";
+			if (id === base || SUFFIXES.some(([s]) => id === base + s)) {
+				if (!found.has(id)) found.set(id, href);
+			}
+		});
+		const sources = [];
+		for (const [suffix, label, color] of [ORIGINAL, ...SUFFIXES]) {
+			const id = base + suffix;
+			const href = found.get(id);
+			if (href) sources.push({
+				id,
+				label,
+				color,
+				href
+			});
+		}
+		return sources;
+	}
+	function renderSwitcher(sources, currentId) {
+		const h1 = document.querySelector("h1");
+		if (!h1) return;
+		const row = Object.assign(document.createElement("div"), {
+			className: "mx-sources",
+			innerHTML: "<span class=\"mx-sources-label\">源</span>" + sources.map((s) => `<a class="mx-src${s.id === currentId ? " current" : ""}" style="background:${s.color}" href="${s.href}">${s.label}</a>`).join("")
+		});
+		row.querySelector(".mx-src.current")?.removeAttribute("href");
+		h1.after(row);
+	}
+	function sources() {
+		waitDOMContentLoaded(async () => {
+			if (![...document.querySelectorAll("button")].some((b) => b.getAttributeNames().some((n) => n.startsWith("@click") && (b.getAttribute(n) || "").includes("toggleSave")))) return;
+			const id = location.pathname.split("/").filter(Boolean).pop() || "";
+			const parsed = parseVideoId(id);
+			if (!parsed) return;
+			try {
+				const lang = currentLang() ?? "cn";
+				const list = await fetchSources(parsed.base, lang);
+				if (list.length < 2 && !parsed.suffix) return;
+				renderSwitcher(list, id);
+			} catch {}
+		});
+	}
 	(function() {
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
@@ -896,5 +972,6 @@
 		if (GM_getValue$1("shortcut-keys", true)) shortcuts();
 		if (GM_getValue$1("fast-save", true)) fastSave();
 		if (GM_getValue$1("auto-backup", true)) autoBackup();
+		if (GM_getValue$1("sources", true)) sources();
 	})();
 })();
