@@ -11,6 +11,7 @@ import { shortcuts } from './modules/shortcuts.js'
 import { fastSave } from './modules/fast-save.js'
 import { autoBackup } from './modules/backup-export.js'
 import { sources } from './modules/sources.js'
+import { playlistPanel } from './modules/playlist-panel.js'
 ;(function () {
   if (window.top !== window.self) {
     return
@@ -28,4 +29,5 @@ import { sources } from './modules/sources.js'
   if (GM_getValue('fast-save', true)) fastSave()
   if (GM_getValue('auto-backup', true)) autoBackup()
   if (GM_getValue('sources', true)) sources()
+  if (GM_getValue('playlist-panel', true)) playlistPanel()
 })()

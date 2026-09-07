@@ -1,6 +1,7 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toast, toastBroadcast, listenToastChannel } from '../utils/toast.ts'
+import { adjustPlaylistCount } from './playlist-panel.ts'
 
 // 站点收藏/片单的问题：1) 收藏状态要等 /api/items/{id}/view 返回才显示；
 // 2) toggleSave 乐观翻转 UI 但请求无失败处理，关标签页可能丢请求；
@@ -186,6 +187,7 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
   )
     .then((r) => {
       if (r.ok) {
+        adjustPlaylistCount(item.key, target ? 1 : -1)
         toastBroadcast(target ? '已加入片单' : '已移出片单')
       } else {
         item.is_added = !target

@@ -226,3 +226,22 @@ div:has(> iframe[src*="mayzaent"]),
 div:has(> iframe[src*="rallytrck"]) {
   display: none;
 }
+
+/* 片单面板：多列布局 + 数量小字 */
+fieldset.mx-pl-cols {
+  columns: 3;
+  column-gap: 1.5rem;
+}
+@media (max-width: 1280px) {
+  fieldset.mx-pl-cols {
+    columns: 2;
+  }
+}
+fieldset.mx-pl-cols > div {
+  break-inside: avoid;
+}
+.mx-pl-count {
+  margin-left: 0.3rem;
+  font-size: 0.75rem;
+  opacity: 0.55;
+}

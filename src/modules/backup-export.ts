@@ -2,6 +2,7 @@ import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 import { toast } from '../utils/toast.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
+import { setPlaylistCounts } from './playlist-panel.ts'
 
 // 收藏与片单的备份导出：顺序抓取自己账号的分页列表页
 // （服务端渲染 HTML，无内部列表接口），解析视频卡片后下载 JSON。
@@ -133,6 +134,10 @@ function saveSnapshot(s: Snapshot): void {
   const list = [s, ...readSnapshots()].slice(0, MAX_SNAPSHOTS)
   GM_setValue(SNAPSHOTS_KEY, list)
   GM_setValue(LAST_BACKUP_KEY, s.ts)
+  // 同步片单数量表（片单面板排序与显示用）
+  const counts: Record<string, number> = {}
+  s.playlists.forEach((p) => (counts[p.key] = p.videos.length))
+  setPlaylistCounts(counts)
 }
 
 // 备份抓取耗时较长，期间挂 beforeunload：

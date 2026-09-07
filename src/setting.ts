@@ -11,6 +11,7 @@ const keyValues: Record<string, string> = {
   'fast-save': '收藏片单增强',
   'auto-backup': '自动备份（每 7 天）',
   'sources': '多源显示切换',
+  'playlist-panel': '片单面板优化',
 }
 
 // 设置项默认值，未列出的键默认为 false
@@ -22,6 +23,7 @@ const keyDefaults: Record<string, boolean> = {
   'fast-save': true,
   'auto-backup': true,
   'sources': true,
+  'playlist-panel': true,
 }
 
 function createSettingPanel(): HTMLElement {
