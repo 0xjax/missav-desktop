@@ -111,6 +111,7 @@ interface Snapshot {
 
 const SNAPSHOTS_KEY = 'backup-snapshots'
 const LAST_BACKUP_KEY = 'last-backup-ts'
+const LAST_MANUAL_KEY = 'last-manual-export-ts'
 const MAX_SNAPSHOTS = 3
 
 function readSnapshots(): Snapshot[] {
@@ -141,12 +142,14 @@ function preventUnload(e: BeforeUnloadEvent): void {
   e.returnValue = ''
 }
 
-async function runBackup(): Promise<void> {
+async function runBackup(saveSnap: boolean): Promise<void> {
   window.addEventListener('beforeunload', preventUnload)
   try {
     const { saved, playlists } = await crawlAll()
     const snap: Snapshot = { ts: Date.now(), saved, playlists }
-    saveSnapshot(snap)
+    // 快照与自动备份同一体系：只有自动备份写入快照并刷新其时间戳；
+    // 手动抓取完全独立，只下载文件
+    if (saveSnap) saveSnapshot(snap)
     downloadSnapshot(snap)
     toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`)
   } finally {
@@ -185,18 +188,19 @@ async function crawlFresh(): Promise<void> {
     toast('备份进行中，请稍候')
     return
   }
-  // 距上次完成不足 10 分钟时二次确认
-  const last = GM_getValue<number>(LAST_BACKUP_KEY, 0)
+  // 距上次手动抓取不足 10 分钟时二次确认（独立于自动备份时间戳）
+  const last = GM_getValue<number>(LAST_MANUAL_KEY, 0)
   const gapMin = Math.round((Date.now() - last) / 60000)
   if (gapMin < 10) {
     const ok = window.confirm(
-      `距离上次备份仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新抓取吗？`,
+      `距离上次抓取仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新抓取吗？`,
     )
     if (!ok) return
   }
   exporting = true
   try {
-    await runBackup()
+    await runBackup(false)
+    GM_setValue(LAST_MANUAL_KEY, Date.now())
   } catch (err) {
     toast(`备份失败：${err instanceof Error ? err.message : '网络异常'}`)
   } finally {
@@ -218,17 +222,19 @@ export function exportBackup(): void {
         <button id="backup-latest-btn" type="button">抓取最新数据</button>
       </div>
       ${
-        snapshots.length
-          ? `<div class="backup-list">${snapshots
-              .map(
-                (s, i) => `
+        // 固定渲染 3 个槽位，高度恒定
+        `<div class="backup-list">${[0, 1, 2]
+          .map((i) => {
+            const s = snapshots[i]
+            if (!s)
+              return '<div class="backup-row backup-empty"><span>（空槽位，等待自动备份）</span></div>'
+            return `
             <div class="backup-row">
               <span>${fmtTs(s.ts)}<br>${snapshotStat(s)}</span>
               <button type="button" data-i="${i}">下载</button>
-            </div>`,
-              )
-              .join('')}</div>`
-          : '<div class="backup-hint">暂无历史备份</div>'
+            </div>`
+          })
+          .join('')}</div>`
       }
       <div class="setting-actions">
         <button id="backup-close" type="button">关闭</button>
@@ -271,7 +277,7 @@ export function autoBackup(): void {
       GM_setValue(LAST_BACKUP_KEY, Date.now())
       exporting = true
       toast('开始自动备份收藏与片单…')
-      runBackup()
+      runBackup(true)
         .catch((err) => {
           // 失败则回滚时间戳，下次打开页面重试
           GM_setValue(LAST_BACKUP_KEY, last)

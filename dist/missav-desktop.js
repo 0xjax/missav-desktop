@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.10.0
+// @version      1.10.1
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#backup-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:300px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#backup-panel .setting-title{margin-bottom:8px;font-size:16px;font-weight:700}#backup-panel .backup-hint{color:#999;margin-bottom:10px;font-size:12px}#backup-panel .backup-list{margin:10px 0}#backup-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;font-size:13px;line-height:1.5;display:flex}#backup-panel button{color:#fff;cursor:pointer;white-space:nowrap;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#backup-panel #backup-close{background:#444}#backup-panel .backup-latest{text-align:left}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#backup-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:300px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#backup-panel .setting-title{margin-bottom:8px;font-size:16px;font-weight:700}#backup-panel .backup-hint{color:#999;margin-bottom:10px;font-size:12px}#backup-panel .backup-list{margin:10px 0}#backup-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;font-size:13px;line-height:1.5;display:flex}#backup-panel .backup-empty{color:#555}#backup-panel button{color:#fff;cursor:pointer;white-space:nowrap;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#backup-panel #backup-close{background:#444}#backup-panel .backup-latest{text-align:left}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -186,6 +186,7 @@
 	}
 	var SNAPSHOTS_KEY = "backup-snapshots";
 	var LAST_BACKUP_KEY = "last-backup-ts";
+	var LAST_MANUAL_KEY = "last-manual-export-ts";
 	var MAX_SNAPSHOTS = 3;
 	function readSnapshots() {
 		return GM_getValue$1(SNAPSHOTS_KEY, []);
@@ -207,7 +208,7 @@
 		e.preventDefault();
 		e.returnValue = "";
 	}
-	async function runBackup() {
+	async function runBackup(saveSnap) {
 		window.addEventListener("beforeunload", preventUnload);
 		try {
 			const { saved, playlists } = await crawlAll();
@@ -216,7 +217,7 @@
 				saved,
 				playlists
 			};
-			saveSnapshot(snap);
+			if (saveSnap) saveSnapshot(snap);
 			downloadSnapshot(snap);
 			toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`);
 		} finally {
@@ -248,14 +249,15 @@
 			toast("备份进行中，请稍候");
 			return;
 		}
-		const last = GM_getValue$1(LAST_BACKUP_KEY, 0);
+		const last = GM_getValue$1(LAST_MANUAL_KEY, 0);
 		const gapMin = Math.round((Date.now() - last) / 6e4);
 		if (gapMin < 10) {
-			if (!window.confirm(`距离上次备份仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新抓取吗？`)) return;
+			if (!window.confirm(`距离上次抓取仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新抓取吗？`)) return;
 		}
 		exporting = true;
 		try {
-			await runBackup();
+			await runBackup(false);
+			GM_setValue$1(LAST_MANUAL_KEY, Date.now());
 		} catch (err) {
 			toast(`备份失败：${err instanceof Error ? err.message : "网络异常"}`);
 		} finally {
@@ -273,11 +275,19 @@
       <div class="setting-actions backup-latest">
         <button id="backup-latest-btn" type="button">抓取最新数据</button>
       </div>
-      ${snapshots.length ? `<div class="backup-list">${snapshots.map((s, i) => `
+      ${`<div class="backup-list">${[
+				0,
+				1,
+				2
+			].map((i) => {
+				const s = snapshots[i];
+				if (!s) return "<div class=\"backup-row backup-empty\"><span>（空槽位，等待自动备份）</span></div>";
+				return `
             <div class="backup-row">
               <span>${fmtTs(s.ts)}<br>${snapshotStat(s)}</span>
               <button type="button" data-i="${i}">下载</button>
-            </div>`).join("")}</div>` : "<div class=\"backup-hint\">暂无历史备份</div>"}
+            </div>`;
+			}).join("")}</div>`}
       <div class="setting-actions">
         <button id="backup-close" type="button">关闭</button>
       </div>
@@ -312,7 +322,7 @@
 				GM_setValue$1(LAST_BACKUP_KEY, Date.now());
 				exporting = true;
 				toast("开始自动备份收藏与片单…");
-				runBackup().catch((err) => {
+				runBackup(true).catch((err) => {
 					GM_setValue$1(LAST_BACKUP_KEY, last);
 					toast(`自动备份失败：${err instanceof Error ? err.message : "网络异常"}`);
 				}).finally(() => {

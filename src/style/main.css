@@ -94,6 +94,10 @@
   line-height: 1.5;
 }
 
+#backup-panel .backup-empty {
+  color: #555;
+}
+
 #backup-panel button {
   padding: 4px 16px;
   border: none;
