@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.4.1
+// @version      1.4.2
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -363,23 +363,25 @@
 		].includes(el.tagName) || el.isContentEditable);
 	}
 	function clickByAlpineAction(action) {
-		const el = Array.from(document.querySelectorAll("button, a")).find((e) => e.getAttributeNames().some((n) => n.startsWith("@click") && (e.getAttribute(n) || "").includes(action)));
+		const els = Array.from(document.querySelectorAll("button, a")).filter((e) => e.getAttributeNames().some((n) => n.startsWith("@click") && (e.getAttribute(n) || "").includes(action)));
+		const el = els.find((e) => e.offsetParent !== null) ?? els[0];
 		if (!el) return false;
 		el.click();
 		return true;
 	}
 	function focusSearch() {
-		const home = document.querySelector("form.w-full input[type=\"text\"]");
-		if (home) {
-			home.focus();
-			home.select();
+		const visibleInput = () => [...document.querySelectorAll("form.w-full input[type=\"text\"], input[x-ref=\"search\"]")].find((i) => i.offsetParent !== null);
+		const input = visibleInput();
+		if (input) {
+			input.focus();
+			input.select();
 			return;
 		}
 		if (clickByAlpineAction("toggleSearch")) setTimeout(() => {
-			const input = Array.from(document.querySelectorAll("form")).find((f) => (f.getAttribute("@submit.prevent") || "").includes("search($refs.search"))?.querySelector("input[type=\"text\"]");
-			input?.focus();
-			input?.select();
-		}, 100);
+			const el = visibleInput();
+			el?.focus();
+			el?.select();
+		}, 200);
 	}
 	function gotoPage(path) {
 		const lang = currentLang() ?? GM_getValue$1("pref-lang", null);
@@ -401,7 +403,7 @@
 		["H", "打开观看历史"],
 		[",", "脚本设置"],
 		["?", "快捷键帮助"],
-		["F", "全屏（站点自带，播放器聚焦时）"]
+		["F", "全屏（站点自带）"]
 	];
 	function toggleHelpPanel() {
 		const exist = document.getElementById("shortcut-help");
@@ -426,8 +428,9 @@
 				if (e.code === "Space" && !isTyping()) e.stopImmediatePropagation();
 			}, true);
 			window.addEventListener("keydown", (e) => {
-				if (e.code === "Escape" && isTyping()) {
-					document.activeElement.blur();
+				if (e.code === "Escape") {
+					if (isTyping()) document.activeElement.blur();
+					if (document.querySelector(".content-with-search")) clickByAlpineAction("toggleSearch");
 					return;
 				}
 				if (e.ctrlKey || e.metaKey || e.altKey || isTyping()) return;

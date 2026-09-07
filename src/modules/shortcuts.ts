@@ -12,9 +12,9 @@ function isTyping(): boolean {
   )
 }
 
-// 复用站点的 Alpine 动作（@click 绑定在 button/a 上）
+// 复用站点的 Alpine 动作（@click 绑定在 button/a 上），优先可见元素
 function clickByAlpineAction(action: string): boolean {
-  const el = Array.from(document.querySelectorAll('button, a')).find((e) =>
+  const els = Array.from(document.querySelectorAll('button, a')).filter((e) =>
     e
       .getAttributeNames()
       .some(
@@ -22,34 +22,34 @@ function clickByAlpineAction(action: string): boolean {
           n.startsWith('@click') && (e.getAttribute(n) || '').includes(action),
       ),
   )
+  const el =
+    els.find((e) => (e as HTMLElement).offsetParent !== null) ?? els[0]
   if (!el) return false
   ;(el as HTMLElement).click()
   return true
 }
 
 function focusSearch(): void {
-  // 首页大搜索框优先
-  const home = document.querySelector(
-    'form.w-full input[type="text"]',
-  ) as HTMLInputElement | null
-  if (home) {
-    home.focus()
-    home.select()
+  // 首页大搜索框优先；顶栏搜索框（x-ref=search）仅展开时渲染
+  const visibleInput = () =>
+    [
+      ...document.querySelectorAll<HTMLInputElement>(
+        'form.w-full input[type="text"], input[x-ref="search"]',
+      ),
+    ].find((i) => i.offsetParent !== null)
+  const input = visibleInput()
+  if (input) {
+    input.focus()
+    input.select()
     return
   }
-  // 其他页先展开顶栏搜索再聚焦
+  // 搜索条收起时先展开再聚焦（展开后站点通常会自动聚焦，这里兜底）
   if (clickByAlpineAction('toggleSearch')) {
     setTimeout(() => {
-      const input = Array.from(document.querySelectorAll('form'))
-        .find((f) =>
-          (f.getAttribute('@submit.prevent') || '').includes(
-            'search($refs.search',
-          ),
-        )
-        ?.querySelector('input[type="text"]') as HTMLInputElement | null
-      input?.focus()
-      input?.select()
-    }, 100)
+      const el = visibleInput()
+      el?.focus()
+      el?.select()
+    }, 200)
   }
 }
 
@@ -76,7 +76,7 @@ const shortcutList: [string, string][] = [
   ['H', '打开观看历史'],
   [',', '脚本设置'],
   ['?', '快捷键帮助'],
-  ['F', '全屏（站点自带，播放器聚焦时）'],
+  ['F', '全屏（站点自带）'],
 ]
 
 function toggleHelpPanel(): void {
@@ -111,9 +111,11 @@ export function shortcuts(): void {
       true,
     )
     window.addEventListener('keydown', (e) => {
-      // Esc 让输入框失焦，否则 / 聚焦搜索后再按 / 只会变成打字
-      if (e.code === 'Escape' && isTyping()) {
-        ;(document.activeElement as HTMLElement).blur()
+      // Esc：输入框失焦；顶栏搜索条若展开则一并收起（一次按键完成关闭）
+      if (e.code === 'Escape') {
+        if (isTyping()) (document.activeElement as HTMLElement).blur()
+        if (document.querySelector('.content-with-search'))
+          clickByAlpineAction('toggleSearch')
         return
       }
       if (e.ctrlKey || e.metaKey || e.altKey || isTyping()) return
