@@ -2,6 +2,7 @@ import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toast, toastBroadcast, listenToastChannel } from '../utils/toast.ts'
 import { adjustPlaylistCount } from './playlist-panel.ts'
+import { applyChangeToLatestSnapshot } from './backup-export.ts'
 
 // 站点收藏/片单的问题：1) 收藏状态要等 /api/items/{id}/view 返回才显示；
 // 2) toggleSave 乐观翻转 UI 但请求无失败处理，关标签页可能丢请求；
@@ -44,13 +45,31 @@ function writeCache(dvdId: string, saved: boolean): void {
 }
 
 function dvdIdOf(el: Element): string | null {
+  const fromUrl = location.pathname.split('/').filter(Boolean).pop() ?? null
   let cur: Element | null = el
   while (cur) {
-    const m = (cur.getAttribute?.('x-data') || '').match(/dvdId: '([^']+)'/)
-    if (m) return m[1]
+    const xd = cur.getAttribute?.('x-data') || ''
+    const matches = [...xd.matchAll(/dvdId:\s*'([^']+)'/g)].map((m) => m[1])
+    if (matches.length) {
+      // 同一 x-data 可能有多个 dvdId（片单面板容器是短 id，函数体是完整 id）：
+      // 与当前 URL slug 一致的最可信，否则取最长（更具体）
+      return (
+        matches.find((m) => m === fromUrl) ??
+        matches.sort((a, b) => b.length - a.length)[0]
+      )
+    }
     cur = cur.parentElement
   }
-  return location.pathname.split('/').filter(Boolean).pop() ?? null
+  return fromUrl
+}
+
+// 当前视频信息：操作成功后回写最新备份快照用
+function currentVideo(dvdId: string): { id: string; title: string; url: string } {
+  return {
+    id: dvdId,
+    title: document.querySelector('h1')?.textContent?.trim() || dvdId,
+    url: location.href,
+  }
 }
 
 // ---- 请求：keepalive 保证关标签页后仍送达 ----
@@ -134,7 +153,10 @@ function onSaveClick(e: MouseEvent, btn: Element): void {
     .then((r) => {
       data.loading = false
       if (r.ok) {
-        if (dvdId) writeCache(dvdId, target)
+        if (dvdId) {
+          writeCache(dvdId, target)
+          applyChangeToLatestSnapshot(currentVideo(dvdId), target)
+        }
         toastBroadcast(target ? '已收藏' : '已取消收藏')
       } else {
         data.saved = !target
@@ -188,6 +210,7 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
     .then((r) => {
       if (r.ok) {
         adjustPlaylistCount(item.key, target ? 1 : -1)
+        if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), target, item.key)
         toastBroadcast(target ? '已加入片单' : '已移出片单')
       } else {
         item.is_added = !target

@@ -7,6 +7,8 @@ import { setPlaylistCounts } from './playlist-panel.ts'
 // 收藏与片单的备份导出：顺序抓取自己账号的分页列表页
 // （服务端渲染 HTML，无内部列表接口），解析视频卡片后下载 JSON。
 // 每页间隔 400ms，与正常翻页浏览相当，避免给服务器额外压力。
+// 快照是唯一事实来源：立即备份与自动备份同一体系，按"日"占槽（同日覆盖，
+// 最多 5 份）；收藏/片单操作成功后动态回写最新快照，保持近乎最新。
 
 interface VideoItem {
   id: string
@@ -69,18 +71,24 @@ async function crawlVideos(baseUrl: string): Promise<VideoItem[]> {
 }
 
 async function crawlPlaylists(lang: string): Promise<PlaylistData[]> {
-  const doc = await fetchDoc(`${location.origin}/${lang}/playlists`)
+  // 片单列表本身也分页（12 个/页），某页没有新片单时结束（20 页兜底）
   const map = new Map<string, { name: string; url: string }>()
-  doc.querySelectorAll('a[href*="/playlists/"]').forEach((a) => {
-    const href = a.getAttribute('href') || ''
-    const m = href.match(/\/playlists\/([a-z0-9]+)\/?$/i)
-    if (!m || m[1] === 'create' || map.has(m[1])) return
-    // 片单名在链接内第一个 <p>，其余文本是"私人/最后更新"等元信息
-    map.set(m[1], {
-      name: a.querySelector('p')?.textContent?.trim() || m[1],
-      url: href,
+  for (let page = 1; page <= 20; page++) {
+    const doc = await fetchDoc(`${location.origin}/${lang}/playlists?page=${page}`)
+    const before = map.size
+    doc.querySelectorAll('a[href*="/playlists/"]').forEach((a) => {
+      const href = a.getAttribute('href') || ''
+      const m = href.match(/\/playlists\/([a-z0-9]+)\/?$/i)
+      if (!m || m[1] === 'create' || map.has(m[1])) return
+      // 片单名在链接内第一个 <p>，其余文本是"私人/最后更新"等元信息
+      map.set(m[1], {
+        name: a.querySelector('p')?.textContent?.trim() || m[1],
+        url: href,
+      })
     })
-  })
+    if (map.size === before) break
+    await sleep(400)
+  }
   const playlists: PlaylistData[] = []
   for (const [key, { name, url }] of map) {
     toast(`导出片单：${name}`)
@@ -112,11 +120,16 @@ interface Snapshot {
 
 const SNAPSHOTS_KEY = 'backup-snapshots'
 const LAST_BACKUP_KEY = 'last-backup-ts'
-const LAST_MANUAL_KEY = 'last-manual-export-ts'
-const MAX_SNAPSHOTS = 3
+const MAX_SNAPSHOTS = 5
 
 function readSnapshots(): Snapshot[] {
   return GM_getValue<Snapshot[]>(SNAPSHOTS_KEY, [])
+}
+
+function localDay(ts: number): string {
+  const d = new Date(ts)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 function fmtTs(ts: number): string {
@@ -130,14 +143,45 @@ function snapshotStat(s: Snapshot): string {
   return `收藏 ${s.saved.length} 部 · 片单 ${s.playlists.length} 个 / 共 ${videos} 部`
 }
 
-function saveSnapshot(s: Snapshot): void {
-  const list = [s, ...readSnapshots()].slice(0, MAX_SNAPSHOTS)
-  GM_setValue(SNAPSHOTS_KEY, list)
-  GM_setValue(LAST_BACKUP_KEY, s.ts)
-  // 同步片单数量表（片单面板排序与显示用）
+function syncCounts(s: Snapshot): void {
   const counts: Record<string, number> = {}
   s.playlists.forEach((p) => (counts[p.key] = p.videos.length))
   setPlaylistCounts(counts)
+}
+
+// 快照按"日"为槽位：与最新快照同日则覆盖（一天最多一份），否则新起一槽
+function saveSnapshot(s: Snapshot): void {
+  const list = readSnapshots()
+  if (list[0] && localDay(list[0].ts) === localDay(s.ts)) list[0] = s
+  else list.unshift(s)
+  GM_setValue(SNAPSHOTS_KEY, list.slice(0, MAX_SNAPSHOTS))
+  GM_setValue(LAST_BACKUP_KEY, s.ts)
+  syncCounts(s)
+}
+
+// 收藏/片单操作成功后回写最新快照：立即备份一次，后续操作让快照保持近乎最新。
+// 没有任何快照时是空操作
+export function applyChangeToLatestSnapshot(
+  video: { id: string; title: string; url: string },
+  added: boolean,
+  playlistKey?: string,
+): void {
+  const list = readSnapshots()
+  const latest = list[0]
+  if (!latest) return
+  if (playlistKey === undefined) {
+    latest.saved = added
+      ? [video, ...latest.saved.filter((v) => v.id !== video.id)]
+      : latest.saved.filter((v) => v.id !== video.id)
+  } else {
+    const pl = latest.playlists.find((p) => p.key === playlistKey)
+    if (!pl) return
+    pl.videos = added
+      ? [video, ...pl.videos.filter((v) => v.id !== video.id)]
+      : pl.videos.filter((v) => v.id !== video.id)
+  }
+  GM_setValue(SNAPSHOTS_KEY, list)
+  syncCounts(latest)
 }
 
 // 备份抓取耗时较长，期间挂 beforeunload：
@@ -147,14 +191,12 @@ function preventUnload(e: BeforeUnloadEvent): void {
   e.returnValue = ''
 }
 
-async function runBackup(saveSnap: boolean): Promise<void> {
+async function runBackup(): Promise<void> {
   window.addEventListener('beforeunload', preventUnload)
   try {
     const { saved, playlists } = await crawlAll()
     const snap: Snapshot = { ts: Date.now(), saved, playlists }
-    // 快照与自动备份同一体系：只有自动备份写入快照并刷新其时间戳；
-    // 手动抓取完全独立，只下载文件
-    if (saveSnap) saveSnapshot(snap)
+    saveSnapshot(snap)
     downloadSnapshot(snap)
     toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`)
   } finally {
@@ -188,27 +230,23 @@ async function crawlAll(): Promise<{
   return { saved, playlists }
 }
 
-async function crawlFresh(): Promise<void> {
+async function backupNow(): Promise<void> {
   if (exporting) {
     toast('备份进行中，请稍候')
     return
   }
-  // 距最近一次抓取（手动或自动备份）不足 10 分钟时二次确认
-  const last = Math.max(
-    GM_getValue<number>(LAST_MANUAL_KEY, 0),
-    GM_getValue<number>(LAST_BACKUP_KEY, 0),
-  )
+  // 距最近一次备份（立即或自动）不足 10 分钟时二次确认
+  const last = GM_getValue<number>(LAST_BACKUP_KEY, 0)
   const gapMin = Math.round((Date.now() - last) / 60000)
   if (gapMin < 10) {
     const ok = window.confirm(
-      `距离上次抓取仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新抓取吗？`,
+      `距离上次备份仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新备份吗？`,
     )
     if (!ok) return
   }
   exporting = true
   try {
-    await runBackup(false)
-    GM_setValue(LAST_MANUAL_KEY, Date.now())
+    await runBackup()
   } catch (err) {
     toast(`备份失败：${err instanceof Error ? err.message : '网络异常'}`)
   } finally {
@@ -225,13 +263,13 @@ export function exportBackup(): void {
     id: 'backup-panel',
     innerHTML: `
       <div class="setting-title">导出备份</div>
-      <div class="backup-hint">抓取最新数据约需 1–3 分钟，期间请勿关闭本标签页</div>
+      <div class="backup-hint">立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载</div>
       <div class="setting-actions backup-latest">
-        <button id="backup-latest-btn" type="button">抓取最新数据</button>
+        <button id="backup-latest-btn" type="button">立即备份</button>
       </div>
       ${
-        // 固定渲染 3 个槽位，高度恒定
-        `<div class="backup-list">${[0, 1, 2]
+        // 固定渲染 5 个槽位，高度恒定
+        `<div class="backup-list">${[0, 1, 2, 3, 4]
           .map((i) => {
             const s = snapshots[i]
             if (!s)
@@ -253,7 +291,7 @@ export function exportBackup(): void {
 
   panel.querySelector('#backup-latest-btn')?.addEventListener('click', () => {
     panel.remove()
-    crawlFresh()
+    backupNow()
   })
   panel.querySelector('#backup-close')?.addEventListener('click', () => {
     panel.remove()
@@ -285,7 +323,7 @@ export function autoBackup(): void {
       GM_setValue(LAST_BACKUP_KEY, Date.now())
       exporting = true
       toast('开始自动备份收藏与片单…')
-      runBackup(true)
+      runBackup()
         .catch((err) => {
           // 失败则回滚时间戳，下次打开页面重试
           GM_setValue(LAST_BACKUP_KEY, last)

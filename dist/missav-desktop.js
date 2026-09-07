@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.12.2
+// @version      1.13.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -235,17 +235,22 @@
 		return all;
 	}
 	async function crawlPlaylists(lang) {
-		const doc = await fetchDoc(`${location.origin}/${lang}/playlists`);
 		const map = new Map();
-		doc.querySelectorAll("a[href*=\"/playlists/\"]").forEach((a) => {
-			const href = a.getAttribute("href") || "";
-			const m = href.match(/\/playlists\/([a-z0-9]+)\/?$/i);
-			if (!m || m[1] === "create" || map.has(m[1])) return;
-			map.set(m[1], {
-				name: a.querySelector("p")?.textContent?.trim() || m[1],
-				url: href
+		for (let page = 1; page <= 20; page++) {
+			const doc = await fetchDoc(`${location.origin}/${lang}/playlists?page=${page}`);
+			const before = map.size;
+			doc.querySelectorAll("a[href*=\"/playlists/\"]").forEach((a) => {
+				const href = a.getAttribute("href") || "";
+				const m = href.match(/\/playlists\/([a-z0-9]+)\/?$/i);
+				if (!m || m[1] === "create" || map.has(m[1])) return;
+				map.set(m[1], {
+					name: a.querySelector("p")?.textContent?.trim() || m[1],
+					url: href
+				});
 			});
-		});
+			if (map.size === before) break;
+			await sleep(400);
+		}
 		const playlists = [];
 		for (const [key, { name, url }] of map) {
 			toast(`导出片单：${name}`);
@@ -269,10 +274,14 @@
 	}
 	var SNAPSHOTS_KEY = "backup-snapshots";
 	var LAST_BACKUP_KEY = "last-backup-ts";
-	var LAST_MANUAL_KEY = "last-manual-export-ts";
-	var MAX_SNAPSHOTS = 3;
+	var MAX_SNAPSHOTS = 5;
 	function readSnapshots() {
 		return GM_getValue$1(SNAPSHOTS_KEY, []);
+	}
+	function localDay(ts) {
+		const d = new Date(ts);
+		const pad = (n) => String(n).padStart(2, "0");
+		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 	}
 	function fmtTs(ts) {
 		const d = new Date(ts);
@@ -283,18 +292,37 @@
 		const videos = s.playlists.reduce((n, p) => n + p.videos.length, 0);
 		return `收藏 ${s.saved.length} 部 · 片单 ${s.playlists.length} 个 / 共 ${videos} 部`;
 	}
-	function saveSnapshot(s) {
-		GM_setValue$1(SNAPSHOTS_KEY, [s, ...readSnapshots()].slice(0, MAX_SNAPSHOTS));
-		GM_setValue$1(LAST_BACKUP_KEY, s.ts);
+	function syncCounts(s) {
 		const counts = {};
 		s.playlists.forEach((p) => counts[p.key] = p.videos.length);
 		setPlaylistCounts(counts);
+	}
+	function saveSnapshot(s) {
+		const list = readSnapshots();
+		if (list[0] && localDay(list[0].ts) === localDay(s.ts)) list[0] = s;
+		else list.unshift(s);
+		GM_setValue$1(SNAPSHOTS_KEY, list.slice(0, MAX_SNAPSHOTS));
+		GM_setValue$1(LAST_BACKUP_KEY, s.ts);
+		syncCounts(s);
+	}
+	function applyChangeToLatestSnapshot(video, added, playlistKey) {
+		const list = readSnapshots();
+		const latest = list[0];
+		if (!latest) return;
+		if (playlistKey === void 0) latest.saved = added ? [video, ...latest.saved.filter((v) => v.id !== video.id)] : latest.saved.filter((v) => v.id !== video.id);
+		else {
+			const pl = latest.playlists.find((p) => p.key === playlistKey);
+			if (!pl) return;
+			pl.videos = added ? [video, ...pl.videos.filter((v) => v.id !== video.id)] : pl.videos.filter((v) => v.id !== video.id);
+		}
+		GM_setValue$1(SNAPSHOTS_KEY, list);
+		syncCounts(latest);
 	}
 	function preventUnload(e) {
 		e.preventDefault();
 		e.returnValue = "";
 	}
-	async function runBackup(saveSnap) {
+	async function runBackup() {
 		window.addEventListener("beforeunload", preventUnload);
 		try {
 			const { saved, playlists } = await crawlAll();
@@ -303,7 +331,7 @@
 				saved,
 				playlists
 			};
-			if (saveSnap) saveSnapshot(snap);
+			saveSnapshot(snap);
 			downloadSnapshot(snap);
 			toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`);
 		} finally {
@@ -330,20 +358,19 @@
 			playlists: await crawlPlaylists(lang)
 		};
 	}
-	async function crawlFresh() {
+	async function backupNow() {
 		if (exporting) {
 			toast("备份进行中，请稍候");
 			return;
 		}
-		const last = Math.max(GM_getValue$1(LAST_MANUAL_KEY, 0), GM_getValue$1(LAST_BACKUP_KEY, 0));
+		const last = GM_getValue$1(LAST_BACKUP_KEY, 0);
 		const gapMin = Math.round((Date.now() - last) / 6e4);
 		if (gapMin < 10) {
-			if (!window.confirm(`距离上次抓取仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新抓取吗？`)) return;
+			if (!window.confirm(`距离上次备份仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新备份吗？`)) return;
 		}
 		exporting = true;
 		try {
-			await runBackup(false);
-			GM_setValue$1(LAST_MANUAL_KEY, Date.now());
+			await runBackup();
 		} catch (err) {
 			toast(`备份失败：${err instanceof Error ? err.message : "网络异常"}`);
 		} finally {
@@ -357,14 +384,16 @@
 			id: "backup-panel",
 			innerHTML: `
       <div class="setting-title">导出备份</div>
-      <div class="backup-hint">抓取最新数据约需 1–3 分钟，期间请勿关闭本标签页</div>
+      <div class="backup-hint">立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载</div>
       <div class="setting-actions backup-latest">
-        <button id="backup-latest-btn" type="button">抓取最新数据</button>
+        <button id="backup-latest-btn" type="button">立即备份</button>
       </div>
       ${`<div class="backup-list">${[
 				0,
 				1,
-				2
+				2,
+				3,
+				4
 			].map((i) => {
 				const s = snapshots[i];
 				if (!s) return "<div class=\"backup-row backup-empty\"><span>（空槽位，等待自动备份）</span></div>";
@@ -382,7 +411,7 @@
 		document.body.appendChild(panel);
 		panel.querySelector("#backup-latest-btn")?.addEventListener("click", () => {
 			panel.remove();
-			crawlFresh();
+			backupNow();
 		});
 		panel.querySelector("#backup-close")?.addEventListener("click", () => {
 			panel.remove();
@@ -408,7 +437,7 @@
 				GM_setValue$1(LAST_BACKUP_KEY, Date.now());
 				exporting = true;
 				toast("开始自动备份收藏与片单…");
-				runBackup(true).catch((err) => {
+				runBackup().catch((err) => {
 					GM_setValue$1(LAST_BACKUP_KEY, last);
 					toast(`自动备份失败：${err instanceof Error ? err.message : "网络异常"}`);
 				}).finally(() => {
@@ -885,13 +914,21 @@
 		GM_setValue$1(SAVED_CACHE_KEY, cache);
 	}
 	function dvdIdOf(el) {
+		const fromUrl = location.pathname.split("/").filter(Boolean).pop() ?? null;
 		let cur = el;
 		while (cur) {
-			const m = (cur.getAttribute?.("x-data") || "").match(/dvdId: '([^']+)'/);
-			if (m) return m[1];
+			const matches = [...(cur.getAttribute?.("x-data") || "").matchAll(/dvdId:\s*'([^']+)'/g)].map((m) => m[1]);
+			if (matches.length) return matches.find((m) => m === fromUrl) ?? matches.sort((a, b) => b.length - a.length)[0];
 			cur = cur.parentElement;
 		}
-		return location.pathname.split("/").filter(Boolean).pop() ?? null;
+		return fromUrl;
+	}
+	function currentVideo(dvdId) {
+		return {
+			id: dvdId,
+			title: document.querySelector("h1")?.textContent?.trim() || dvdId,
+			url: location.href
+		};
 	}
 	function apiFetch(url, method, body) {
 		const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1];
@@ -944,7 +981,10 @@
 		apiFetch(url, target ? "POST" : "DELETE").then((r) => {
 			data.loading = false;
 			if (r.ok) {
-				if (dvdId) writeCache$1(dvdId, target);
+				if (dvdId) {
+					writeCache$1(dvdId, target);
+					applyChangeToLatestSnapshot(currentVideo(dvdId), target);
+				}
 				toastBroadcast(target ? "已收藏" : "已取消收藏");
 			} else {
 				data.saved = !target;
@@ -983,6 +1023,7 @@
 		}).then((r) => {
 			if (r.ok) {
 				adjustPlaylistCount(item.key, target ? 1 : -1);
+				if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), target, item.key);
 				toastBroadcast(target ? "已加入片单" : "已移出片单");
 			} else {
 				item.is_added = !target;
