@@ -78,6 +78,27 @@
   text-align: center;
 }
 
+/* 收藏/片单操作反馈 toast */
+.mx-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  padding: 8px 20px;
+  background: #1e1e1e;
+  color: #eee;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+  font-size: 14px;
+  opacity: 0.95;
+  transition: opacity 0.4s;
+}
+
+.mx-toast-out {
+  opacity: 0;
+}
+
 /* 去广告：document-start 阶段先行隐藏已知广告容器防闪烁，JS 层随后移除 */
 div:has(> iframe[src*="mayzaent"]),
 div:has(> iframe[src*="rallytrck"]) {

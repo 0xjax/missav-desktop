@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.6.0
+// @version      1.7.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}.mx-toast{z-index:99999;color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;position:fixed;bottom:32px;left:50%;transform:translate(-50%);box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -73,7 +73,7 @@
 		"lang-pref": "语言偏好",
 		"search-pref": "搜索偏好",
 		"shortcut-keys": "快捷操作",
-		"fast-save": "即时收藏"
+		"fast-save": "收藏片单增强"
 	};
 	var keyDefaults = {
 		"block-ads": true,
@@ -467,44 +467,165 @@
 			});
 		});
 	}
+	function alpine() {
+		return window.Alpine;
+	}
+	function toast(msg) {
+		const el = Object.assign(document.createElement("div"), {
+			className: "mx-toast",
+			textContent: msg
+		});
+		document.body.appendChild(el);
+		setTimeout(() => el.classList.add("mx-toast-out"), 1800);
+		setTimeout(() => el.remove(), 2200);
+	}
+	var SAVED_CACHE_KEY = "saved-cache";
+	function readCache() {
+		return GM_getValue$1(SAVED_CACHE_KEY, {});
+	}
+	function writeCache(dvdId, saved) {
+		const cache = readCache();
+		cache[dvdId] = saved;
+		const keys = Object.keys(cache);
+		if (keys.length > 800) keys.slice(0, 200).forEach((k) => delete cache[k]);
+		GM_setValue$1(SAVED_CACHE_KEY, cache);
+	}
+	function dvdIdOf(el) {
+		let cur = el;
+		while (cur) {
+			const m = (cur.getAttribute?.("x-data") || "").match(/dvdId: '([^']+)'/);
+			if (m) return m[1];
+			cur = cur.parentElement;
+		}
+		return location.pathname.split("/").filter(Boolean).pop() ?? null;
+	}
+	function apiFetch(url, method, body) {
+		const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1];
+		const headers = {
+			"X-Requested-With": "XMLHttpRequest",
+			Accept: "application/json"
+		};
+		if (xsrf) headers["X-XSRF-TOKEN"] = decodeURIComponent(xsrf);
+		if (body) headers["Content-Type"] = "application/json";
+		return fetch(url, {
+			method,
+			credentials: "include",
+			keepalive: true,
+			headers,
+			body: body ? JSON.stringify(body) : void 0
+		});
+	}
+	function openLoginModal(data) {
+		const req = data.requireLogin;
+		if (typeof req === "function") {
+			req(() => {});
+			return;
+		}
+		[...document.querySelectorAll("button, a")].find((el) => el.getAttributeNames().some((n) => n.startsWith("@click") && (el.getAttribute(n) || "").includes("showLoginModal")))?.click();
+	}
+	function alpineAction(el, action) {
+		return el.getAttributeNames().some((n) => n.startsWith("@click") && (el.getAttribute(n) || "").includes(action));
+	}
 	function findSaveUrl(btn) {
 		let el = btn;
 		while (el) {
-			const m = (el.getAttribute?.("x-data"))?.match(/https:\/\/[^'"]+\/api\/items\/[^'"]+\/save/);
+			const m = (el.getAttribute?.("x-data") || "").match(/https:\/\/[^'"]+\/api\/items\/[^'"]+\/save/);
 			if (m) return m[0];
 			el = el.parentElement;
 		}
 		return null;
 	}
-	function isSaveButton(btn) {
-		return btn.getAttributeNames().some((n) => n.startsWith("@click") && (btn.getAttribute(n) || "").includes("toggleSave"));
+	function onSaveClick(e, btn) {
+		const alp = alpine();
+		if (!alp) return;
+		const data = alp.$data(btn);
+		const url = findSaveUrl(btn);
+		if (!data || !url) return;
+		e.preventDefault();
+		e.stopImmediatePropagation();
+		const target = !data.saved;
+		const dvdId = dvdIdOf(btn);
+		data.saved = target;
+		data.loading = true;
+		apiFetch(url, target ? "POST" : "DELETE").then((r) => {
+			data.loading = false;
+			if (r.ok) {
+				if (dvdId) writeCache(dvdId, target);
+				toast(target ? "已收藏" : "已取消收藏");
+			} else {
+				data.saved = !target;
+				if (r.status === 401) openLoginModal(data);
+				else toast("操作失败，请重试");
+			}
+		}).catch(() => {
+			data.loading = false;
+			data.saved = !target;
+			toast("网络错误，操作未生效");
+		});
+	}
+	function onPlaylistOpenClick(e, btn) {
+		const alp = alpine();
+		if (!alp) return;
+		const data = alp.$data(btn);
+		if (!data || data.user || typeof data.togglePanel !== "function") return;
+		e.preventDefault();
+		e.stopImmediatePropagation();
+		data.togglePanel("playlist");
+	}
+	function onPlaylistToggle(e, input) {
+		e.preventDefault();
+		e.stopImmediatePropagation();
+		const alp = alpine();
+		if (!alp) return;
+		const data = alp.$data(input);
+		const item = data.playlists?.find((p) => p.key === input.id);
+		const dvdId = dvdIdOf(input);
+		if (!item || !dvdId) return;
+		const target = !item.is_added;
+		item.is_added = target;
+		apiFetch(`${location.origin}/api/playlists/${target ? "add" : "remove"}`, "POST", {
+			dvdId,
+			key: item.key
+		}).then((r) => {
+			if (r.ok) toast(target ? "已加入片单" : "已移出片单");
+			else {
+				item.is_added = !target;
+				if (r.status === 401) openLoginModal(data);
+				else toast("操作失败，请重试");
+			}
+		}).catch(() => {
+			item.is_added = !target;
+			toast("网络错误，操作未生效");
+		});
 	}
 	function fastSave() {
 		waitDOMContentLoaded(() => {
+			const timer = setInterval(() => {
+				const alp = alpine();
+				const btn = [...document.querySelectorAll("button")].find((b) => alpineAction(b, "toggleSave"));
+				if (!alp || !btn) return;
+				clearInterval(timer);
+				if (performance.getEntriesByType("resource").some((r) => r.name.includes("/view"))) return;
+				const dvdId = dvdIdOf(btn);
+				if (!dvdId) return;
+				const cache = readCache();
+				if (dvdId in cache) {
+					const data = alp.$data(btn);
+					if (data && data.saved === false) data.saved = cache[dvdId];
+				}
+			}, 100);
+			setTimeout(() => clearInterval(timer), 3e3);
 			document.addEventListener("click", (e) => {
-				const btn = e.target.closest?.("button");
-				if (!btn || !isSaveButton(btn)) return;
-				const alpine = window.Alpine;
-				const axios = window.axios;
-				if (!alpine || !axios) return;
-				const data = alpine.$data(btn);
-				if (!data || data.user) return;
-				const url = findSaveUrl(btn);
-				if (!url) return;
-				e.preventDefault();
-				e.stopImmediatePropagation();
-				const targetSaved = !data.saved;
-				data.loading = true;
-				(targetSaved ? axios.post(url) : axios.delete(url)).then(() => {
-					data.saved = targetSaved;
-					data.loading = false;
-				}).catch((err) => {
-					data.loading = false;
-					if (err.response?.status === 401) {
-						if (typeof data.requireLogin === "function") data.requireLogin(() => {});
-						else [...document.querySelectorAll("button, a")].find((el) => el.getAttributeNames().some((n) => n.startsWith("@click") && (el.getAttribute(n) || "").includes("showLoginModal")))?.click();
-					}
-				});
+				const target = e.target;
+				const box = target.closest?.("input[x-model=\"playlist.is_added\"]");
+				if (box) {
+					onPlaylistToggle(e, box);
+					return;
+				}
+				const el = target.closest?.("button, a");
+				if (!el) return;
+				if (el.tagName === "BUTTON" && alpineAction(el, "toggleSave")) onSaveClick(e, el);
+				else if (alpineAction(el, "togglePlaylist")) onPlaylistOpenClick(e, el);
 			}, true);
 		});
 	}

@@ -7,7 +7,7 @@ const keyValues: Record<string, string> = {
   'lang-pref': '语言偏好',
   'search-pref': '搜索偏好',
   'shortcut-keys': '快捷操作',
-  'fast-save': '即时收藏',
+  'fast-save': '收藏片单增强',
 }
 
 // 设置项默认值，未列出的键默认为 false
