@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.11.4
+// @version      1.11.5
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -411,6 +411,12 @@
 		"iframe[width=\"1\"][height=\"1\"]:not([src])",
 		"ul.list-none.text-nord14"
 	];
+	var AD_MENU_TEXTS = ["更多好站"];
+	function matchAdMenu(el) {
+		if (el.tagName !== "A") return false;
+		const text = el.textContent?.trim() ?? "";
+		return AD_MENU_TEXTS.some((t) => text.startsWith(t));
+	}
 	function isAdUrl(url) {
 		return !!url && AD_HOSTS.some((host) => url.includes(host));
 	}
@@ -446,9 +452,15 @@
 		if (shell && shell !== el && isFloatingShell(shell)) shell.remove();
 		else removeWithWrapper(el);
 	}
+	function removeAdMenu(el) {
+		const wrapper = el.closest("nav div.relative");
+		if (wrapper && matchAdMenu(wrapper.querySelector("a") ?? el)) wrapper.remove();
+		else removeWithWrapper(el);
+	}
 	function scanAndRemove(root) {
 		root.querySelectorAll(`iframe[src], a[href], ${AD_SELECTORS.join(", ")}`).forEach((el) => {
-			if (matchAdEl(el)) removeAd(el);
+			if (matchAdMenu(el)) removeAdMenu(el);
+			else if (matchAdEl(el)) removeAd(el);
 		});
 		if (root === document) scanFloatingAds();
 	}
@@ -460,7 +472,8 @@
 					if (node.nodeType !== Node.ELEMENT_NODE) return;
 					hasAdded = true;
 					const el = node;
-					if (matchAdEl(el)) removeAd(el);
+					if (matchAdMenu(el)) removeAdMenu(el);
+					else if (matchAdEl(el)) removeAd(el);
 					else scanAndRemove(el);
 				});
 				if (hasAdded) scanFloatingAds();

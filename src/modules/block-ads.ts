@@ -21,6 +21,15 @@ const AD_SELECTORS = [
   'ul.list-none.text-nord14',
 ]
 
+// 纯广告菜单：文案匹配（类名是通用 Tailwind，不可靠）
+const AD_MENU_TEXTS = ['更多好站']
+
+function matchAdMenu(el: Element): boolean {
+  if (el.tagName !== 'A') return false
+  const text = el.textContent?.trim() ?? ''
+  return AD_MENU_TEXTS.some((t) => text.startsWith(t))
+}
+
 function isAdUrl(url: string | null): boolean {
   return !!url && AD_HOSTS.some((host) => url.includes(host))
 }
@@ -75,11 +84,19 @@ function removeAd(el: Element): void {
   else removeWithWrapper(el)
 }
 
+// 删除广告菜单：桌面端整个下拉单元（含空面板）一起删，移动端只删条目本身
+function removeAdMenu(el: Element): void {
+  const wrapper = el.closest('nav div.relative')
+  if (wrapper && matchAdMenu(wrapper.querySelector('a') ?? el)) wrapper.remove()
+  else removeWithWrapper(el)
+}
+
 function scanAndRemove(root: ParentNode): void {
   root
     .querySelectorAll(`iframe[src], a[href], ${AD_SELECTORS.join(', ')}`)
     .forEach((el) => {
-      if (matchAdEl(el)) removeAd(el)
+      if (matchAdMenu(el)) removeAdMenu(el)
+      else if (matchAdEl(el)) removeAd(el)
     })
   if (root === document) scanFloatingAds()
 }
@@ -93,7 +110,8 @@ function observeAds(): void {
           if (node.nodeType !== Node.ELEMENT_NODE) return
           hasAdded = true
           const el = node as Element
-          if (matchAdEl(el)) removeAd(el)
+          if (matchAdMenu(el)) removeAdMenu(el)
+          else if (matchAdEl(el)) removeAd(el)
           else scanAndRemove(el)
         })
       }
