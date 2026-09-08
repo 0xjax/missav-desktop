@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.25.0
+// @version      1.26.0
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -1286,11 +1286,36 @@
 		row.querySelector(".mx-src.current")?.removeAttribute("href");
 		if (!row.isConnected) h1.after(row);
 	}
+	var ID_RE = /^[a-z]{2,6}-\d{2,6}(-[a-z-]+)?$/;
+	var FC2_RE = /^fc2(-\d+)?(-[a-z-]+)?$/;
+	var RESERVED = new Set([
+		"search",
+		"new",
+		"best",
+		"genres",
+		"actresses",
+		"series",
+		"makers",
+		"leak",
+		"ranking",
+		"settings",
+		"login",
+		"register",
+		"dm4",
+		"dm539"
+	]);
+	function isVideoPath() {
+		const parts = location.pathname.split("/").filter(Boolean);
+		const id = parts[parts.length - 1] || "";
+		if (!id || RESERVED.has(id)) return false;
+		return ID_RE.test(id) || FC2_RE.test(id);
+	}
 	function sources() {
+		if (!isVideoPath()) return;
 		let done = false;
 		const init = () => {
 			if (done) return true;
-			if (![...document.querySelectorAll("button")].some((b) => b.getAttributeNames().some((n) => n.startsWith("@click") && (b.getAttribute(n) || "").includes("toggleSave")))) return false;
+			if (!document.querySelector("h1")) return false;
 			done = true;
 			const id = location.pathname.split("/").filter(Boolean).pop() || "";
 			const parsed = parseVideoId(id);
@@ -1303,6 +1328,10 @@
 				href: location.href
 			};
 			renderSwitcher([current], id, true);
+			const row = document.querySelector(".mx-sources");
+			setTimeout(() => {
+				if (![...document.querySelectorAll("button")].some((b) => b.getAttributeNames().some((n) => n.startsWith("@click") && (b.getAttribute(n) || "").includes("toggleSave")))) row?.remove();
+			}, 8e3);
 			const cached = readCache()[parsed.base];
 			const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL;
 			if (cacheFresh) renderSwitcher(cached.list, id, false);

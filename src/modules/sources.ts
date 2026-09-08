@@ -95,23 +95,32 @@ function renderSwitcher(
   if (!row.isConnected) h1.after(row)
 }
 
+// 详情页 URL 判据（document-start 即可算，不等 Vue 水合）：
+// 末段为番号格式（前缀-数字 或 fc2-数字，可带源后缀）；排除 search 等功能路径
+const ID_RE = /^[a-z]{2,6}-\d{2,6}(-[a-z-]+)?$/
+const FC2_RE = /^fc2(-\d+)?(-[a-z-]+)?$/
+const RESERVED = new Set(['search', 'new', 'best', 'genres', 'actresses', 'series', 'makers', 'leak', 'ranking', 'settings', 'login', 'register', 'dm4', 'dm539'])
+
+function isVideoPath(): boolean {
+  const parts = location.pathname.split('/').filter(Boolean)
+  // 详情页路径两段起（dm 前缀段 + lang + 番号），末段必须是番号且不在保留词内
+  const id = parts[parts.length - 1] || ''
+  if (!id || RESERVED.has(id)) return false
+  return ID_RE.test(id) || FC2_RE.test(id)
+}
+
 export function sources(): void {
-  // 脚本在 document-start 运行：等 DOMContentLoaded 会让插入发生在首帧之后，
-  // 造成高度 0 突变。改用 MutationObserver 在收藏按钮（详情页标志）
-  // 解析出来的同一帧内插入切换行，消除布局跳动。
+  // 脚本在 document-start 运行：插入时机必须与 h1 同帧（站点把 h1 和下方内容
+  // 一起水合，晚一帧插入就会把下方内容推下去，造成布局跳动）。
+  // 原实现等收藏按钮（Vue 水合产物，比 h1 晚 ~440ms）才插，已实测跳动 8px。
+  // 现改：详情页 URL 判据成立后，等 h1 出现即插入占位行；异步校验收藏按钮
+  // 确认详情页（误判时撤掉）。URL 判据在 document-start 就能算，无水合依赖。
+  if (!isVideoPath()) return
   let done = false
   const init = (): boolean => {
     if (done) return true
-    const isVideoPage = [...document.querySelectorAll('button')].some((b) =>
-      b
-        .getAttributeNames()
-        .some(
-          (n) =>
-            n.startsWith('@click') &&
-            (b.getAttribute(n) || '').includes('toggleSave'),
-        ),
-    )
-    if (!isVideoPage) return false
+    const h1 = document.querySelector('h1')
+    if (!h1) return false
     done = true
 
     const id = location.pathname.split('/').filter(Boolean).pop() || ''
@@ -126,6 +135,21 @@ export function sources(): void {
       href: location.href,
     }
     renderSwitcher([current], id, true)
+
+    const row = document.querySelector('.mx-sources')
+
+    // 确认真的是详情页：收藏按钮（Vue 水合后出现）。误判（如番号格式的目录页）
+    // 则撤掉切换行，恢复原布局。
+    setTimeout(() => {
+      const confirmed = [...document.querySelectorAll('button')].some((b) =>
+        b.getAttributeNames().some(
+          (n) =>
+            n.startsWith('@click') &&
+            (b.getAttribute(n) || '').includes('toggleSave'),
+        ),
+      )
+      if (!confirmed) row?.remove()
+    }, 8000)
 
     // 有新鲜缓存则直接渲染完整列表，后台静默校验
     const cached = readCache()[parsed.base]
