@@ -123,6 +123,16 @@
   background: #f06292;
   color: #fff;
   cursor: pointer;
+  transition: filter 0.15s;
+}
+
+/* 悬浮统一提亮：粉色主按钮与灰底次按钮共用一套规则 */
+#setting-panel button:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+#setting-panel button:active:not(:disabled) {
+  filter: brightness(0.95);
 }
 
 #setting-panel button#setting-export {
