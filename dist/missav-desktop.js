@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.26.0
+// @version      1.27.0
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel #setting-view,#setting-panel #backup-view,#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-sources{justify-content:center;align-items:center;gap:8px;margin-top:8px;font-size:12px;display:flex}.mx-sources-label{color:#d8dee9;opacity:.6}.mx-src{color:#e5e9f0;opacity:.65;border-radius:8px;padding:4px 8px;text-decoration:none;transition:opacity .15s}.mx-src:hover{opacity:1}.mx-src.current{opacity:1;cursor:default;outline:1px solid #88c0d0}.mx-loading{opacity:.4;background:0 0}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>hr,fieldset.mx-pl-grid>a{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel #setting-view,#setting-panel #backup-view,#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:none;border-radius:8px;padding:2px 10px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-skeleton{cursor:default;color:#d8dee9}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>hr,fieldset.mx-pl-grid>a{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -1215,12 +1215,12 @@
 	}
 	var SUFFIXES = [[
 		"-uncensored-leak",
-		"无码影片",
-		"#1e40af"
+		"无码",
+		"#2563eb"
 	], [
 		"-chinese-subtitle",
-		"中文字幕",
-		"#991b1b"
+		"中字",
+		"#dc2626"
 	]];
 	var ORIGINAL = [
 		"",
@@ -1278,13 +1278,46 @@
 		}
 		return sources;
 	}
-	function renderSwitcher(sources, currentId, loading) {
-		const h1 = document.querySelector("h1");
-		if (!h1) return;
-		const row = document.querySelector(".mx-sources") ?? Object.assign(document.createElement("div"), { className: "mx-sources" });
-		row.innerHTML = "<span class=\"mx-sources-label\">源</span>" + sources.map((s) => `<a class="mx-src${s.id === currentId ? " current" : ""}" style="background:${s.color}" href="${s.href}">${s.label}</a>`).join("") + (loading ? "<span class=\"mx-src mx-loading\">…</span>" : "");
-		row.querySelector(".mx-src.current")?.removeAttribute("href");
-		if (!row.isConnected) h1.after(row);
+	function renderSegmented(sources, currentId, loading) {
+		const groups = new Set();
+		for (const a of document.querySelectorAll("a")) if (a.getAttributeNames().some((n) => (a.getAttribute(n) || "").includes("toggleSearch"))) groups.add(a.parentElement);
+		if (!groups.size) return;
+		for (const group of groups) {
+			if (loading && !sources.length) {
+				let seg = group.querySelector("[data-mx-seg]");
+				if (!seg) {
+					seg = document.createElement("div");
+					seg.setAttribute("data-mx-seg", "");
+					group.insertBefore(seg, group.querySelector("[data-setting-icon]"));
+				}
+				seg.innerHTML = "<span class=\"mx-seg mx-seg-skeleton\">…</span>";
+				continue;
+			}
+			if (sources.length < 2) {
+				group.querySelector("[data-mx-seg]")?.remove();
+				continue;
+			}
+			let seg = group.querySelector("[data-mx-seg]");
+			if (!seg) {
+				seg = document.createElement("div");
+				seg.setAttribute("data-mx-seg", "");
+				group.insertBefore(seg, group.querySelector("[data-setting-icon]"));
+			}
+			seg.className = "mx-segmented";
+			seg.replaceChildren(...sources.map((s) => {
+				const b = document.createElement("button");
+				b.type = "button";
+				b.className = "mx-seg" + (s.id === currentId ? " mx-seg-current" : "");
+				b.textContent = s.label;
+				if (s.id === currentId) {
+					b.style.background = s.color;
+					b.disabled = true;
+				} else b.addEventListener("click", () => {
+					location.href = s.href;
+				});
+				return b;
+			}));
+		}
 	}
 	var ID_RE = /^[a-z]{2,6}-\d{2,6}(-[a-z-]+)?$/;
 	var FC2_RE = /^fc2(-\d+)?(-[a-z-]+)?$/;
@@ -1312,38 +1345,34 @@
 	}
 	function sources() {
 		if (!isVideoPath()) return;
-		let done = false;
+		const id = location.pathname.split("/").filter(Boolean).pop() || "";
+		const parsed = parseVideoId(id);
+		if (!parsed) return;
+		const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix);
+		const current = {
+			id,
+			label: curDef[1],
+			color: curDef[2],
+			href: location.href
+		};
+		let injected = false;
 		const init = () => {
-			if (done) return true;
-			if (!document.querySelector("h1")) return false;
-			done = true;
-			const id = location.pathname.split("/").filter(Boolean).pop() || "";
-			const parsed = parseVideoId(id);
-			if (!parsed) return true;
-			const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix);
-			const current = {
-				id,
-				label: curDef[1],
-				color: curDef[2],
-				href: location.href
-			};
-			renderSwitcher([current], id, true);
-			const row = document.querySelector(".mx-sources");
-			setTimeout(() => {
-				if (![...document.querySelectorAll("button")].some((b) => b.getAttributeNames().some((n) => n.startsWith("@click") && (b.getAttribute(n) || "").includes("toggleSave")))) row?.remove();
-			}, 8e3);
+			if (injected) return true;
+			if (![...document.querySelectorAll("a")].some((a) => a.getAttributeNames().some((n) => (a.getAttribute(n) || "").includes("toggleSearch")))) return false;
+			injected = true;
+			renderSegmented([], id, true);
 			const cached = readCache()[parsed.base];
 			const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL;
-			if (cacheFresh) renderSwitcher(cached.list, id, false);
+			if (cacheFresh && cached.list.length >= 2) renderSegmented(cached.list, id, false);
 			(async () => {
 				try {
 					const lang = currentLang() ?? "cn";
 					const list = await fetchSources(parsed.base, lang);
 					if (!list.length) list.push(current);
 					writeCache(parsed.base, list);
-					if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) renderSwitcher(list, id, false);
+					if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) renderSegmented(list, id, false);
 				} catch {
-					if (!cacheFresh) renderSwitcher([current], id, false);
+					if (!cacheFresh) renderSegmented(cached?.list ?? [], id, false);
 				}
 			})();
 			return true;
@@ -1354,7 +1383,8 @@
 		});
 		obs.observe(document.documentElement, {
 			childList: true,
-			subtree: true
+			subtree: true,
+			attributes: true
 		});
 		setTimeout(() => obs.disconnect(), 15e3);
 	}

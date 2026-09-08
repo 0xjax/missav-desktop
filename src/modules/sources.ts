@@ -2,8 +2,9 @@ import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 
 // 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中文字幕），
-// URL 后缀即源标识。详情页拉一次搜索页解析同源列表，在标题下方
-// 嵌入与卡片徽标同风格的切换行，当前源高亮。
+// URL 后缀即源标识。详情页拉一次搜索页解析同源列表，在顶栏搜索图标左侧
+// 渲染胶囊三档分段器（原版/无码/中字），当前源实色档位，点档位直达对应源。
+// 顶栏是固定高度常驻区域，组件放这里从结构上杜绝下方内容布局跳动。
 
 interface Source {
   id: string
@@ -13,8 +14,8 @@ interface Source {
 }
 
 const SUFFIXES: [suffix: string, label: string, color: string][] = [
-  ['-uncensored-leak', '无码影片', '#1e40af'],
-  ['-chinese-subtitle', '中文字幕', '#991b1b'],
+  ['-uncensored-leak', '无码', '#2563eb'],
+  ['-chinese-subtitle', '中字', '#dc2626'],
 ]
 const ORIGINAL: [string, string, string] = ['', '原版', '#4c566a']
 
@@ -70,29 +71,65 @@ async function fetchSources(base: string, lang: string): Promise<Source[]> {
   return sources
 }
 
-function renderSwitcher(
+// ---- 顶栏胶囊三档分段器 ----
+
+// 渲染/更新分段器。锚定顶栏按钮组（搜索 a 的父级 flex 行），与齿轮同位置体系。
+// 三态：拉取中（单颗骨架档）、可选（≥1 源，当前档实色）、锁定态不渲染整组
+// （单源无切换意义，顶栏不留死控件）。列表页（无番号）整组不渲染。
+function renderSegmented(
   sources: Source[],
   currentId: string,
   loading: boolean,
 ): void {
-  const h1 = document.querySelector('h1')
-  if (!h1) return
-  const row =
-    document.querySelector('.mx-sources') ??
-    Object.assign(document.createElement('div'), { className: 'mx-sources' })
-  row.innerHTML =
-    '<span class="mx-sources-label">源</span>' +
-    sources
-      .map(
-        (s) =>
-          `<a class="mx-src${s.id === currentId ? ' current' : ''}" ` +
-          `style="background:${s.color}" href="${s.href}">${s.label}</a>`,
-      )
-      .join('') +
-    (loading ? '<span class="mx-src mx-loading">…</span>' : '')
-  // 当前源不可点
-  row.querySelector('.mx-src.current')?.removeAttribute('href')
-  if (!row.isConnected) h1.after(row)
+  // 两套响应式容器都要注入（同齿轮）；锚点组 = 搜索 a 的父级
+  const groups = new Set<Element>()
+  for (const a of document.querySelectorAll('a')) {
+    if (a.getAttributeNames().some((n) => (a.getAttribute(n) || '').includes('toggleSearch')))
+      groups.add(a.parentElement!)
+  }
+  if (!groups.size) return
+  for (const group of groups) {
+    if (loading && !sources.length) {
+      // 骨架态：单颗灰胶囊，不拦截点击
+      let seg = group.querySelector<HTMLDivElement>('[data-mx-seg]')
+      if (!seg) {
+        seg = document.createElement('div')
+        seg.setAttribute('data-mx-seg', '')
+        group.insertBefore(seg, group.querySelector('[data-setting-icon]'))
+      }
+      seg.innerHTML = '<span class="mx-seg mx-seg-skeleton">…</span>'
+      continue
+    }
+    // 锁定态（仅当前一个源）：无切换意义，整组不渲染
+    if (sources.length < 2) {
+      group.querySelector('[data-mx-seg]')?.remove()
+      continue
+    }
+    let seg = group.querySelector<HTMLDivElement>('[data-mx-seg]')
+    if (!seg) {
+      seg = document.createElement('div')
+      seg.setAttribute('data-mx-seg', '')
+      group.insertBefore(seg, group.querySelector('[data-setting-icon]'))
+    }
+    seg.className = 'mx-segmented'
+    seg.replaceChildren(
+      ...sources.map((s) => {
+        const b = document.createElement('button')
+        b.type = 'button'
+        b.className = 'mx-seg' + (s.id === currentId ? ' mx-seg-current' : '')
+        b.textContent = s.label
+        if (s.id === currentId) {
+          b.style.background = s.color
+          b.disabled = true
+        } else {
+          b.addEventListener('click', () => {
+            location.href = s.href
+          })
+        }
+        return b
+      }),
+    )
+  }
 }
 
 // 详情页 URL 判据（document-start 即可算，不等 Vue 水合）：
@@ -110,51 +147,37 @@ function isVideoPath(): boolean {
 }
 
 export function sources(): void {
-  // 脚本在 document-start 运行：插入时机必须与 h1 同帧（站点把 h1 和下方内容
-  // 一起水合，晚一帧插入就会把下方内容推下去，造成布局跳动）。
-  // 原实现等收藏按钮（Vue 水合产物，比 h1 晚 ~440ms）才插，已实测跳动 8px。
-  // 现改：详情页 URL 判据成立后，等 h1 出现即插入占位行；异步校验收藏按钮
-  // 确认详情页（误判时撤掉）。URL 判据在 document-start 就能算，无水合依赖。
+  // 顶栏分段器放在固定高度常驻容器里，无布局跳动问题；
+  // 等顶栏按钮组渲染出来（MutationObserver），番号判据 document-start 已可算
   if (!isVideoPath()) return
-  let done = false
+
+  const id = location.pathname.split('/').filter(Boolean).pop() || ''
+  const parsed = parseVideoId(id)
+  if (!parsed) return
+
+  const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix)!
+  const current: Source = {
+    id,
+    label: curDef[1],
+    color: curDef[2],
+    href: location.href,
+  }
+
+  // 骨架态先行：顶栏一出就显示拉取中，无内容高度参与
+  let injected = false
   const init = (): boolean => {
-    if (done) return true
-    const h1 = document.querySelector('h1')
-    if (!h1) return false
-    done = true
+    if (injected) return true
+    const hasGroup = [...document.querySelectorAll('a')].some((a) =>
+      a.getAttributeNames().some((n) => (a.getAttribute(n) || '').includes('toggleSearch')),
+    )
+    if (!hasGroup) return false
+    injected = true
+    renderSegmented([], id, true)
 
-    const id = location.pathname.split('/').filter(Boolean).pop() || ''
-    const parsed = parseVideoId(id)
-    if (!parsed) return true
-
-    const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix)!
-    const current: Source = {
-      id,
-      label: curDef[1],
-      color: curDef[2],
-      href: location.href,
-    }
-    renderSwitcher([current], id, true)
-
-    const row = document.querySelector('.mx-sources')
-
-    // 确认真的是详情页：收藏按钮（Vue 水合后出现）。误判（如番号格式的目录页）
-    // 则撤掉切换行，恢复原布局。
-    setTimeout(() => {
-      const confirmed = [...document.querySelectorAll('button')].some((b) =>
-        b.getAttributeNames().some(
-          (n) =>
-            n.startsWith('@click') &&
-            (b.getAttribute(n) || '').includes('toggleSave'),
-        ),
-      )
-      if (!confirmed) row?.remove()
-    }, 8000)
-
-    // 有新鲜缓存则直接渲染完整列表，后台静默校验
+    // 有新鲜缓存则直接渲染完整分段器，后台静默校验
     const cached = readCache()[parsed.base]
     const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL
-    if (cacheFresh) renderSwitcher(cached.list, id, false)
+    if (cacheFresh && cached.list.length >= 2) renderSegmented(cached.list, id, false)
 
     ;(async () => {
       try {
@@ -164,11 +187,11 @@ export function sources(): void {
         writeCache(parsed.base, list)
         // 缓存命中时只有内容变化才重渲染，无变化零感知
         if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) {
-          renderSwitcher(list, id, false)
+          renderSegmented(list, id, false)
         }
       } catch {
-        // 拉取失败：有缓存用缓存，否则只保留当前源标识
-        if (!cacheFresh) renderSwitcher([current], id, false)
+        // 拉取失败：有缓存用缓存，否则保留骨架（下页重试）
+        if (!cacheFresh) renderSegmented(cached?.list ?? [], id, false)
       }
     })()
     return true
@@ -178,6 +201,6 @@ export function sources(): void {
   const obs = new MutationObserver(() => {
     if (init()) obs.disconnect()
   })
-  obs.observe(document.documentElement, { childList: true, subtree: true })
+  obs.observe(document.documentElement, { childList: true, subtree: true, attributes: true })
   setTimeout(() => obs.disconnect(), 15000)
 }
