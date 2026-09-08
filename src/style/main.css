@@ -265,10 +265,10 @@ a > svg[fill="none"][viewBox="0 0 24 24"]:not([data-mx-icon]) {
   visibility: hidden !important;
 }
 
-/* 语言下拉浮窗：站点原始 max-h 近乎全屏（13 项全展开 644px+），压到视口 60%，
+/* 语言下拉浮窗：站点原始 max-h 近乎全屏（13 项全展开 644px+），压到视口 45%，
    超出部分面板自身 overflow-y-scroll 滚动 */
 [x-show*="showLocaleSwitcher"] {
-  max-height: 60vh !important;
+  max-height: 45vh !important;
 }
 
 #shortcut-help {
