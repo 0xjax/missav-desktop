@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         missav 桌面端
-// @namespace    https://github.com/jk278/missav-desktop
-// @version      1.24.0
-// @author       jk278
+// @namespace    https://github.com/0xjax/missav-desktop
+// @version      1.25.0
+// @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
 // @icon         https://missav.ws/favicon.ico
