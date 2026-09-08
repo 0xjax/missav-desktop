@@ -9,7 +9,7 @@ export default defineConfig({
                 name: "missav 桌面端",
                 namespace: "https://github.com/0xjax/missav-desktop",
                 description: "增强 missav 网站的桌面端浏览体验。",
-                version: "1.27.0",
+                version: "1.28.0",
                 author: "0xjax",
                 license: "MIT",
                 "run-at": "document-start",

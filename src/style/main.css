@@ -240,6 +240,11 @@
   color: #fff;
 }
 
+/* 单源锁定态：仅标识当前源，无切换可用性，视觉更收敛 */
+.mx-seg-locked {
+  opacity: 0.85;
+}
+
 .mx-seg-skeleton {
   cursor: default;
   color: #d8dee9;

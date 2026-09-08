@@ -74,8 +74,8 @@ async function fetchSources(base: string, lang: string): Promise<Source[]> {
 // ---- 顶栏胶囊三档分段器 ----
 
 // 渲染/更新分段器。锚定顶栏按钮组（搜索 a 的父级 flex 行），与齿轮同位置体系。
-// 三态：拉取中（单颗骨架档）、可选（≥1 源，当前档实色）、锁定态不渲染整组
-// （单源无切换意义，顶栏不留死控件）。列表页（无番号）整组不渲染。
+// 始终显示，按源数自适应形态：拉取中（单颗骨架档）、单源（单档锁定态，当前源
+// 实色但禁用）、双/三源（多档可选，当前档实色）。列表页（无番号）整组不渲染。
 function renderSegmented(
   sources: Source[],
   currentId: string,
@@ -89,38 +89,31 @@ function renderSegmented(
   }
   if (!groups.size) return
   for (const group of groups) {
-    if (loading && !sources.length) {
-      // 骨架态：单颗灰胶囊，不拦截点击
-      let seg = group.querySelector<HTMLDivElement>('[data-mx-seg]')
-      if (!seg) {
-        seg = document.createElement('div')
-        seg.setAttribute('data-mx-seg', '')
-        group.insertBefore(seg, group.querySelector('[data-setting-icon]'))
-      }
-      seg.innerHTML = '<span class="mx-seg mx-seg-skeleton">…</span>'
-      continue
-    }
-    // 锁定态（仅当前一个源）：无切换意义，整组不渲染
-    if (sources.length < 2) {
-      group.querySelector('[data-mx-seg]')?.remove()
-      continue
-    }
     let seg = group.querySelector<HTMLDivElement>('[data-mx-seg]')
     if (!seg) {
       seg = document.createElement('div')
       seg.setAttribute('data-mx-seg', '')
       group.insertBefore(seg, group.querySelector('[data-setting-icon]'))
     }
+    if (loading && !sources.length) {
+      // 骨架态：单颗灰胶囊，不拦截点击
+      seg.className = ''
+      seg.innerHTML = '<span class="mx-seg mx-seg-skeleton">…</span>'
+      continue
+    }
     seg.className = 'mx-segmented'
     seg.replaceChildren(
       ...sources.map((s) => {
         const b = document.createElement('button')
         b.type = 'button'
-        b.className = 'mx-seg' + (s.id === currentId ? ' mx-seg-current' : '')
+        const isCurrent = s.id === currentId
+        b.className = 'mx-seg' + (isCurrent ? ' mx-seg-current' : '')
         b.textContent = s.label
-        if (s.id === currentId) {
+        if (isCurrent) {
+          // 当前档实色；单源时额外加锁定态（无切换意义，仅作标识）
           b.style.background = s.color
           b.disabled = true
+          if (sources.length < 2) b.classList.add('mx-seg-locked')
         } else {
           b.addEventListener('click', () => {
             location.href = s.href
@@ -177,7 +170,7 @@ export function sources(): void {
     // 有新鲜缓存则直接渲染完整分段器，后台静默校验
     const cached = readCache()[parsed.base]
     const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL
-    if (cacheFresh && cached.list.length >= 2) renderSegmented(cached.list, id, false)
+    if (cacheFresh && cached.list.length) renderSegmented(cached.list, id, false)
 
     ;(async () => {
       try {
