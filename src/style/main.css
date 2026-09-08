@@ -6,9 +6,9 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 99999;
-  width: 420px;
+  width: 448px;
   max-width: calc(100vw - 32px);
-  height: 560px;
+  height: 532px;
   max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
