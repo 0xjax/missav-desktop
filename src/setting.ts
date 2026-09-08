@@ -275,6 +275,31 @@ function unifyIcons(container: Element): boolean {
 // 两套容器分别注入；observer 不能在"任一套成功"时就断开——
 // 小屏套先渲染，若此时断开，大屏 NAV 套会永久缺失（实测踩坑）。
 // 两个容器都注入完成才断开；去重由 [data-setting-icon] 标记保证，重复触发无害
+// 顶栏图标防闪烁：脚本 run-at document-start 时 documentElement 尚未出生（实测
+// head/html/body 全 null），样式表无论走 GM_addStyle 还是 fallback 都要等 DOM，
+// 导致 SSR 先画出国旗再被替换——一帧闪烁。故在 documentElement 出现的同一
+// 微任务里立即插入预隐藏样式，早于 SSR 解析出旧图标，全程无闪现。
+const ANTIFLICKER_CSS =
+  'a:not([class*="block"]) > img[src*="/img/flags/"]:not([data-mx-icon]),' +
+  'a > svg[fill="none"][viewBox="0 0 24 24"]:not([data-mx-icon]){visibility:hidden!important}'
+
+export function installAntiFlicker(): void {
+  const inject = (): boolean => {
+    if (document.querySelector('style[data-mx-antiflicker]')) return true
+    if (!document.documentElement) return false
+    const st = document.createElement('style')
+    st.setAttribute('data-mx-antiflicker', '')
+    st.textContent = ANTIFLICKER_CSS
+    document.documentElement.appendChild(st)
+    return true
+  }
+  if (inject()) return
+  const obs = new MutationObserver(() => {
+    if (inject()) obs.disconnect()
+  })
+  obs.observe(document, { childList: true })
+}
+
 export function registerSettingIcon(): void {
   const injectAll = (): boolean => {
     const containers = [document.querySelector('div.sm\\:container'), document.querySelector('nav')]

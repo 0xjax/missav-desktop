@@ -3,7 +3,7 @@
 import './style/main.css'
 
 import { GM_getValue } from './utils/gm.ts'
-import { registerSettingIcon, registerSettingMenu } from './setting.js'
+import { registerSettingIcon, registerSettingMenu, installAntiFlicker } from './setting.js'
 import { blockAds } from './modules/block-ads.js'
 import { preferLang } from './modules/lang-pref.js'
 import { searchPref } from './modules/search-pref.js'
@@ -20,7 +20,10 @@ import { playlistPanel } from './modules/playlist-panel.js'
   console.log('MissAV desktop execute!')
 
   registerSettingMenu()
-  if (GM_getValue('topbar-ui', true)) registerSettingIcon()
+  if (GM_getValue('topbar-ui', true)) {
+    installAntiFlicker()
+    registerSettingIcon()
+  }
 
   // 按页面路径在此分发各功能模块
   if (GM_getValue('block-ads', true)) blockAds()

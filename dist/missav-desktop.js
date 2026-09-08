@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.32.0
+// @version      1.33.0
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -626,6 +626,23 @@
 			}
 		}
 		return touched;
+	}
+	var ANTIFLICKER_CSS = "a:not([class*=\"block\"]) > img[src*=\"/img/flags/\"]:not([data-mx-icon]),a > svg[fill=\"none\"][viewBox=\"0 0 24 24\"]:not([data-mx-icon]){visibility:hidden!important}";
+	function installAntiFlicker() {
+		const inject = () => {
+			if (document.querySelector("style[data-mx-antiflicker]")) return true;
+			if (!document.documentElement) return false;
+			const st = document.createElement("style");
+			st.setAttribute("data-mx-antiflicker", "");
+			st.textContent = ANTIFLICKER_CSS;
+			document.documentElement.appendChild(st);
+			return true;
+		};
+		if (inject()) return;
+		const obs = new MutationObserver(() => {
+			if (inject()) obs.disconnect();
+		});
+		obs.observe(document, { childList: true });
 	}
 	function registerSettingIcon() {
 		const injectAll = () => {
@@ -1386,7 +1403,10 @@
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
 		registerSettingMenu();
-		if (GM_getValue$1("topbar-ui", true)) registerSettingIcon();
+		if (GM_getValue$1("topbar-ui", true)) {
+			installAntiFlicker();
+			registerSettingIcon();
+		}
 		if (GM_getValue$1("block-ads", true)) blockAds();
 		if (GM_getValue$1("lang-pref", true)) preferLang();
 		if (GM_getValue$1("search-pref", true)) searchPref();
