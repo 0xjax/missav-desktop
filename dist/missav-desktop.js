@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.17.0
+// @version      1.18.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -485,7 +485,8 @@
 		"fast-save": "收藏片单增强",
 		"auto-backup": "自动备份（每 3 天）",
 		"sources": "多源显示切换",
-		"playlist-panel": "片单面板优化"
+		"playlist-panel": "片单面板优化",
+		"topbar-ui": "顶栏增强（设置入口 + 图标统一）"
 	};
 	var keyDefaults = {
 		"block-ads": true,
@@ -495,7 +496,8 @@
 		"fast-save": true,
 		"auto-backup": true,
 		"sources": true,
-		"playlist-panel": true
+		"playlist-panel": true,
+		"topbar-ui": true
 	};
 	function createSettingPanel() {
 		const panel = Object.assign(document.createElement("div"), {
@@ -1306,7 +1308,7 @@
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
 		registerSettingMenu();
-		registerSettingIcon();
+		if (GM_getValue$1("topbar-ui", true)) registerSettingIcon();
 		if (GM_getValue$1("block-ads", true)) blockAds();
 		if (GM_getValue$1("lang-pref", true)) preferLang();
 		if (GM_getValue$1("search-pref", true)) searchPref();

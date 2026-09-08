@@ -12,6 +12,7 @@ const keyValues: Record<string, string> = {
   'auto-backup': '自动备份（每 3 天）',
   'sources': '多源显示切换',
   'playlist-panel': '片单面板优化',
+  'topbar-ui': '顶栏增强（设置入口 + 图标统一）',
 }
 
 // 设置项默认值，未列出的键默认为 false
@@ -24,6 +25,7 @@ const keyDefaults: Record<string, boolean> = {
   'auto-backup': true,
   'sources': true,
   'playlist-panel': true,
+  'topbar-ui': true,
 }
 
 function createSettingPanel(): HTMLElement {

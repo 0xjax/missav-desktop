@@ -20,7 +20,7 @@ import { playlistPanel } from './modules/playlist-panel.js'
   console.log('MissAV desktop execute!')
 
   registerSettingMenu()
-  registerSettingIcon()
+  if (GM_getValue('topbar-ui', true)) registerSettingIcon()
 
   // 按页面路径在此分发各功能模块
   if (GM_getValue('block-ads', true)) blockAds()
