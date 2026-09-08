@@ -31,13 +31,16 @@ bun run dev        # 必须占住 5173 端口；被占用会掉到 5174，Tamper
 | `bun scripts/cdp/cdp-nav.ts <url包含> [新url]` | 导航/刷新指定 tab |
 | `bun scripts/cdp/cdp-reset.ts <url包含>` | tab JS 死循环卡死时：浏览器级关闭并重开同 URL |
 | `bun scripts/cdp/cdp-dl.ts` | 设置调试浏览器下载目录（测备份导出用） |
+| `bun scripts/cdp/cdp-press.ts <url包含> <元素id>` | 真实输入管线按压元素并全程事件埋点 |
 
 要点：
 
 - `<url包含子串>` 用能唯一定位 tab 的片段，如 `sone-669-uncensored`；**注意 `sone-669` 会同时命中原版和 `-uncensored-leak` 两个 tab**
+- **验证点击/交互 bug 必须用 `cdp-press.ts`（Input.dispatchMouseEvent 真实输入管线）**：JS 合成 `.click()` 与真实按压的激活序列不同（真实按压 checkbox 全程不派发 change/input），合成点击验证通过不代表用户能点
 - 选择器类名含 `:`（如 `lg:flex`）时反斜杠转义会在 heredoc 管道里被吃掉，改用属性过滤规避
 - 新开 tab：`curl -X PUT "http://localhost:9222/json/new?<url>"`（必须 PUT）
 - 读油猴存储：`localStorage.getItem('gm:<key>')`（gm.ts 双写 localStorage 兜底）
+- 调试交互类 bug 先埋点取证（完整事件序列 + 数据/DOM 双侧状态），不要在未复现的情况下按猜测写修复
 
 ## 验证闭环
 
