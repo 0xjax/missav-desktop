@@ -19,6 +19,7 @@ const keyValues: Record<string, string> = {
   'auto-backup': '自动备份（每 3 天）',
   'sources': '多源显示切换',
   'playlist-panel': '片单面板优化',
+  'playlist-dock': '片单右侧栏（宽屏自动展开）',
   'topbar-ui': '顶栏增强（设置入口 + 图标统一）',
 }
 
@@ -32,6 +33,7 @@ const keyDefaults: Record<string, boolean> = {
   'auto-backup': true,
   'sources': true,
   'playlist-panel': true,
+  'playlist-dock': true,
   'topbar-ui': true,
 }
 

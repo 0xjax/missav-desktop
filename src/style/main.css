@@ -357,3 +357,17 @@ fieldset.mx-pl-grid > a {
   color: #d8dee9;
   opacity: 0.5;
 }
+
+/* 片单面板停靠右栏：收紧留白贴住推荐列表；300px 栏宽下单列排布。
+   WARNING 右栏原是 flex-row，面板搬入后主轴宽度会塌缩到 min-content
+   （width/flex-basis 均无效，实测踩坑），必须改为 column 布局 */
+.mx-pl-docked {
+  margin-bottom: 0 !important;
+  padding: 0.75rem !important;
+}
+.mx-pl-docked fieldset.mx-pl-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+:has(> .mx-pl-docked) {
+  flex-direction: column !important;
+}

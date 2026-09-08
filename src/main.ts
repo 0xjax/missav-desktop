@@ -12,6 +12,7 @@ import { fastSave } from './modules/fast-save.js'
 import { autoBackup } from './modules/backup-export.js'
 import { sources } from './modules/sources.js'
 import { playlistPanel } from './modules/playlist-panel.js'
+import { playlistDock } from './modules/playlist-dock.js'
 ;(function () {
   if (window.top !== window.self) {
     return
@@ -34,4 +35,5 @@ import { playlistPanel } from './modules/playlist-panel.js'
   if (GM_getValue('auto-backup', true)) autoBackup()
   if (GM_getValue('sources', true)) sources()
   if (GM_getValue('playlist-panel', true)) playlistPanel()
+  if (GM_getValue('playlist-dock', true)) playlistDock()
 })()
