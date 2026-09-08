@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.23.0
+// @version      1.24.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -614,6 +614,13 @@
 					const node = Object.assign(document.createElement("span"), { innerHTML: MENU_SVG }).firstElementChild;
 					node.setAttribute("data-mx-icon", "menu");
 					old.replaceWith(node);
+					touched = true;
+				}
+			}
+			if (actions.includes("howDropdown") && actions.includes("jav")) {
+				const span = a.querySelector("span");
+				if (span && span.textContent.trim() === "观看日本 AV") {
+					span.textContent = "日本 AV";
 					touched = true;
 				}
 			}

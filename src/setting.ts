@@ -260,6 +260,14 @@ function unifyIcons(container: Element): boolean {
         touched = true
       }
     }
+    // "观看日本 AV" → "日本 AV"：与其他 2-4 字导航项长度对齐，视觉更整齐
+    if (actions.includes('howDropdown') && actions.includes('jav')) {
+      const span = a.querySelector('span')
+      if (span && span.textContent.trim() === '观看日本 AV') {
+        span.textContent = '日本 AV'
+        touched = true
+      }
+    }
   }
   return touched
 }
