@@ -86,6 +86,19 @@ export function GM_registerMenuCommand(
 }
 
 /**
+ * 读主世界全局（站点脚本挂到 window 上的对象，如 Alpine）。
+ *
+ * WARNING @grant 模式下沙盒 `window` 对站点全局的透传不保证可靠
+ * （实测偶发读不到 window.Alpine），必须走 unsafeWindow 兜底。
+ */
+export function readMainWorld<T = unknown>(name: string): T | undefined {
+  const w = (typeof unsafeWindow !== 'undefined'
+    ? unsafeWindow
+    : undefined) as Record<string, unknown> | undefined
+  return w?.[name] as T | undefined
+}
+
+/**
  * 主世界 window 对象兜底。
  *
  * @grant 模式下脚本跑在 Tampermonkey 沙盒里，`window.open = ...` 只改

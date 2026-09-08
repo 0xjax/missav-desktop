@@ -1,4 +1,4 @@
-import { GM_getValue, GM_setValue } from '../utils/gm.ts'
+import { GM_getValue, GM_setValue, readMainWorld } from '../utils/gm.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toast, toastBroadcast, listenToastChannel } from '../utils/toast.ts'
 import { adjustPlaylistCount } from './playlist-panel.ts'
@@ -23,7 +23,11 @@ interface AlpineLike {
 }
 
 function alpine(): AlpineLike | undefined {
-  return (window as { Alpine?: AlpineLike }).Alpine
+  // WARNING 沙盒 window 对站点全局透传不保证可靠（诊断日志实测偶发读不到
+  // window.Alpine），必须 unsafeWindow 兜底；仍拿不到时调用方放行站点原生流程
+  const w = (window as { Alpine?: AlpineLike }).Alpine
+  if (w) return w
+  return readMainWorld<AlpineLike>('Alpine')
 }
 
 // ---- 收藏状态跨标签缓存（秒显提示，服务器 /view 返回后由站点自动校准） ----
@@ -137,6 +141,7 @@ function findSaveUrl(btn: Element): string | null {
 
 function onSaveClick(e: MouseEvent, btn: Element): void {
   const alp = alpine()
+  // 接不了管（Alpine 读不到等）就不拦截：放行站点原生处理器，宁可不加速不能弄坏
   if (!alp) return
   const data = alp.$data(btn)
   const url = findSaveUrl(btn)
@@ -190,10 +195,13 @@ function onPlaylistOpenClick(e: MouseEvent, btn: Element): void {
 }
 
 function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
+  const alp = alpine()
+  // WARNING 必须先确认能接管再拦截：此前无条件 preventDefault +
+  // stopImmediatePropagation 后才发现 Alpine 读不到，原生流程已被杀死，
+  // 表现为"点片单没反应"（诊断日志定位的根因）
+  if (!alp) return
   e.preventDefault()
   e.stopImmediatePropagation()
-  const alp = alpine()
-  if (!alp) return
   // 面板组件数据含 playlists（x-model 绑定的项即 checkbox 状态来源）
   const data = alp.$data(input)
   const list = data.playlists as PlaylistItem[] | undefined

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.35.1
+// @version      1.35.2
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -63,6 +63,9 @@
 		if (fn) try {
 			fn(name, callback);
 		} catch {}
+	}
+	function readMainWorld(name) {
+		return (typeof unsafeWindow !== "undefined" ? unsafeWindow : void 0)?.[name];
 	}
 	function hijackMainWorld(name, replacement) {
 		const w = typeof unsafeWindow !== "undefined" ? unsafeWindow : globalThis;
@@ -1066,7 +1069,9 @@
 		});
 	}
 	function alpine() {
-		return window.Alpine;
+		const w = window.Alpine;
+		if (w) return w;
+		return readMainWorld("Alpine");
 	}
 	var SAVED_CACHE_KEY = "saved-cache";
 	function readCache$1() {
@@ -1173,10 +1178,10 @@
 		data.togglePanel("playlist");
 	}
 	function onPlaylistToggle(e, input) {
-		e.preventDefault();
-		e.stopImmediatePropagation();
 		const alp = alpine();
 		if (!alp) return;
+		e.preventDefault();
+		e.stopImmediatePropagation();
 		const data = alp.$data(input);
 		const item = data.playlists?.find((p) => p.key === input.id);
 		const dvdId = dvdIdOf(input);
@@ -1408,153 +1413,6 @@
 		});
 		setTimeout(() => obs.disconnect(), 15e3);
 	}
-	var t0 = performance.now();
-	var log = [];
-	var MAX = 500;
-	function rec(ev, detail) {
-		if (log.length >= MAX) return;
-		log.push({
-			t: Math.round(performance.now() - t0),
-			ev,
-			detail
-		});
-		try {
-			localStorage.setItem("gm:playlist-debug-log", JSON.stringify(log));
-		} catch {}
-	}
-	function describe(e) {
-		const el = e.target;
-		return {
-			type: e.type,
-			tag: el?.tagName,
-			id: el?.id || void 0,
-			xmodel: el?.getAttribute?.("x-model"),
-			xclick: el?.getAttributeNames?.().filter((n) => n.startsWith("@click")).map((n) => `${n}=${el.getAttribute(n)}`),
-			checked: el?.checked,
-			trusted: e.isTrusted,
-			defaultPrevented: e.defaultPrevented
-		};
-	}
-	function installEventTap() {
-		const types = [
-			"pointerdown",
-			"mousedown",
-			"pointerup",
-			"mouseup",
-			"click",
-			"change",
-			"input"
-		];
-		const handler = (e) => {
-			const el = e.target;
-			if (el?.closest?.("input[x-model=\"playlist.is_added\"]") || el?.getAttributeNames?.().some((n) => n.startsWith("@click") && (el.getAttribute(n) || "").includes("togglePlaylist"))) rec("dom-event", describe(e));
-		};
-		for (const t of types) document.addEventListener(t, handler, { capture: true });
-	}
-	function installFetchTap() {
-		const orig = window.fetch.bind(window);
-		window.fetch = (...args) => {
-			const url = String(args[0]);
-			const isPl = /\/api\/playlists\/(add|remove)/.test(url);
-			if (isPl) rec("fetch-start", {
-				url,
-				keepalive: args[1]?.keepalive
-			});
-			return orig(...args).then((r) => {
-				if (isPl) rec("fetch-done", {
-					url,
-					status: r.status,
-					ok: r.ok
-				});
-				return r;
-			}, (err) => {
-				if (isPl) rec("fetch-error", {
-					url,
-					msg: String(err)
-				});
-				throw err;
-			});
-		};
-	}
-	function installFastSaveProbe() {
-		document.addEventListener("click", (e) => {
-			const box = e.target.closest?.("input[x-model=\"playlist.is_added\"]");
-			if (!box) return;
-			const input = box;
-			rec("fastsave-hit", {
-				id: input.id,
-				checked: input.checked
-			});
-			const alp = window.Alpine;
-			if (!alp) {
-				rec("fastsave-no-alpine");
-				return;
-			}
-			const data = alp.$data(input);
-			const list = data?.playlists;
-			const item = list?.find((p) => p.key === input.id);
-			rec("fastsave-data", {
-				hasData: !!data,
-				hasList: !!list,
-				listLen: list?.length,
-				hasItem: !!item,
-				itemIsAdded: item?.is_added,
-				dvdId: data?.dvdId ?? data.videoCode
-			});
-			setTimeout(() => {
-				rec("fastsave-after-tick", {
-					checked: input.checked,
-					itemIsAdded: item?.is_added
-				});
-			}, 0);
-		}, true);
-		document.addEventListener("click", (e) => {
-			const box = e.target.closest?.("input[x-model=\"playlist.is_added\"]");
-			if (!box) return;
-			rec("fastsave-bubble", {
-				defaultPrevented: e.defaultPrevented,
-				checked: box.checked
-			});
-		}, false);
-	}
-	function installPanelWatcher() {
-		waitDOMContentLoaded(() => {
-			const snapshot = () => {
-				const boxes = document.querySelectorAll("input[x-model=\"playlist.is_added\"]");
-				if (!boxes.length) return;
-				const fieldset = boxes[0].closest("fieldset");
-				rec("panel-snap", {
-					boxes: boxes.length,
-					fieldsetGrid: fieldset?.classList.contains("mx-pl-grid"),
-					order: [...boxes].slice(0, 3).map((b) => b.closest("div.relative")?.style.order)
-				});
-			};
-			snapshot();
-			const iv = setInterval(() => {
-				if (!document.querySelector("input[x-model=\"playlist.is_added\"]")) return;
-				snapshot();
-			}, 2e3);
-			document.addEventListener("click", (e) => {
-				const t = e.target;
-				if (t?.getAttributeNames?.().some((n) => n.startsWith("@click") && (t.getAttribute(n) || "").includes("togglePanel"))) setTimeout(() => {
-					if (!document.querySelector("input[x-model=\"playlist.is_added\"]")) clearInterval(iv);
-				}, 500);
-			}, true);
-		});
-	}
-	function playlistDebug() {
-		installEventTap();
-		installFetchTap();
-		installFastSaveProbe();
-		installPanelWatcher();
-		rec("debug-installed", { href: location.href });
-		GM_registerMenuCommand$1("📋 复制片单诊断日志", () => {
-			const text = log.map((l) => `${l.t}ms ${l.ev} ${l.detail !== void 0 ? JSON.stringify(l.detail) : ""}`).join("\n");
-			navigator.clipboard.writeText(text).then(() => alert(`已复制 ${log.length} 条日志`)).catch(() => {
-				prompt("手动复制：", text);
-			});
-		});
-	}
 	(function() {
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
@@ -1571,6 +1429,5 @@
 		if (GM_getValue$1("auto-backup", true)) autoBackup();
 		if (GM_getValue$1("sources", true)) sources();
 		if (GM_getValue$1("playlist-panel", true)) playlistPanel();
-		playlistDebug();
 	})();
 })();
