@@ -11,6 +11,7 @@
 2. **Tampermonkey**（装在调试 Chrome 上）：
    - 扩展管理页打开「开发者模式」→ 详情里打开「允许运行用户脚本」
    - 安装脚本：开发用指向 dev server 的壳脚本（`bun run dev` 启动后 vite-plugin-monkey 给出的地址），或直接装 `dist/missav-desktop.js`
+   - **WARNING dev 壳脚本 vs dist 的本质差异**：dev 脚本要从 5173 拉模块（loader ~200ms 才启动），站点 SSR 首绘 ~160-310ms，**脚本物理上跑不赢首绘**——凡依赖"先于站点渲染生效"的功能（如图标替换防闪烁、首帧占位）在 dev 模式必然失效/闪现，这不是代码 bug。验证这类功能必须把 `dist/missav-desktop.js` 装进 Tampermonkey（本地文件导入），dev 模式截图/时序测出来的"闪烁"不代表生产
 3. 登录 missav.ai（收藏/片单/备份功能都依赖真实登录态）
 
 ## 日常启动
