@@ -33,6 +33,7 @@ bun run dev        # 必须占住 5173 端口；被占用会掉到 5174，Tamper
 | `bun scripts/cdp/cdp-reset.ts <url包含>` | tab JS 死循环卡死时：浏览器级关闭并重开同 URL |
 | `bun scripts/cdp/cdp-dl.ts` | 设置调试浏览器下载目录（测备份导出用） |
 | `bun scripts/cdp/cdp-press.ts <url包含> <元素id>` | 真实输入管线按压元素并全程事件埋点 |
+| `bun scripts/cdp/cdp-clear-emulation.ts <url包含>` | 清除视口 override，恢复自适应 |
 
 要点：
 
@@ -61,3 +62,4 @@ bun run dev        # 必须占住 5173 端口；被占用会掉到 5174，Tamper
 - **绝不用 `taskkill //IM chrome.exe` 关调试 Chrome**：会误杀用户正在使用的日常浏览器；只允许经 CDP `Browser.close`（只作用于 9222 调试 profile）
 - 页面挂 `beforeunload` 确认弹窗（如备份抓取中）时，原生确认框会阻塞该 tab 的 `Runtime.evaluate` 和截图——CDP 全线超时先想到这一层，不是页面死了；长耗时流程（备份）测试中不要导航页面
 - Tampermonkey 装到调试 Chrome：Chrome 137+ 已忽略 `--load-extension`，用 CDP `Extensions.loadUnpacked`（browser endpoint，路径必须是 `file:///D:/...` 正斜杠格式）
+- **WARNING CDP `Emulation.setDeviceMetricsOverride`（设备模拟）会跨刷新/跨导航持续生效**：一旦设过，页面刷新后视口仍是固定尺寸（如 1200×800），看起来像"视口不自适应"。这不是脚本 bug，是 DevTools 模拟残留。清除必须走 `cdp-clear-emulation.ts`：先设 0×0（0 = 跟随窗口）再 clear，**直接 clear 对已固定的 tab 常不生效**；清除后可能需改一下窗口尺寸才立即生效
