@@ -202,12 +202,13 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
   if (!item || !dvdId) return
   const target = !item.is_added
   item.is_added = target
-  // 真实鼠标点击的激活行为：pre-click 翻转 checked 并触发 change（x-model 写入
-  // is_added=true），click 被我们取消后 post-click 回滚 checked 并再次触发
-  // change（x-model 把 is_added 写回 false），最终 UI 显示未勾选但服务器已生效。
-  // change 在本事件序列内同步派发完，下一拍把目标状态写回去纠正
+  // 真实按压的激活序列：pre-click 翻转 checked，click 被我们取消后同步回滚，
+  // 且全程不派发 change/input（实测埋点确认）。更关键的是这些行的 x-model
+  // 数据→DOM effect 会部分失效（实测：is_added=true 但 checked 永不刷新），
+  // 所以 checked 不能交给站点 effect 同步——等回滚结束后由我们直接写死
   setTimeout(() => {
     item.is_added = target
+    input.checked = target
   }, 0)
   apiFetch(
     `${location.origin}/api/playlists/${target ? 'add' : 'remove'}`,
@@ -221,12 +222,14 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
         toastBroadcast(target ? '已加入片单' : '已移出片单')
       } else {
         item.is_added = !target
+        input.checked = !target
         if (r.status === 401) openLoginModal(data)
         else toast('操作失败，请重试')
       }
     })
     .catch(() => {
       item.is_added = !target
+      input.checked = !target
       toast('网络错误，操作未生效')
     })
 }

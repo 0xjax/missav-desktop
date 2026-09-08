@@ -227,14 +227,20 @@ div:has(> iframe[src*="rallytrck"]) {
   display: none;
 }
 
-/* 片单面板：grid 分列（行主序，高优先级置顶）+ 数量小字 */
-.mx-pl-grid {
+/* 片单面板：fieldset 自身 grid 分列（行主序，order 视觉排序，DOM 不动），
+   分割线和「建立片单」整行置顶；数量小字 */
+fieldset.mx-pl-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: 1.5rem;
 }
+fieldset.mx-pl-grid > hr,
+fieldset.mx-pl-grid > a {
+  grid-column: 1 / -1;
+  order: -1;
+}
 @media (max-width: 1280px) {
-  .mx-pl-grid {
+  fieldset.mx-pl-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
