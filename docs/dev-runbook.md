@@ -41,13 +41,16 @@ bun run dev        # 必须占住 5173 端口；被占用会掉到 5174，Tamper
 - 新开 tab：`curl -X PUT "http://localhost:9222/json/new?<url>"`（必须 PUT）
 - 读油猴存储：`localStorage.getItem('gm:<key>')`（gm.ts 双写 localStorage 兜底）
 - 调试交互类 bug 先埋点取证（完整事件序列 + 数据/DOM 双侧状态），不要在未复现的情况下按猜测写修复
+- **用户的真实环境实测是唯一验收标准**：自己环境"验证通过"而用户仍失败时，一律视为未修复；要怀疑的是验证路径差异（合成事件 ≠ 真实输入），而不是用户的操作
+- **同一 bug 两次修复无效 = 止损线**：停止修症状，回头质疑架构（如"把状态同步托付给站点 Alpine effect"这类外部依赖），换接管方案
 
 ## 验证闭环
 
 1. `bun run lint && bun run typecheck`
-2. 用 CDP 脚本在真实页面上实测功能
-3. `vite.config.js` 版本号递增（高于已发布版号）→ `bun run build`
-4. `git add -A && git commit`（中文，Conventional Commits），dist 产物一并提交
+2. 用 CDP 脚本在真实页面上实测功能（交互 bug 用 `cdp-press.ts` 走真实输入管线）
+3. 涉及用户交互的修复：**请用户用真实鼠标/键盘验收通过后**再进入下一步
+4. `vite.config.js` 版本号递增（高于已发布版号）→ `bun run build`
+5. `git add -A && git commit`（中文，Conventional Commits），dist 产物一并提交
 
 ## 注意事项
 
