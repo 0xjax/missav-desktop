@@ -250,17 +250,6 @@
   color: #d8dee9;
 }
 
-/* 顶栏图标防闪烁的预隐藏规则由 setting.ts installAntiFlicker() 在 documentElement
-   出生时同步注入（GM_addStyle 在 document-start 无宿主，来不及）；此处的规则
-   作为 dev 模式（样式表异步到达）下的兜底。选择器与 ANTIFLICKER_CSS 一致 */
-a:not([class*="block"]) > img[src*="/img/flags/"]:not([data-mx-icon]) {
-  visibility: hidden !important;
-}
-
-a > svg[fill="none"][viewBox="0 0 24 24"]:not([data-mx-icon]) {
-  visibility: hidden !important;
-}
-
 /* 语言下拉浮窗：站点原始 max-h 近乎全屏（13 项全展开 644px+），压到视口 45%，
    超出部分面板自身 overflow-y-scroll 滚动 */
 [x-show*="showLocaleSwitcher"] {
