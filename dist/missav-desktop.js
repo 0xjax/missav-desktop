@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.36.7
+// @version      1.36.8
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -1506,8 +1506,8 @@
 				const btn = playlistOpenBtn();
 				if (!btn) return;
 				btn.disabled = disabled;
-				btn.style.color = disabled ? "#4c566a" : "";
-				btn.style.cursor = disabled ? "not-allowed" : "";
+				btn.style.color = disabled ? "#9aa5b6" : "";
+				btn.style.cursor = disabled ? "default" : "";
 			};
 			const dock = () => {
 				const panel = findPanel();

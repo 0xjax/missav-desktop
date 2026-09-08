@@ -109,9 +109,10 @@ export function playlistDock(): void {
       if (!btn) return
       btn.disabled = disabled
       // :class 绑定会在 showPanel 变化时重写 className，
-      // 行内样式才能稳压高亮；disabled 挡掉点击事件
-      btn.style.color = disabled ? '#4c566a' : ''
-      btn.style.cursor = disabled ? 'not-allowed' : ''
+      // 行内样式才能稳压高亮；disabled 挡掉点击事件。
+      // 禁用只求"不显眼"，比普通态略暗即可，太灰反而变成视觉焦点
+      btn.style.color = disabled ? '#9aa5b6' : ''
+      btn.style.cursor = disabled ? 'default' : ''
     }
 
     const dock = (): void => {
