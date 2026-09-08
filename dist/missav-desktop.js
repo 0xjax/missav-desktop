@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.14.0
+// @version      1.15.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -543,6 +543,54 @@
 		GM_registerMenuCommand$1("脚本设置", () => {
 			waitDOMContentLoaded(toggleSettingPanel);
 		});
+	}
+	var GEAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.53 1.53 0 0 1-2.28.95l-.09-.06a1.53 1.53 0 0 0-2.08.53l-.14.24a1.53 1.53 0 0 0 .4 2.03l.1.07c.87.63.87 1.94 0 2.57l-.1.07a1.53 1.53 0 0 0-.4 2.03l.14.24c.42.72 1.3.98 2.08.53l.09-.06c.85-.5 1.9-.06 2.27.88.22.56.76.94 1.36.94h.28c.6 0 1.14-.38 1.36-.94.37-.94 1.42-1.38 2.27-.88l.09.06c.78.45 1.66.19 2.08-.53l.14-.24a1.53 1.53 0 0 0-.4-2.03l-.1-.07a1.53 1.53 0 0 1 0-2.57l.1-.07a1.53 1.53 0 0 0 .4-2.03l-.14-.24a1.53 1.53 0 0 0-2.08-.53l-.09.06c-.85.5-1.9.06-2.27-.88a1.45 1.45 0 0 0-1.36-.94h-.28ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd"/></svg>`;
+	function injectSettingIcon(container) {
+		const groups = new Set();
+		for (const a of container.querySelectorAll("a")) if (a.getAttributeNames().some((n) => (a.getAttribute(n) || "").includes("toggleSearch"))) groups.add(a.parentElement);
+		if (!groups.size) return false;
+		for (const group of groups) {
+			if (group.querySelector(":scope > [data-setting-icon]")) continue;
+			const icon = Object.assign(document.createElement("a"), {
+				href: "#",
+				innerHTML: GEAR_SVG
+			});
+			icon.setAttribute("data-setting-icon", "");
+			icon.setAttribute("class", "rounded-md text-nord6 hover:text-primary focus:outline-none");
+			icon.setAttribute("alt", "脚本设置");
+			icon.addEventListener("click", (e) => {
+				e.preventDefault();
+				toggleSettingPanel();
+			});
+			group.appendChild(icon);
+		}
+		return true;
+	}
+	function registerSettingIcon() {
+		const injectAll = () => {
+			const containers = [document.querySelector("div.sm\\:container"), document.querySelector("nav")];
+			let injected = 0;
+			for (const c of containers) {
+				if (!c) return false;
+				if (injectSettingIcon(c)) injected++;
+			}
+			if (!injected) {
+				const bar = document.querySelector("div[class*=\"fixed z-max\"]");
+				if (bar && injectSettingIcon(bar)) injected++;
+			}
+			return injected === containers.length;
+		};
+		if (injectAll()) return;
+		if (injectAll()) return;
+		const obs = new MutationObserver(() => {
+			if (injectAll()) obs.disconnect();
+		});
+		obs.observe(document.documentElement, {
+			childList: true,
+			subtree: true,
+			attributes: true
+		});
+		setTimeout(() => obs.disconnect(), 15e3);
 	}
 	var AD_HOSTS = [
 		"mayzaent.com",
@@ -1224,6 +1272,7 @@
 		if (window.top !== window.self) return;
 		console.log("MissAV desktop execute!");
 		registerSettingMenu();
+		registerSettingIcon();
 		if (GM_getValue$1("block-ads", true)) blockAds();
 		if (GM_getValue$1("lang-pref", true)) preferLang();
 		if (GM_getValue$1("search-pref", true)) searchPref();
