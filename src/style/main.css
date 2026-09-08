@@ -334,14 +334,19 @@ div:has(> iframe[src*="rallytrck"]) {
 }
 
 /* 片单面板：fieldset 自身 grid 分列（行主序，order 视觉排序，DOM 不动），
-   分割线和「建立片单」整行置顶；数量小字 */
+   分割线和「建立片单」整行置顶，建立片单在上、分割线紧随其下；
+   数量小字 */
 fieldset.mx-pl-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: 1.5rem;
 }
-fieldset.mx-pl-grid > hr,
 fieldset.mx-pl-grid > a {
+  grid-column: 1 / -1;
+  order: -2;
+  margin-bottom: 8px;
+}
+fieldset.mx-pl-grid > hr {
   grid-column: 1 / -1;
   order: -1;
 }
@@ -358,13 +363,15 @@ fieldset.mx-pl-grid > a {
   opacity: 0.5;
 }
 
-/* 片单面板停靠右栏：收紧留白；限高内部滚动（置顶排序保证目标片单
-   在前几行，无需全展开）；300px 栏宽下单列排布。
+/* 片单面板停靠右栏：收紧留白；高度对齐主视频（924×520 视频同 top
+   起始，等高对齐），内部滚动（置顶排序保证目标片单在前几行）；
+   300px 栏宽下单列排布。
    WARNING 右栏原是 flex-row，面板搬入后主轴宽度会塌缩到 min-content
    （width/flex-basis 均无效，实测踩坑），必须改为 column 布局 */
 .mx-pl-docked {
   padding: 0.75rem !important;
   max-height: calc(100vh - 6rem);
+  height: 520px;
   overflow-y: auto;
 }
 .mx-pl-docked fieldset.mx-pl-grid {
