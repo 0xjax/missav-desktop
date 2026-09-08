@@ -1,4 +1,5 @@
-/* 统一弹窗框架：设置主视图与备份子视图共用，同一尺寸同一布局 */
+/* 统一弹窗框架：设置主视图与备份子视图共用，同一尺寸同一布局。
+   高度固定：切换视图时不跳动；内容多时内部滚动 */
 #setting-panel {
   position: fixed;
   top: 50%;
@@ -7,6 +8,10 @@
   z-index: 99999;
   width: 420px;
   max-width: calc(100vw - 32px);
+  height: 560px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
   padding: 16px;
   background: #1e1e1e;
   color: #eee;
@@ -14,6 +19,29 @@
   border-radius: 8px;
   box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
   font-size: 14px;
+}
+
+/* 视图容器自身滚动，弹窗外壳尺寸恒定 */
+#setting-panel #setting-view,
+#setting-panel #backup-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 备份子视图内容包裹层：同样纵向弹性，footer 才能钉底 */
+#setting-panel .backup-render {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+#setting-panel .setting-checkboxes {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 /* 备份子视图头部：← 返回 + 标题 */
@@ -43,10 +71,13 @@
   color: #fff;
 }
 
-/* 底部按钮行：取消固定左下角（退出不触发保存），主动作靠右 */
+/* 底部按钮行：取消固定左下角（退出不触发保存），主动作靠右；
+   两个视图的 footer 都钉在弹窗底部 */
 #setting-panel .dialog-footer {
   display: flex;
   gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 #setting-panel .dialog-footer .dialog-cancel {
@@ -100,22 +131,52 @@
 }
 
 #setting-panel .backup-list {
-  margin: 10px 0;
+  margin: 10px 0 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
+/* 快照行：紧凑单行式（时间 + 统计同行），行高收敛 */
 #setting-panel .backup-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 6px 0;
+  padding: 7px 2px;
   border-top: 1px solid #333;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+#setting-panel .backup-row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#setting-panel .backup-row > span b {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 时间与统计分两行显示改为"时间 · 统计"内联，靠 JS 输出结构配合；
+   这里控制按钮不换行、视觉居中 */
+#setting-panel .backup-row button {
+  padding: 3px 12px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 #setting-panel .backup-empty {
   color: #555;
+  padding: 7px 2px;
+}
+
+/* 备份子视图：footer 钉底，列表占中间弹性空间 */
+#setting-panel #backup-view .setting-actions.dialog-footer {
+  margin-top: auto;
 }
 
 #setting-panel .backup-latest {

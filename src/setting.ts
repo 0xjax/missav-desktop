@@ -99,6 +99,7 @@ function showBackupView(panel: HTMLElement): void {
   const render = (): HTMLElement => {
     const snapshots = readSnapshots()
     const view = Object.assign(document.createElement('div'), {
+      className: 'backup-render',
       innerHTML: `
         <div class="dialog-header">
           <button class="dialog-back" type="button">← 返回</button>
@@ -109,7 +110,7 @@ function showBackupView(panel: HTMLElement): void {
           <button id="backup-latest-btn" type="button">立即备份</button>
         </div>
         ${
-          // 固定渲染 5 个槽位，高度恒定
+          // 固定渲染 5 个槽位，高度恒定；行内"时间 + 统计"单行排布保持紧凑
           `<div class="backup-list">${[0, 1, 2, 3, 4]
             .map((i) => {
               const s = snapshots[i]
@@ -117,7 +118,7 @@ function showBackupView(panel: HTMLElement): void {
                 return '<div class="backup-row backup-empty"><span>（空槽位，等待自动备份）</span></div>'
               return `
               <div class="backup-row">
-                <span>${fmtTs(s.ts)}<br>${snapshotStat(s)}</span>
+                <span><b>${fmtTs(s.ts)}</b> · ${snapshotStat(s)}</span>
                 <button type="button" data-i="${i}">下载</button>
               </div>`
             })

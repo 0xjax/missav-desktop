@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.19.0
+// @version      1.20.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;width:420px;max-width:calc(100vw - 32px);padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:10px;font-size:12px}#setting-panel .backup-list{margin:10px 0}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;font-size:13px;line-height:1.5;display:flex}#setting-panel .backup-empty{color:#555}#setting-panel .backup-latest{text-align:left}.mx-sources{justify-content:center;align-items:center;gap:8px;margin-top:8px;font-size:12px;display:flex}.mx-sources-label{color:#d8dee9;opacity:.6}.mx-src{color:#e5e9f0;opacity:.65;border-radius:8px;padding:4px 8px;text-decoration:none;transition:opacity .15s}.mx-src:hover{opacity:1}.mx-src.current{opacity:1;cursor:default;outline:1px solid #88c0d0}.mx-loading{opacity:.4;background:0 0}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>hr,fieldset.mx-pl-grid>a{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:420px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 48px);padding:16px;font-size:14px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel #setting-view,#setting-panel #backup-view,#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:10px;font-size:12px}#setting-panel .backup-list{flex:1;min-height:0;margin:10px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:7px 2px;font-size:12px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:3px 12px;font-size:12px}#setting-panel .backup-empty{color:#555;padding:7px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-sources{justify-content:center;align-items:center;gap:8px;margin-top:8px;font-size:12px;display:flex}.mx-sources-label{color:#d8dee9;opacity:.6}.mx-src{color:#e5e9f0;opacity:.65;border-radius:8px;padding:4px 8px;text-decoration:none;transition:opacity .15s}.mx-src:hover{opacity:1}.mx-src.current{opacity:1;cursor:default;outline:1px solid #88c0d0}.mx-loading{opacity:.4;background:0 0}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>hr,fieldset.mx-pl-grid>a{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -496,7 +496,9 @@
 		if (!backupView || backupView.style.display !== "none") return;
 		const render = () => {
 			const snapshots = readSnapshots();
-			const view = Object.assign(document.createElement("div"), { innerHTML: `
+			const view = Object.assign(document.createElement("div"), {
+				className: "backup-render",
+				innerHTML: `
         <div class="dialog-header">
           <button class="dialog-back" type="button">← 返回</button>
           <span class="setting-title">导出备份</span>
@@ -506,24 +508,25 @@
           <button id="backup-latest-btn" type="button">立即备份</button>
         </div>
         ${`<div class="backup-list">${[
-				0,
-				1,
-				2,
-				3,
-				4
-			].map((i) => {
-				const s = snapshots[i];
-				if (!s) return "<div class=\"backup-row backup-empty\"><span>（空槽位，等待自动备份）</span></div>";
-				return `
+					0,
+					1,
+					2,
+					3,
+					4
+				].map((i) => {
+					const s = snapshots[i];
+					if (!s) return "<div class=\"backup-row backup-empty\"><span>（空槽位，等待自动备份）</span></div>";
+					return `
               <div class="backup-row">
-                <span>${fmtTs(s.ts)}<br>${snapshotStat(s)}</span>
+                <span><b>${fmtTs(s.ts)}</b> · ${snapshotStat(s)}</span>
                 <button type="button" data-i="${i}">下载</button>
               </div>`;
-			}).join("")}</div>`}
+				}).join("")}</div>`}
         <div class="setting-actions dialog-footer">
           <button class="dialog-cancel" type="button">取消</button>
         </div>
-      ` });
+      `
+			});
 			view.querySelector(".dialog-back")?.addEventListener("click", () => {
 				view.style.display = "none";
 				backupView.style.display = "none";
