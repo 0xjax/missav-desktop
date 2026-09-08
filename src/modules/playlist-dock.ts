@@ -80,6 +80,49 @@ function expand(alp: AlpineLike): boolean {
   return false
 }
 
+// 站点把片单数据加载挂在 $watch('showPanel') 上：冷启动我们直接把
+// showPanel 从 null 置为 'playlist' 时 watcher 可能尚未注册，变更通知
+// 丢失，fetch 永不发生——表现为面板打开是空的，手动关开（第二次变更）
+// 才加载。置位后轮询兜底：数据仍空且不在 loading 就按站点同款逻辑补拉
+function ensurePlaylistLoaded(alp: AlpineLike): void {
+  const slug = location.pathname.split('/').filter(Boolean).pop()
+  if (!slug) return
+  const url = `${location.origin}/api/playlists/${slug}`
+  let tries = 0
+  const tick = (): void => {
+    tries++
+    const panel = findPanel()
+    const d = panel ? alp.$data(panel) : undefined
+    const loading = d?.loading as { playlist?: boolean } | undefined
+    const playlists = d?.playlists as unknown[] | undefined
+    if (!d || !loading || !playlists) return
+    if (playlists.length > 0 || loading.playlist) return
+    loading.playlist = true
+    void fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((j) => {
+        const list = (j as { data?: unknown[] }).data ?? []
+        // fetch 期间站点 watcher 可能也发起了同请求：仅在仍为空时写入
+        if ((d.playlists as unknown[]).length === 0) d.playlists = list
+      })
+      .catch(() => {})
+      .finally(() => {
+        loading.playlist = false
+      })
+  }
+  const timer = setInterval(() => {
+    if (tries > 40) {
+      clearInterval(timer)
+      return
+    }
+    const panel = findPanel()
+    const d = panel ? alp.$data(panel) : undefined
+    if (d && (d.playlists as unknown[] | undefined)?.length) clearInterval(timer)
+    else tick()
+  }, 250)
+  setTimeout(() => clearInterval(timer), 11000)
+}
+
 export function playlistDock(): void {
   waitDOMContentLoaded(() => {
     const mq = window.matchMedia(LG_QUERY)
@@ -163,7 +206,9 @@ export function playlistDock(): void {
       if (mq.matches) {
         // 宽屏：每次都先置状态（断点切回/宿主重渲染都可能复位），再搬运
         reserveSlot()
-        if (alp) expand(alp)
+        if (alp) {
+          if (expand(alp)) ensurePlaylistLoaded(alp)
+        }
         dock()
         watch()
       } else {
