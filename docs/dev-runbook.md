@@ -57,3 +57,6 @@ bun run dev        # 必须占住 5173 端口；被占用会掉到 5174，Tamper
 - **测试会动真实账号数据**：收藏/片单操作后必须恢复原状
 - 页面 JS 死循环卡死时 Runtime.evaluate 也会超时，用 `cdp-reset.ts` 浏览器级重开
 - 调试 Chrome 多开会积累大量 tab，卡顿时先清理
+- **绝不用 `taskkill //IM chrome.exe` 关调试 Chrome**：会误杀用户正在使用的日常浏览器；只允许经 CDP `Browser.close`（只作用于 9222 调试 profile）
+- 页面挂 `beforeunload` 确认弹窗（如备份抓取中）时，原生确认框会阻塞该 tab 的 `Runtime.evaluate` 和截图——CDP 全线超时先想到这一层，不是页面死了；长耗时流程（备份）测试中不要导航页面
+- Tampermonkey 装到调试 Chrome：Chrome 137+ 已忽略 `--load-extension`，用 CDP `Extensions.loadUnpacked`（browser endpoint，路径必须是 `file:///D:/...` 正斜杠格式）
