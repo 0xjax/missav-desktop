@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.28.0
+// @version      1.29.0
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -1287,7 +1287,8 @@
 			if (!seg) {
 				seg = document.createElement("div");
 				seg.setAttribute("data-mx-seg", "");
-				group.insertBefore(seg, group.querySelector("[data-setting-icon]"));
+				const searchA = [...group.querySelectorAll("a")].find((a) => a.getAttributeNames().some((n) => (a.getAttribute(n) || "").includes("toggleSearch")));
+				group.insertBefore(seg, searchA ?? group.querySelector("[data-setting-icon]"));
 			}
 			if (loading && !sources.length) {
 				seg.className = "";

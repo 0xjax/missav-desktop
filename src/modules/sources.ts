@@ -93,7 +93,11 @@ function renderSegmented(
     if (!seg) {
       seg = document.createElement('div')
       seg.setAttribute('data-mx-seg', '')
-      group.insertBefore(seg, group.querySelector('[data-setting-icon]'))
+      // 位置：搜索图标左侧（insertBefore 搜索 a 本身），图标们靠右、分段器靠中间
+      const searchA = [...group.querySelectorAll('a')].find((a) =>
+        a.getAttributeNames().some((n) => (a.getAttribute(n) || '').includes('toggleSearch')),
+      )
+      group.insertBefore(seg, searchA ?? group.querySelector('[data-setting-icon]'))
     }
     if (loading && !sources.length) {
       // 骨架态：单颗灰胶囊，不拦截点击
