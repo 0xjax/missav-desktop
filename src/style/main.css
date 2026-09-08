@@ -373,6 +373,14 @@ fieldset.mx-pl-grid > hr {
   max-height: calc(100vh - 6rem);
   height: 520px;
   overflow-y: auto;
+  /* 常驻：压过 x-show 切换（切分享面板/状态复位）的内联 display:none */
+  display: block !important;
+}
+
+/* 停靠槽位：面板懒渲染期间在右栏顶预留同尺寸空间，防布局跳动 */
+.mx-pl-dock-slot {
+  height: 520px;
+  flex-shrink: 0;
 }
 .mx-pl-docked fieldset.mx-pl-grid {
   grid-template-columns: minmax(0, 1fr);

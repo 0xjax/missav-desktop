@@ -9,6 +9,11 @@ import { waitDOMContentLoaded } from '../utils/wait.ts'
 // 面板 DOM 是懒渲染的：刷新后 showPanel 为 null，面板根本不会渲染。
 // 所以展开必须「状态先行」——showPanel 的宿主是左列 div.flex 这个 Alpine
 // 根（始终存在），先把它置为 'playlist'，面板渲染出来后再搬运进右栏。
+//
+// 停靠后面板静态常驻：片单按钮置灰禁用（不允许收起，行内样式稳压
+// Alpine :class 绑定的高亮重写）；面板 display !important 压过 x-show
+// 的内联 display:none，切到分享面板时停靠面板也不消失；面板渲染前
+// 用同尺寸槽位占位，避免右栏内容跳动。
 
 interface AlpineLike {
   $data: (el: Element) => Record<string, unknown>
@@ -22,24 +27,39 @@ function alpine(): AlpineLike | undefined {
   return readMainWorld<AlpineLike>('Alpine')
 }
 
+// 片单展开按钮（按钮行那个开关，不是 fieldset 里的勾选行）
+function playlistOpenBtn(): HTMLButtonElement | null {
+  return (
+    ([...document.querySelectorAll('button')].find(
+      (b) =>
+        b
+          .getAttributeNames()
+          .some(
+            (n) =>
+              n.startsWith('@click') &&
+              b.getAttribute(n) === 'togglePlaylist',
+          ) && !b.closest('fieldset'),
+    ) as HTMLButtonElement | undefined) ?? null
+  )
+}
+
 function findPanel(): HTMLElement | null {
   const box = document.querySelector('input[x-model="playlist.is_added"]')
   if (!box) return null
-  const panel = box.closest('div.mb-5')
-  return (panel as HTMLElement | null) ?? null
+  return (box.closest('div.mb-5') as HTMLElement | null) ?? null
 }
 
-// 右栏：hidden lg:flex 侧栏（推荐视频列表容器）。
-// 层级：右栏 > 左列(本面板当前父级 flex-1) 的父级 flex 下，与左列平级的前一个兄弟
+// 右栏：hidden lg:flex 侧栏（推荐视频列表容器），与左列平级。
+// 左列 flex-1 的定位改用片单按钮锚定（面板未渲染时它也可靠存在）
 function findSidebar(): HTMLElement | null {
-  const box = document.querySelector('input[x-model="playlist.is_added"]')
-  if (!box) return null
-  const panel = box.closest('div.mb-5')!
-  const leftCol = panel.parentElement // flex-1 order-first
+  const leftCol = playlistOpenBtn()?.closest('.flex-1')
   const flex = leftCol?.parentElement
   if (!flex) return null
-  const right = flex.querySelector(':scope > [class*="hidden"][class*="lg:flex"]')
-  return (right as HTMLElement | null) ?? null
+  return (
+    (flex.querySelector(
+      ':scope > [class*="hidden"][class*="lg:flex"]',
+    ) as HTMLElement | null) ?? null
+  )
 }
 
 // showPanel 状态宿主扫描：遍历 x-data 根找持有 showPanel 键的组件
@@ -66,36 +86,85 @@ export function playlistDock(): void {
     // 原生锚点：面板在左列中的原始位置（用 nextSibling 精确还原）
     let homeAnchor: ChildNode | null = null
     let docked = false
+    let slot: HTMLElement | null = null
+    let slotTimer: ReturnType<typeof setTimeout> | undefined
+
+    // 槽位：面板渲染前在右栏顶预留同尺寸空间防跳动；久等不渲染
+    //（未登录等）则撤掉，不留空洞
+    const reserveSlot = (): void => {
+      const sidebar = findSidebar()
+      if (!sidebar || slot?.isConnected) return
+      slot = document.createElement('div')
+      slot.className = 'mx-pl-dock-slot'
+      sidebar.insertBefore(slot, sidebar.firstChild)
+      clearTimeout(slotTimer)
+      slotTimer = setTimeout(() => {
+        slot?.remove()
+        slot = null
+      }, 8000)
+    }
+
+    const setBtnDisabled = (disabled: boolean): void => {
+      const btn = playlistOpenBtn()
+      if (!btn) return
+      btn.disabled = disabled
+      // :class 绑定会在 showPanel 变化时重写 className，
+      // 行内样式才能稳压高亮；disabled 挡掉点击事件
+      btn.style.color = disabled ? '#4c566a' : ''
+      btn.style.cursor = disabled ? 'not-allowed' : ''
+    }
 
     const dock = (): void => {
       const panel = findPanel()
       const sidebar = findSidebar()
-      if (!panel || !sidebar) return
-      if (docked) return
+      if (!panel || !sidebar || docked) return
       homeAnchor = panel.nextSibling
       sidebar.insertBefore(panel, sidebar.firstChild)
       docked = true
       // 面板容器在右栏时去掉底部留白，贴住推荐列表
       panel.classList.add('mx-pl-docked')
+      slot?.remove()
+      slot = null
+      clearTimeout(slotTimer)
+      setBtnDisabled(true)
     }
 
     const undock = (): void => {
       const panel = findPanel()
-      if (!panel) return
-      if (homeAnchor && homeAnchor.parentElement) {
+      setBtnDisabled(false)
+      if (panel && homeAnchor?.parentElement) {
         homeAnchor.parentElement.insertBefore(panel, homeAnchor)
       }
-      panel.classList.remove('mx-pl-docked')
+      panel?.classList.remove('mx-pl-docked')
       docked = false
       homeAnchor = null
+    }
+
+    // 面板渲染出来后搬运（冷启动由 expand 置位触发渲染）
+    let obs: MutationObserver | null = null
+    const watch = (): void => {
+      if (obs) return
+      obs = new MutationObserver(() => {
+        if (!findPanel()) return
+        obs?.disconnect()
+        obs = null
+        dock()
+      })
+      obs.observe(document.body, { childList: true, subtree: true })
+      setTimeout(() => {
+        obs?.disconnect()
+        obs = null
+      }, 20000)
     }
 
     const apply = (): void => {
       const alp = alpine()
       if (mq.matches) {
         // 宽屏：每次都先置状态（断点切回/宿主重渲染都可能复位），再搬运
+        reserveSlot()
         if (alp) expand(alp)
         dock()
+        watch()
       } else {
         undock()
       }
@@ -103,7 +172,7 @@ export function playlistDock(): void {
 
     mq.addEventListener('change', apply)
 
-    // 宽屏冷启动：Alpine 就绪后先置状态，面板渲染出来后 observer 负责搬运
+    // 宽屏冷启动：Alpine 就绪后置状态并占位，面板渲染后 observer 搬运
     const boot = async (): Promise<void> => {
       if (!mq.matches) return
       let alp: AlpineLike | undefined
@@ -112,14 +181,7 @@ export function playlistDock(): void {
         if (!alp) await new Promise((r) => setTimeout(r, 100))
       }
       if (!alp) return
-      expand(alp)
-      const obs = new MutationObserver(() => {
-        if (!findPanel()) return
-        obs.disconnect()
-        dock()
-      })
-      obs.observe(document.body, { childList: true, subtree: true })
-      setTimeout(() => obs.disconnect(), 20000)
+      apply()
     }
     boot()
   })
