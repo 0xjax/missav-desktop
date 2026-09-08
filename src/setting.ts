@@ -89,10 +89,26 @@ export function registerSettingMenu(): void {
   })
 }
 
-// 页内设置 icon：嵌在站点顶栏按钮组最右（国旗之后），与搜索/国旗同款风格。
+// 页内设置 icon：嵌在站点顶栏按钮组最右（语言图标之后），与搜索/语言同款风格。
 // 站点顶栏有两套响应式容器（小屏 div.xl:hidden / 大屏 nav.hidden.xl:flex），
 // 都要插入；锚点用 Alpine action 名定位（不含构建 hash，跨改版稳定）。
-const GEAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.53 1.53 0 0 1-2.28.95l-.09-.06a1.53 1.53 0 0 0-2.08.53l-.14.24a1.53 1.53 0 0 0 .4 2.03l.1.07c.87.63.87 1.94 0 2.57l-.1.07a1.53 1.53 0 0 0-.4 2.03l.14.24c.42.72 1.3.98 2.08.53l.09-.06c.85-.5 1.9-.06 2.27.88.22.56.76.94 1.36.94h.28c.6 0 1.14-.38 1.36-.94.37-.94 1.42-1.38 2.27-.88l.09.06c.78.45 1.66.19 2.08-.53l.14-.24a1.53 1.53 0 0 0-.4-2.03l-.1-.07a1.53 1.53 0 0 1 0-2.57l.1-.07a1.53 1.53 0 0 0 .4-2.03l-.14-.24a1.53 1.53 0 0 0-2.08-.53l-.09.06c-.85.5-1.9.06-2.27-.88a1.45 1.45 0 0 0-1.36-.94h-.28ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clip-rule="evenodd"/></svg>`
+// 顶栏四个图标统一为 heroicons v1 solid 20x20（站点搜索本就是该包的 search）：
+// 齿轮 cog（脚本新增）、语言 globe-alt（替换站点国旗 img）、汉堡 menu（替换小屏 24 outline）。
+// SVG 内容取自官方仓库 tailwindlabs/heroicons v1.0.6，fill 换 currentColor 随主题变色
+const svg = (inner: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-6 w-6">${inner}</svg>`
+
+const GEAR_SVG = svg(
+  `<path fill-rule="evenodd" clip-rule="evenodd" d="M11.4892 3.17094C11.1102 1.60969 8.8898 1.60969 8.51078 3.17094C8.26594 4.17949 7.11045 4.65811 6.22416 4.11809C4.85218 3.28212 3.28212 4.85218 4.11809 6.22416C4.65811 7.11045 4.17949 8.26593 3.17094 8.51078C1.60969 8.8898 1.60969 11.1102 3.17094 11.4892C4.17949 11.7341 4.65811 12.8896 4.11809 13.7758C3.28212 15.1478 4.85218 16.7179 6.22417 15.8819C7.11045 15.3419 8.26594 15.8205 8.51078 16.8291C8.8898 18.3903 11.1102 18.3903 11.4892 16.8291C11.7341 15.8205 12.8896 15.3419 13.7758 15.8819C15.1478 16.7179 16.7179 15.1478 15.8819 13.7758C15.3419 12.8896 15.8205 11.7341 16.8291 11.4892C18.3903 11.1102 18.3903 8.8898 16.8291 8.51078C15.8205 8.26593 15.3419 7.11045 15.8819 6.22416C16.7179 4.85218 15.1478 3.28212 13.7758 4.11809C12.8896 4.65811 11.7341 4.17949 11.4892 3.17094ZM10 13C11.6569 13 13 11.6569 13 10C13 8.34315 11.6569 7 10 7C8.34315 7 7 8.34315 7 10C7 11.6569 8.34315 13 10 13Z"/>`,
+)
+
+const GLOBE_SVG = svg(
+  `<path fill-rule="evenodd" clip-rule="evenodd" d="M4.08296 9H6.02863C6.11783 7.45361 6.41228 6.02907 6.86644 4.88228C5.41752 5.77135 4.37513 7.25848 4.08296 9ZM10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2ZM10 4C9.92395 4 9.76787 4.03173 9.5347 4.26184C9.29723 4.4962 9.03751 4.8849 8.79782 5.44417C8.40914 6.3511 8.12491 7.58559 8.03237 9H11.9676C11.8751 7.58559 11.5909 6.3511 11.2022 5.44417C10.2321 4.03173 10.076 4 10 4ZM13.9714 9C13.8822 7.45361 13.5877 6.02907 13.1336 4.88228C14.5825 5.77135 15.6249 7.25848 15.917 9H13.9714ZM11.9676 11H8.03237C8.12491 12.4144 8.40914 13.6489 8.79782 14.5558C9.03751 15.1151 9.29723 15.5038 9.5347 15.7382C9.76787 15.9683 9.92395 16 10 16C10.076 16 10.2321 15.9683 10.4653 15.7382C10.7028 15.5038 10.9625 15.1151 11.2022 14.5558C11.5909 13.6489 11.8751 12.4144 11.9676 11ZM13.1336 15.1177C13.5877 13.9709 13.8822 12.5464 13.9714 11H15.917C15.6249 12.7415 14.5825 14.2287 13.1336 15.1177ZM6.86644 15.1177C6.41228 13.9709 6.11783 12.5464 6.02863 11H4.08296C4.37513 12.7415 5.41752 14.2287 6.86644 15.1177Z"/>`,
+)
+
+const MENU_SVG = svg(
+  `<path fill-rule="evenodd" clip-rule="evenodd" d="M3 5C3 4.44772 3.44772 4 4 4H16C16.5523 4 17 4.44772 17 5C17 5.55228 16.5523 6 16 6H4C3.44772 6 3 5.55228 3 5Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M3 10C3 9.44772 3.44772 9 4 9H16C16.5523 9 17 9.44772 17 10C17 10.5523 16.5523 11 16 11H4C3.44772 11 3 10.5523 3 10Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M3 15C3 14.4477 3.44772 14 4 14H16C16.5523 14 17 14.4477 17 15C17 15.5523 16.5523 16 16 16H4C3.44772 16 3 15.5523 3 15Z"/>`,
+)
 
 function injectSettingIcon(container: Element): boolean {
   // 按钮组锚点：搜索 icon（Alpine action 名，全站稳定）。
@@ -123,6 +139,46 @@ function injectSettingIcon(container: Element): boolean {
   return true
 }
 
+// 站点图标统一化：语言切换（国旗 img → globe）、小屏汉堡（24 outline → solid menu）。
+// 只动外观不动行为：Alpine 绑定都在父级 a 上，替换的是 a 的子内容
+function unifyIcons(container: Element): boolean {
+  let touched = false
+  for (const a of container.querySelectorAll('a')) {
+    const actions = a.getAttributeNames()
+      .map((n) => a.getAttribute(n) || '')
+      .join(' ')
+    if (actions.includes('showLocaleSwitcher')) {
+      const img = a.querySelector('img')
+      if (img && !a.querySelector('[data-mx-icon]')) {
+        // 原国旗 img 自带颜色，a 无 class；换 svg 后需补上其他按钮同款的配色 class，
+        // 否则 currentColor 继承默认黑色（实测踩坑：globe 几乎不可见）
+        a.setAttribute(
+          'class',
+          'rounded-md text-nord6 hover:text-primary focus:outline-none',
+        )
+        const svgEl = Object.assign(document.createElement('span'), { innerHTML: GLOBE_SVG })
+        const node = svgEl.firstElementChild as Element
+        node.setAttribute('data-mx-icon', 'lang')
+        node.setAttribute('alt', img.getAttribute('alt') || '语言')
+        img.replaceWith(node)
+        touched = true
+      }
+    }
+    // 小屏汉堡（24 outline 三横线，只存在于 xl:hidden 容器）；NAV 大屏的下拉是菜单项 chevron，不动
+    if (actions.includes('showDropdown') && a.closest('[class*="xl:hidden"]')) {
+      const old = a.querySelector('svg')
+      if (old && !old.hasAttribute('data-mx-icon')) {
+        const wrap = Object.assign(document.createElement('span'), { innerHTML: MENU_SVG })
+        const node = wrap.firstElementChild as Element
+        node.setAttribute('data-mx-icon', 'menu')
+        old.replaceWith(node)
+        touched = true
+      }
+    }
+  }
+  return touched
+}
+
 // 两套容器分别注入；observer 不能在"任一套成功"时就断开——
 // 小屏套先渲染，若此时断开，大屏 NAV 套会永久缺失（实测踩坑）。
 // 两个容器都注入完成才断开；去重由 [data-setting-icon] 标记保证，重复触发无害
@@ -135,6 +191,7 @@ export function registerSettingIcon(): void {
       // observer 断开，大屏套永久缺失（实测踩坑两次：缺 NAV、缺 attributes 监听）
       if (!c) return false
       if (injectSettingIcon(c)) injected++
+      unifyIcons(c)
     }
     // 容器都未渲染时从共同父级兜底（组定位仍落在响应式容器内，标记防重）
     if (!injected) {
@@ -143,7 +200,6 @@ export function registerSettingIcon(): void {
     }
     return injected === containers.length
   }
-  if (injectAll()) return
   if (injectAll()) return
   // attributes 必须监听：NAV 套的 a 元素先入 DOM、@click 属性由 Alpine 之后补上，
   // 只看 childList 会在最后一突变更早前错过（实测踩坑：大屏 icon 永久缺失）
