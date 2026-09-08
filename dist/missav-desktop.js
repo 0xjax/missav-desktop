@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.13.1
+// @version      1.13.2
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -1017,6 +1017,9 @@
 		if (!item || !dvdId) return;
 		const target = !item.is_added;
 		item.is_added = target;
+		setTimeout(() => {
+			item.is_added = target;
+		}, 0);
 		apiFetch(`${location.origin}/api/playlists/${target ? "add" : "remove"}`, "POST", {
 			dvdId,
 			key: item.key
