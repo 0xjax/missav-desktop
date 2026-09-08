@@ -84,3 +84,25 @@ export function GM_registerMenuCommand(
     }
   }
 }
+
+/**
+ * 主世界 window 对象兜底。
+ *
+ * @grant 模式下脚本跑在 Tampermonkey 沙盒里，`window.open = ...` 只改
+ * 沙盒代理，站点主世界代码（如播放器 Alpine 的 pop()）调用的仍是原生
+ * window.open——沙盒劫持形同虚设。对站点行为的拦截必须落到 unsafeWindow。
+ */
+export function hijackMainWorld(
+  name: 'open',
+  replacement: (...args: unknown[]) => unknown,
+): void {
+  const w = (typeof unsafeWindow !== 'undefined'
+    ? unsafeWindow
+    : (globalThis as unknown)) as Record<string, unknown>
+  try {
+    w[name] = replacement
+  } catch {
+    // 个别管理器冻结 unsafeWindow：退而求其次劫持沙盒 window（聊胜于无）
+    ;(globalThis as Record<string, unknown>)[name] = replacement
+  }
+}

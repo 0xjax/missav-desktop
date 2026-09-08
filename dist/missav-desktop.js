@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.34.0
+// @version      1.35.0
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -63,6 +63,14 @@
 		if (fn) try {
 			fn(name, callback);
 		} catch {}
+	}
+	function hijackMainWorld(name, replacement) {
+		const w = typeof unsafeWindow !== "undefined" ? unsafeWindow : globalThis;
+		try {
+			w[name] = replacement;
+		} catch {
+			globalThis[name] = replacement;
+		}
 	}
 	function toast(msg) {
 		let box = document.getElementById("mx-toast-box");
@@ -787,10 +795,11 @@
 		});
 	}
 	function hijackWindowOpen() {
-		window.open = (...args) => {
+		const blocked = (...args) => {
 			console.warn("[missav-desktop] 已拦截 window.open:", args[0]);
 			return null;
 		};
+		hijackMainWorld("open", blocked);
 	}
 	function interceptAdClicks() {
 		document.addEventListener("click", (e) => {

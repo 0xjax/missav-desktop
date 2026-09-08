@@ -1,4 +1,5 @@
 import { waitDOMContentLoaded } from '../utils/wait.ts'
+import { hijackMainWorld } from '../utils/gm.ts'
 
 // 广告域名黑名单（比站点的 hash 类名稳定），漏广告时在此补充
 const AD_HOSTS = [
@@ -162,12 +163,15 @@ function observeAds(): void {
   observer.observe(document.body, { childList: true, subtree: true })
 }
 
-// 拦截 popunder：站点正常功能不依赖 window.open，全部拦掉并留痕
+// 拦截 popunder：站点正常功能不依赖 window.open，全部拦掉并留痕。
+// WARNING 必须劫持主世界（unsafeWindow）：@grant 沙盒模式下改沙盒
+// window.open 无效，播放器 Alpine 的 pop()（主世界）仍会弹广告新 tab
 function hijackWindowOpen(): void {
-  window.open = (...args: unknown[]) => {
+  const blocked = (...args: unknown[]) => {
     console.warn('[missav-desktop] 已拦截 window.open:', args[0])
     return null
   }
+  hijackMainWorld('open', blocked)
 }
 
 // 捕获阶段拦截指向广告域名的 target=_blank 点击劫持
