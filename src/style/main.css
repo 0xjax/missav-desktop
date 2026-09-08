@@ -358,16 +358,38 @@ fieldset.mx-pl-grid > a {
   opacity: 0.5;
 }
 
-/* 片单面板停靠右栏：收紧留白贴住推荐列表；300px 栏宽下单列排布。
+/* 片单面板停靠右栏：收紧留白；限高内部滚动（置顶排序保证目标片单
+   在前几行，无需全展开）；300px 栏宽下单列排布。
    WARNING 右栏原是 flex-row，面板搬入后主轴宽度会塌缩到 min-content
    （width/flex-basis 均无效，实测踩坑），必须改为 column 布局 */
 .mx-pl-docked {
-  margin-bottom: 0 !important;
   padding: 0.75rem !important;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
 }
 .mx-pl-docked fieldset.mx-pl-grid {
   grid-template-columns: minmax(0, 1fr);
 }
 :has(> .mx-pl-docked) {
   flex-direction: column !important;
+}
+
+/* 滚动条美化：全局与停靠片单面板，细轨 + 圆角滑块贴合暗色主题 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4c566a transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #4c566a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #5e81ac;
 }

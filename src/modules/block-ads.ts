@@ -107,10 +107,14 @@ function removeAdMenu(el: Element): void {
 }
 
 // 广告被删后残留的空占位壳：space-y/mb 间距容器，内容清空后仍留白
-// （页脚上方 250px 广告位、详情页侧栏首卡上方间距都是这种）。
-// 带 x-/@ 属性的是 Alpine 组件容器，可能稍后渲染，跳过防误伤
+// （页脚上方 250px 广告位是这种）。带 x-/@ 属性的是 Alpine 组件容器，
+// 可能稍后渲染，跳过防误伤。
+// NOTE 详情页侧栏顶部也是 space-y-6 mb-6 壳（包着 300×250 广告），
+// 但它是右栏首卡原生顶距的载体，删壳会吃掉间距（实测踩坑）——
+// 只在壳位于 body 直接子级（页脚广告壳的归属层）时才清，侧栏深层的保留
 function isEmptyAdWrapper(el: Element): boolean {
   if (el.tagName !== 'DIV') return false
+  if (el.parentElement !== document.body) return false
   const cls = (el.className || '').toString()
   if (!/\bspace-y-\d/.test(cls) || !/\bmb-\d/.test(cls)) return false
   if (el.children.length > 0 || el.textContent?.trim()) return false
