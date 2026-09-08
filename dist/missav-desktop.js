@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.36.5
+// @version      1.36.6
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -1140,9 +1140,36 @@
 		}
 		return null;
 	}
+	function domSavedState() {
+		const svg = [...document.querySelectorAll("button")].find((b) => alpineAction(b, "toggleSave"))?.querySelector("svg[x-show=\"saved\"]");
+		if (!svg) return null;
+		return getComputedStyle(svg).display !== "none";
+	}
+	function fallbackPlaylistSync(input) {
+		const before = input.checked;
+		const dvdId = dvdIdOf(input);
+		if (!dvdId) return;
+		setTimeout(() => {
+			if (input.checked === before) return;
+			applyChangeToLatestSnapshot(currentVideo(dvdId), input.checked, input.id);
+		}, 1500);
+	}
+	function fallbackSaveSync() {
+		const before = domSavedState();
+		if (before === null) return;
+		setTimeout(() => {
+			const after = domSavedState();
+			if (after === null || after === before) return;
+			const dvdId = dvdIdOf([...document.querySelectorAll("button")].find((b) => alpineAction(b, "toggleSave"))) ?? location.pathname.split("/").filter(Boolean).pop();
+			if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), after);
+		}, 1500);
+	}
 	function onSaveClick(e, btn) {
 		const alp = alpine$1();
-		if (!alp) return;
+		if (!alp) {
+			fallbackSaveSync();
+			return;
+		}
 		const data = alp.$data(btn);
 		const url = findSaveUrl(btn);
 		if (!data || !url) return;
@@ -1182,13 +1209,19 @@
 	}
 	function onPlaylistToggle(e, input) {
 		const alp = alpine$1();
-		if (!alp) return;
+		if (!alp) {
+			fallbackPlaylistSync(input);
+			return;
+		}
 		e.preventDefault();
 		e.stopImmediatePropagation();
 		const data = alp.$data(input);
 		const item = data.playlists?.find((p) => p.key === input.id);
 		const dvdId = dvdIdOf(input);
-		if (!item || !dvdId) return;
+		if (!item || !dvdId) {
+			if (dvdId) fallbackPlaylistSync(input);
+			return;
+		}
 		const target = !item.is_added;
 		item.is_added = target;
 		setTimeout(() => {

@@ -139,10 +139,53 @@ function findSaveUrl(btn: Element): string | null {
 
 // ---- 收藏/取消 ----
 
+// ---- 绕过路径的快照兜底：Alpine 接不了管时放行站点原生流程，
+// 延迟读 DOM 真实结果（checkbox checked / 收藏图标可见性），
+// 状态确实翻转才回写最新快照。登录框弹出、请求失败时状态不变，不会误记。
+
+function domSavedState(): boolean | null {
+  const btn = [...document.querySelectorAll('button')].find((b) =>
+    alpineAction(b, 'toggleSave'),
+  )
+  const svg = btn?.querySelector('svg[x-show="saved"]')
+  if (!svg) return null
+  return getComputedStyle(svg).display !== 'none'
+}
+
+function fallbackPlaylistSync(input: HTMLInputElement): void {
+  const before = input.checked
+  const dvdId = dvdIdOf(input)
+  if (!dvdId) return
+  // 原生流程：等请求发出、乐观 UI 翻转完成后再读；太早会读到旧值
+  setTimeout(() => {
+    if (input.checked === before) return
+    applyChangeToLatestSnapshot(currentVideo(dvdId), input.checked, input.id)
+  }, 1500)
+}
+
+function fallbackSaveSync(): void {
+  const before = domSavedState()
+  if (before === null) return
+  setTimeout(() => {
+    const after = domSavedState()
+    if (after === null || after === before) return
+    const dvdId =
+      dvdIdOf(
+        [...document.querySelectorAll('button')].find((b) =>
+          alpineAction(b, 'toggleSave'),
+        )!,
+      ) ?? location.pathname.split('/').filter(Boolean).pop()
+    if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), after)
+  }, 1500)
+}
+
 function onSaveClick(e: MouseEvent, btn: Element): void {
   const alp = alpine()
   // 接不了管（Alpine 读不到等）就不拦截：放行站点原生处理器，宁可不加速不能弄坏
-  if (!alp) return
+  if (!alp) {
+    fallbackSaveSync()
+    return
+  }
   const data = alp.$data(btn)
   const url = findSaveUrl(btn)
   if (!data || !url) return
@@ -199,7 +242,10 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
   // WARNING 必须先确认能接管再拦截：此前无条件 preventDefault +
   // stopImmediatePropagation 后才发现 Alpine 读不到，原生流程已被杀死，
   // 表现为"点片单没反应"（诊断日志定位的根因）
-  if (!alp) return
+  if (!alp) {
+    fallbackPlaylistSync(input)
+    return
+  }
   e.preventDefault()
   e.stopImmediatePropagation()
   // 面板组件数据含 playlists（x-model 绑定的项即 checkbox 状态来源）
@@ -207,7 +253,11 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
   const list = data.playlists as PlaylistItem[] | undefined
   const item = list?.find((p) => p.key === input.id)
   const dvdId = dvdIdOf(input)
-  if (!item || !dvdId) return
+  if (!item || !dvdId) {
+    // 数据侧接不了管仍放行原生，但快照兜底照走（不依赖 Alpine 数据）
+    if (dvdId) fallbackPlaylistSync(input)
+    return
+  }
   const target = !item.is_added
   item.is_added = target
   // 真实按压的激活序列：pre-click 翻转 checked，click 被我们取消后同步回滚，
