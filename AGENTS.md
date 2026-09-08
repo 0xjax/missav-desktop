@@ -17,3 +17,43 @@ missav 网站桌面端增强油猴脚本，vite + vite-plugin-monkey 构建。
 - 新增设置项 → `src/setting.ts` 的 `keyValues` 加键；功能代码用 `GM_getValue(key, default)` 读取
 - 样式在 `src/style/*.css`，在 `main.ts` 以副作用导入，由插件内联进产物并经 GM_addStyle 注入
 - 代码注释与提交信息用中文；提交信息遵循 Conventional Commits
+
+## Anti-Over-Engineering
+
+- Only make changes that are directly requested or clearly necessary
+- Don't add features, refactor code, or make improvements beyond what was asked
+- Be extra concise
+- State ambiguity explicitly; NEVER silently pick one interpretation over another
+- Surface tradeoffs and push back if a simpler approach exists
+- No abstractions for single-use code
+- No error handling for impossible scenarios
+- Don't "improve" adjacent code or formatting
+- Match existing style even if you'd do it differently
+
+## Comment Tags
+
+- `CRITICAL`: system-dangerous — errors/crashes/data-loss
+- `WARNING`: risks, edge cases, non-obvious side effects
+- `TODO`: incomplete work, tech debt
+- `NOTE`: non-obvious design decisions, counter-intuitive logic
+
+## Methodology
+
+- Small working increments over big-bang changes
+- Adapt approach when requirements shift; never force-fit a stale plan
+- After structural changes, update stale descriptions in AGENTS.md proactively
+- 语义变更（影响既有行为/入口）→ 先列受影响路径，用户确认后改
+
+## Tool Selection
+
+- **Grep** (default) over `rg`, `grep`, `findstr`, `Select-String`
+- **Glob** over `find`, `dir /s`, `Get-ChildItem -Recurse`
+- **Read** over `cat`, `type`, `Get-Content`, `head`, `tail`
+- **Edit** over `sed`, `awk`
+- **Write** over `echo >`, `Set-Content`, `Out-File`
+- **Bash** reserved for git, bun, and shell-only operations
+- Read/Edit long files in batches — NEVER load entire file at once
+
+## Type Checking
+
+- NEVER per-commit or mid-task
