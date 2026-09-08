@@ -12,6 +12,7 @@ import { fastSave } from './modules/fast-save.js'
 import { autoBackup } from './modules/backup-export.js'
 import { sources } from './modules/sources.js'
 import { playlistPanel } from './modules/playlist-panel.js'
+import { playlistDebug } from './modules/playlist-debug.js'
 ;(function () {
   if (window.top !== window.self) {
     return
@@ -34,4 +35,5 @@ import { playlistPanel } from './modules/playlist-panel.js'
   if (GM_getValue('auto-backup', true)) autoBackup()
   if (GM_getValue('sources', true)) sources()
   if (GM_getValue('playlist-panel', true)) playlistPanel()
+  playlistDebug() // WARNING 诊断版：1.35.1，定位片单偶发失效后移除
 })()
