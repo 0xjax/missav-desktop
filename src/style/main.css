@@ -8,6 +8,7 @@
   padding: 16px;
   background: #1e1e1e;
   color: #eee;
+  border: 1px solid #555;
   border-radius: 8px;
   box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
   font-size: 14px;
@@ -17,6 +18,24 @@
   margin-bottom: 12px;
   font-size: 16px;
   font-weight: bold;
+}
+
+/* 关闭按钮：取消操作不应触发保存重载，固定在标题行右上角 */
+#setting-panel .setting-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  border: none;
+  background: none;
+  color: #999;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+#setting-panel .setting-close:hover {
+  color: #fff;
 }
 
 #setting-panel .setting-checkboxes label {
@@ -62,6 +81,7 @@
   padding: 16px;
   background: #1e1e1e;
   color: #eee;
+  border: 1px solid #555;
   border-radius: 8px;
   box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
   font-size: 14px;

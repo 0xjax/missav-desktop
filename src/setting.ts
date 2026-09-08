@@ -31,6 +31,7 @@ function createSettingPanel(): HTMLElement {
     id: 'setting-panel',
     innerHTML: `
       <div class="setting-title">脚本设置</div>
+      <button class="setting-close" type="button" title="关闭（不保存）">×</button>
       <div class="setting-checkboxes">
         ${Object.entries(keyValues)
           .map(
@@ -58,6 +59,10 @@ function createSettingPanel(): HTMLElement {
 
   panel.querySelector('#setting-export')?.addEventListener('click', () => {
     exportBackup()
+  })
+
+  panel.querySelector('.setting-close')?.addEventListener('click', () => {
+    panel.remove()
   })
 
   panel.querySelector('#setting-save')?.addEventListener('click', () => {
