@@ -1,6 +1,13 @@
 import { GM_getValue, GM_setValue, GM_registerMenuCommand } from './utils/gm.ts'
+import { toast } from './utils/toast.ts'
 import { waitDOMContentLoaded } from './utils/wait.ts'
-import { exportBackup } from './modules/backup-export.ts'
+import {
+  backupNow,
+  downloadSnapshot,
+  readSnapshots,
+  snapshotStat,
+  fmtTs,
+} from './modules/backup-export.ts'
 
 // 新增设置项：在 keyValues 加键（键名即存储 key，值为面板显示文案）
 const keyValues: Record<string, string> = {
@@ -32,21 +39,24 @@ function createSettingPanel(): HTMLElement {
   const panel = Object.assign(document.createElement('div'), {
     id: 'setting-panel',
     innerHTML: `
-      <div class="setting-title">脚本设置</div>
-      <button class="setting-close" type="button" title="关闭（不保存）">×</button>
-      <div class="setting-checkboxes">
-        ${Object.entries(keyValues)
-          .map(
-            ([key, label]) => `
-          <label><input type="checkbox" data-key="${key}"><span>${label}</span></label>
-        `,
-          )
-          .join('')}
+      <div id="setting-view">
+        <div class="setting-title">脚本设置</div>
+        <div class="setting-checkboxes">
+          ${Object.entries(keyValues)
+            .map(
+              ([key, label]) => `
+            <label><input type="checkbox" data-key="${key}"><span>${label}</span></label>
+          `,
+            )
+            .join('')}
+        </div>
+        <div class="setting-actions dialog-footer">
+          <button class="dialog-cancel" type="button">取消</button>
+          <button id="setting-export" type="button">导出备份</button>
+          <button id="setting-save" type="button">保存</button>
+        </div>
       </div>
-      <div class="setting-actions">
-        <button id="setting-export" type="button">导出备份</button>
-        <button id="setting-save" type="button">保存</button>
-      </div>
+      <div id="backup-view" style="display: none"></div>
     `,
   })
 
@@ -59,12 +69,12 @@ function createSettingPanel(): HTMLElement {
     checkbox.checked = GM_getValue(key, keyDefaults[key] ?? false)
   })
 
-  panel.querySelector('#setting-export')?.addEventListener('click', () => {
-    exportBackup()
+  panel.querySelector('.dialog-cancel')?.addEventListener('click', () => {
+    panel.remove()
   })
 
-  panel.querySelector('.setting-close')?.addEventListener('click', () => {
-    panel.remove()
+  panel.querySelector('#setting-export')?.addEventListener('click', () => {
+    showBackupView(panel)
   })
 
   panel.querySelector('#setting-save')?.addEventListener('click', () => {
@@ -78,6 +88,73 @@ function createSettingPanel(): HTMLElement {
   })
 
   return panel
+}
+
+// 备份子视图：在同一弹窗内导航层级切换（设置 → 备份 → 返回），
+// 替代原先两个独立弹窗的割裂感
+function showBackupView(panel: HTMLElement): void {
+  const backupView = panel.querySelector('#backup-view') as HTMLElement
+  const settingView = panel.querySelector('#setting-view') as HTMLElement
+  if (!backupView || backupView.style.display !== 'none') return
+  const render = (): HTMLElement => {
+    const snapshots = readSnapshots()
+    const view = Object.assign(document.createElement('div'), {
+      innerHTML: `
+        <div class="dialog-header">
+          <button class="dialog-back" type="button">← 返回</button>
+          <span class="setting-title">导出备份</span>
+        </div>
+        <div class="backup-hint">立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载</div>
+        <div class="setting-actions backup-latest">
+          <button id="backup-latest-btn" type="button">立即备份</button>
+        </div>
+        ${
+          // 固定渲染 5 个槽位，高度恒定
+          `<div class="backup-list">${[0, 1, 2, 3, 4]
+            .map((i) => {
+              const s = snapshots[i]
+              if (!s)
+                return '<div class="backup-row backup-empty"><span>（空槽位，等待自动备份）</span></div>'
+              return `
+              <div class="backup-row">
+                <span>${fmtTs(s.ts)}<br>${snapshotStat(s)}</span>
+                <button type="button" data-i="${i}">下载</button>
+              </div>`
+            })
+            .join('')}</div>`
+        }
+        <div class="setting-actions dialog-footer">
+          <button class="dialog-cancel" type="button">取消</button>
+        </div>
+      `,
+    })
+    view.querySelector('.dialog-back')?.addEventListener('click', () => {
+      view.style.display = 'none'
+      backupView.style.display = 'none'
+      settingView.style.display = ''
+    })
+    view.querySelector('.dialog-cancel')?.addEventListener('click', () => {
+      panel.remove()
+    })
+    view.querySelector('#backup-latest-btn')?.addEventListener('click', () => {
+      panel.remove()
+      backupNow()
+    })
+    view.querySelectorAll<HTMLButtonElement>('.backup-row button').forEach((b) => {
+      b.addEventListener('click', () => {
+        const s = readSnapshots()[Number(b.dataset.i)]
+        if (s) {
+          downloadSnapshot(s)
+          toast('已导出历史备份')
+        }
+        panel.remove()
+      })
+    })
+    return view
+  }
+  settingView.style.display = 'none'
+  backupView.style.display = ''
+  backupView.replaceChildren(render())
 }
 
 export function toggleSettingPanel(): void {

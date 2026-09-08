@@ -1,10 +1,12 @@
+/* 统一弹窗框架：设置主视图与备份子视图共用，同一尺寸同一布局 */
 #setting-panel {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 99999;
-  min-width: 260px;
+  width: 420px;
+  max-width: calc(100vw - 32px);
   padding: 16px;
   background: #1e1e1e;
   color: #eee;
@@ -14,28 +16,48 @@
   font-size: 14px;
 }
 
+/* 备份子视图头部：← 返回 + 标题 */
+#setting-panel .dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+#setting-panel .dialog-header .setting-title {
+  margin-bottom: 0;
+}
+
+#setting-panel .dialog-back {
+  padding: 2px 10px;
+  border: none;
+  border-radius: 4px;
+  background: #444;
+  color: #ccc;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#setting-panel .dialog-back:hover {
+  background: #555;
+  color: #fff;
+}
+
+/* 底部按钮行：取消固定左下角（退出不触发保存），主动作靠右 */
+#setting-panel .dialog-footer {
+  display: flex;
+  gap: 8px;
+}
+
+#setting-panel .dialog-footer .dialog-cancel {
+  margin-right: auto;
+  background: #444;
+}
+
 #setting-panel .setting-title {
   margin-bottom: 12px;
   font-size: 16px;
   font-weight: bold;
-}
-
-/* 关闭按钮：取消操作不应触发保存重载，固定在标题行右上角 */
-#setting-panel .setting-close {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  border: none;
-  background: none;
-  color: #999;
-  font-size: 18px;
-  line-height: 1;
-  padding: 2px 6px;
-  cursor: pointer;
-}
-
-#setting-panel .setting-close:hover {
-  color: #fff;
 }
 
 #setting-panel .setting-checkboxes label {
@@ -70,40 +92,18 @@
   cursor: default;
 }
 
-/* 备份选择面板，复用设置面板风格 */
-#backup-panel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 99999;
-  min-width: 300px;
-  padding: 16px;
-  background: #1e1e1e;
-  color: #eee;
-  border: 1px solid #555;
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
-  font-size: 14px;
-}
-
-#backup-panel .setting-title {
-  margin-bottom: 8px;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-#backup-panel .backup-hint {
+/* 备份子视图内容（在 #setting-panel 内） */
+#setting-panel .backup-hint {
   margin-bottom: 10px;
   color: #999;
   font-size: 12px;
 }
 
-#backup-panel .backup-list {
+#setting-panel .backup-list {
   margin: 10px 0;
 }
 
-#backup-panel .backup-row {
+#setting-panel .backup-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -114,25 +114,11 @@
   line-height: 1.5;
 }
 
-#backup-panel .backup-empty {
+#setting-panel .backup-empty {
   color: #555;
 }
 
-#backup-panel button {
-  padding: 4px 16px;
-  border: none;
-  border-radius: 4px;
-  background: #f06292;
-  color: #fff;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-#backup-panel #backup-close {
-  background: #444;
-}
-
-#backup-panel .backup-latest {
+#setting-panel .backup-latest {
   text-align: left;
 }
 

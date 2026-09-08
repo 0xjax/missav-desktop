@@ -139,7 +139,9 @@ const SNAPSHOTS_KEY = 'backup-snapshots'
 const LAST_BACKUP_KEY = 'last-backup-ts'
 const MAX_SNAPSHOTS = 5
 
-function readSnapshots(): Snapshot[] {
+// 以下快照读取/格式化/下载函数供设置面板的备份子视图（setting.ts）使用
+
+export function readSnapshots(): Snapshot[] {
   return GM_getValue<Snapshot[]>(SNAPSHOTS_KEY, [])
 }
 
@@ -149,13 +151,13 @@ function localDay(ts: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-function fmtTs(ts: number): string {
+export function fmtTs(ts: number): string {
   const d = new Date(ts)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function snapshotStat(s: Snapshot): string {
+export function snapshotStat(s: Snapshot): string {
   const videos = s.playlists.reduce((n, p) => n + p.videos.length, 0)
   return `收藏 ${s.saved.length} 部 · 片单 ${s.playlists.length} 个 / 共 ${videos} 部`
 }
@@ -225,7 +227,7 @@ async function runBackup(): Promise<void> {
   }
 }
 
-function downloadSnapshot(s: Snapshot): void {
+export function downloadSnapshot(s: Snapshot): void {
   const d = new Date(s.ts)
   const pad = (n: number) => String(n).padStart(2, '0')
   const localDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -250,7 +252,12 @@ async function crawlAll(): Promise<{
   return { saved, playlists }
 }
 
-async function backupNow(): Promise<void> {
+// ---- 导出备份选择面板已移至设置弹窗的备份子视图（setting.ts） ----
+
+// 导出备份选择面板已移至设置弹窗的备份子视图（setting.ts）；
+// backupNow 供其"立即备份"按钮调用
+
+export async function backupNow(): Promise<void> {
   if (exporting) {
     toast('备份进行中，请稍候')
     return
@@ -272,60 +279,6 @@ async function backupNow(): Promise<void> {
   } finally {
     exporting = false
   }
-}
-
-// ---- 导出备份选择面板 ----
-
-export function exportBackup(): void {
-  if (document.getElementById('backup-panel')) return
-  const snapshots = readSnapshots()
-  const panel = Object.assign(document.createElement('div'), {
-    id: 'backup-panel',
-    innerHTML: `
-      <div class="setting-title">导出备份</div>
-      <div class="backup-hint">立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载</div>
-      <div class="setting-actions backup-latest">
-        <button id="backup-latest-btn" type="button">立即备份</button>
-      </div>
-      ${
-        // 固定渲染 5 个槽位，高度恒定
-        `<div class="backup-list">${[0, 1, 2, 3, 4]
-          .map((i) => {
-            const s = snapshots[i]
-            if (!s)
-              return '<div class="backup-row backup-empty"><span>（空槽位，等待自动备份）</span></div>'
-            return `
-            <div class="backup-row">
-              <span>${fmtTs(s.ts)}<br>${snapshotStat(s)}</span>
-              <button type="button" data-i="${i}">下载</button>
-            </div>`
-          })
-          .join('')}</div>`
-      }
-      <div class="setting-actions">
-        <button id="backup-close" type="button">关闭</button>
-      </div>
-    `,
-  })
-  document.body.appendChild(panel)
-
-  panel.querySelector('#backup-latest-btn')?.addEventListener('click', () => {
-    panel.remove()
-    backupNow()
-  })
-  panel.querySelector('#backup-close')?.addEventListener('click', () => {
-    panel.remove()
-  })
-  panel.querySelectorAll<HTMLButtonElement>('.backup-row button').forEach((b) => {
-    b.addEventListener('click', () => {
-      const s = readSnapshots()[Number(b.dataset.i)]
-      if (s) {
-        downloadSnapshot(s)
-        toast('已导出历史备份')
-      }
-      panel.remove()
-    })
-  })
 }
 
 // ---- 自动备份：距上次超过 3 天则在打开页面时自动导出 ----
