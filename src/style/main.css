@@ -309,12 +309,12 @@
 
 .mx-toast {
   padding: 8px 20px;
-  background: #1e1e1e;
-  color: #eee;
+  background: #2e3440;
+  color: #e5e9f0;
+  border: 1px solid #4c566a;
   border-radius: 6px;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 60%);
   font-size: 14px;
-  opacity: 0.95;
   transition: opacity 0.4s;
 }
 
