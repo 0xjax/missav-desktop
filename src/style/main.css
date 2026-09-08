@@ -296,7 +296,7 @@
 /* 收藏/片单操作反馈 toast：垂直堆叠，互不遮挡 */
 #mx-toast-box {
   position: fixed;
-  bottom: 32px;
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 99999;
