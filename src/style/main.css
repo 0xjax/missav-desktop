@@ -221,6 +221,11 @@
   opacity: 0;
 }
 
+/* 常驻状态条（备份抓取进度）：不自动消失，指针穿透同普通 toast */
+.mx-toast-sticky {
+  border-left: 3px solid #e8a0bf;
+}
+
 /* 去广告：document-start 阶段先行隐藏已知广告容器防闪烁，JS 层随后移除 */
 div:has(> iframe[src*="mayzaent"]),
 div:has(> iframe[src*="rallytrck"]) {

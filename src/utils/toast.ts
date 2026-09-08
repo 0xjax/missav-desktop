@@ -32,6 +32,25 @@ export function toastBroadcast(msg: string): void {
   )
 }
 
+// 常驻状态条：长耗时流程（备份抓取）期间显示进度，不会 2 秒自动消失；
+// 更新调用覆盖文本，结束/失败时由调用方显式 hideSticky() 移除
+export function stickyToast(id: string, msg?: string): void {
+  let el = document.getElementById(id)
+  if (!el) {
+    if (msg === undefined) return
+    let box = document.getElementById('mx-toast-box')
+    if (!box) {
+      box = Object.assign(document.createElement('div'), { id: 'mx-toast-box' })
+      document.body.appendChild(box)
+    }
+    el = Object.assign(document.createElement('div'), { id })
+    el.className = 'mx-toast mx-toast-sticky'
+    box.appendChild(el)
+  }
+  if (msg === undefined) el.remove()
+  else el.textContent = msg
+}
+
 export function listenToastChannel(): void {
   window.addEventListener('storage', (e) => {
     if (e.key !== TOAST_CHANNEL || !e.newValue) return

@@ -1,6 +1,6 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
-import { toast } from '../utils/toast.ts'
+import { stickyToast, toast } from '../utils/toast.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { setPlaylistCounts } from './playlist-panel.ts'
 
@@ -26,11 +26,19 @@ let exporting = false
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+// Cloudflare 防爬会在连续翻页中随机插入 403（实测单次请求即触发、与具体页面无关），
+// 不是封禁：稍候重试同一 URL 即可通过。指数退避重试 4 次，全部失败才放弃本次备份。
 async function fetchDoc(url: string): Promise<Document> {
-  const res = await fetch(url, { credentials: 'include' })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const html = await res.text()
-  return new DOMParser().parseFromString(html, 'text/html')
+  const delays = [2000, 5000, 10000, 20000]
+  let lastStatus = 0
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    if (attempt > 0) await sleep(delays[attempt - 1])
+    const res = await fetch(url, { credentials: 'include' })
+    if (res.ok) return new DOMParser().parseFromString(await res.text(), 'text/html')
+    lastStatus = res.status
+    if (res.status !== 403) break // 403 之外的错误重试无意义
+  }
+  throw new Error(`HTTP ${lastStatus}（重试后仍被拒绝）`)
 }
 
 // 视频卡片：.thumbnail 内的 a（href 为视频页，alt 为番号，img alt 为标题）
@@ -53,11 +61,14 @@ function parseVideos(doc: Document): VideoItem[] {
   return items
 }
 
+const STICKY_ID = 'mx-backup-sticky'
+
 // 顺序翻页抓取，某页没有新条目时结束（100 页兜底）
-async function crawlVideos(baseUrl: string): Promise<VideoItem[]> {
+async function crawlVideos(baseUrl: string, label: string): Promise<VideoItem[]> {
   const all: VideoItem[] = []
   const seen = new Set<string>()
   for (let page = 1; page <= 100; page++) {
+    stickyToast(STICKY_ID, `${label}：第 ${page} 页（已抓 ${all.length} 条）`)
     const doc = await fetchDoc(`${baseUrl}?page=${page}`)
     const fresh = parseVideos(doc).filter((i) => !seen.has(i.id))
     fresh.forEach((i) => {
@@ -74,6 +85,7 @@ async function crawlPlaylists(lang: string): Promise<PlaylistData[]> {
   // 片单列表本身也分页（12 个/页），某页没有新片单时结束（20 页兜底）
   const map = new Map<string, { name: string; url: string }>()
   for (let page = 1; page <= 20; page++) {
+    stickyToast(STICKY_ID, `备份片单列表：第 ${page} 页`)
     const doc = await fetchDoc(`${location.origin}/${lang}/playlists?page=${page}`)
     const before = map.size
     doc.querySelectorAll('a[href*="/playlists/"]').forEach((a) => {
@@ -90,9 +102,14 @@ async function crawlPlaylists(lang: string): Promise<PlaylistData[]> {
     await sleep(400)
   }
   const playlists: PlaylistData[] = []
+  let i = 0
   for (const [key, { name, url }] of map) {
-    toast(`导出片单：${name}`)
-    playlists.push({ key, name, videos: await crawlVideos(url) })
+    i++
+    playlists.push({
+      key,
+      name,
+      videos: await crawlVideos(url, `片单 ${i}/${map.size}「${name}」`),
+    })
     await sleep(400)
   }
   return playlists
@@ -198,7 +215,11 @@ async function runBackup(): Promise<void> {
     const snap: Snapshot = { ts: Date.now(), saved, playlists }
     saveSnapshot(snap)
     downloadSnapshot(snap)
+    stickyToast(STICKY_ID) // 移除常驻进度条
     toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`)
+  } catch (err) {
+    stickyToast(STICKY_ID)
+    throw err
   } finally {
     window.removeEventListener('beforeunload', preventUnload)
   }
@@ -223,9 +244,8 @@ async function crawlAll(): Promise<{
   playlists: PlaylistData[]
 }> {
   const lang = currentLang() ?? 'cn'
-  toast('备份收藏中…')
-  const saved = await crawlVideos(`${location.origin}/${lang}/saved`)
-  toast(`收藏 ${saved.length} 部，备份片单中…`)
+  const saved = await crawlVideos(`${location.origin}/${lang}/saved`, '备份收藏')
+  stickyToast(STICKY_ID, `收藏 ${saved.length} 部，开始备份片单`)
   const playlists = await crawlPlaylists(lang)
   return { saved, playlists }
 }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/jk278/missav-desktop
-// @version      1.13.3
+// @version      1.14.0
 // @author       jk278
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#backup-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:300px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#backup-panel .setting-title{margin-bottom:8px;font-size:16px;font-weight:700}#backup-panel .backup-hint{color:#999;margin-bottom:10px;font-size:12px}#backup-panel .backup-list{margin:10px 0}#backup-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;font-size:13px;line-height:1.5;display:flex}#backup-panel .backup-empty{color:#555}#backup-panel button{color:#fff;cursor:pointer;white-space:nowrap;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#backup-panel #backup-close{background:#444}#backup-panel .backup-latest{text-align:left}.mx-sources{justify-content:center;align-items:center;gap:8px;margin-top:8px;font-size:12px;display:flex}.mx-sources-label{color:#d8dee9;opacity:.6}.mx-src{color:#e5e9f0;opacity:.65;border-radius:8px;padding:4px 8px;text-decoration:none;transition:opacity .15s}.mx-src:hover{opacity:1}.mx-src.current{opacity:1;cursor:default;outline:1px solid #88c0d0}.mx-loading{opacity:.4;background:0 0}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>hr,fieldset.mx-pl-grid>a{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:260px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-title{margin-bottom:12px;font-size:16px;font-weight:700}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:8px;padding:4px 0;display:flex}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#backup-panel{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:300px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#backup-panel .setting-title{margin-bottom:8px;font-size:16px;font-weight:700}#backup-panel .backup-hint{color:#999;margin-bottom:10px;font-size:12px}#backup-panel .backup-list{margin:10px 0}#backup-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;font-size:13px;line-height:1.5;display:flex}#backup-panel .backup-empty{color:#555}#backup-panel button{color:#fff;cursor:pointer;white-space:nowrap;background:#f06292;border:none;border-radius:4px;padding:4px 16px}#backup-panel #backup-close{background:#444}#backup-panel .backup-latest{text-align:left}.mx-sources{justify-content:center;align-items:center;gap:8px;margin-top:8px;font-size:12px;display:flex}.mx-sources-label{color:#d8dee9;opacity:.6}.mx-src{color:#e5e9f0;opacity:.65;border-radius:8px;padding:4px 8px;text-decoration:none;transition:opacity .15s}.mx-src:hover{opacity:1}.mx-src.current{opacity:1;cursor:default;outline:1px solid #88c0d0}.mx-loading{opacity:.4;background:0 0}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;bottom:32px;left:50%;transform:translate(-50%)}.mx-toast{color:#eee;opacity:.95;background:#1e1e1e;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0006}.mx-toast-out{opacity:0}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>hr,fieldset.mx-pl-grid>a{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -98,6 +98,22 @@
 			text: msg,
 			ts: lastToastTs
 		}));
+	}
+	function stickyToast(id, msg) {
+		let el = document.getElementById(id);
+		if (!el) {
+			if (msg === void 0) return;
+			let box = document.getElementById("mx-toast-box");
+			if (!box) {
+				box = Object.assign(document.createElement("div"), { id: "mx-toast-box" });
+				document.body.appendChild(box);
+			}
+			el = Object.assign(document.createElement("div"), { id });
+			el.className = "mx-toast mx-toast-sticky";
+			box.appendChild(el);
+		}
+		if (msg === void 0) el.remove();
+		else el.textContent = msg;
 	}
 	function listenToastChannel() {
 		window.addEventListener("storage", (e) => {
@@ -193,10 +209,21 @@
 	var exporting = false;
 	var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 	async function fetchDoc(url) {
-		const res = await fetch(url, { credentials: "include" });
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		const html = await res.text();
-		return new DOMParser().parseFromString(html, "text/html");
+		const delays = [
+			2e3,
+			5e3,
+			1e4,
+			2e4
+		];
+		let lastStatus = 0;
+		for (let attempt = 0; attempt <= delays.length; attempt++) {
+			if (attempt > 0) await sleep(delays[attempt - 1]);
+			const res = await fetch(url, { credentials: "include" });
+			if (res.ok) return new DOMParser().parseFromString(await res.text(), "text/html");
+			lastStatus = res.status;
+			if (res.status !== 403) break;
+		}
+		throw new Error(`HTTP ${lastStatus}（重试后仍被拒绝）`);
 	}
 	function parseVideos(doc) {
 		const items = [];
@@ -217,10 +244,12 @@
 		});
 		return items;
 	}
-	async function crawlVideos(baseUrl) {
+	var STICKY_ID = "mx-backup-sticky";
+	async function crawlVideos(baseUrl, label) {
 		const all = [];
 		const seen = new Set();
 		for (let page = 1; page <= 100; page++) {
+			stickyToast(STICKY_ID, `${label}：第 ${page} 页（已抓 ${all.length} 条）`);
 			const fresh = parseVideos(await fetchDoc(`${baseUrl}?page=${page}`)).filter((i) => !seen.has(i.id));
 			fresh.forEach((i) => {
 				seen.add(i.id);
@@ -234,6 +263,7 @@
 	async function crawlPlaylists(lang) {
 		const map = new Map();
 		for (let page = 1; page <= 20; page++) {
+			stickyToast(STICKY_ID, `备份片单列表：第 ${page} 页`);
 			const doc = await fetchDoc(`${location.origin}/${lang}/playlists?page=${page}`);
 			const before = map.size;
 			doc.querySelectorAll("a[href*=\"/playlists/\"]").forEach((a) => {
@@ -249,12 +279,13 @@
 			await sleep(400);
 		}
 		const playlists = [];
+		let i = 0;
 		for (const [key, { name, url }] of map) {
-			toast(`导出片单：${name}`);
+			i++;
 			playlists.push({
 				key,
 				name,
-				videos: await crawlVideos(url)
+				videos: await crawlVideos(url, `片单 ${i}/${map.size}「${name}」`)
 			});
 			await sleep(400);
 		}
@@ -330,7 +361,11 @@
 			};
 			saveSnapshot(snap);
 			downloadSnapshot(snap);
+			stickyToast(STICKY_ID);
 			toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`);
+		} catch (err) {
+			stickyToast(STICKY_ID);
+			throw err;
 		} finally {
 			window.removeEventListener("beforeunload", preventUnload);
 		}
@@ -347,9 +382,8 @@
 	}
 	async function crawlAll() {
 		const lang = currentLang() ?? "cn";
-		toast("备份收藏中…");
-		const saved = await crawlVideos(`${location.origin}/${lang}/saved`);
-		toast(`收藏 ${saved.length} 部，备份片单中…`);
+		const saved = await crawlVideos(`${location.origin}/${lang}/saved`, "备份收藏");
+		stickyToast(STICKY_ID, `收藏 ${saved.length} 部，开始备份片单`);
 		return {
 			saved,
 			playlists: await crawlPlaylists(lang)
