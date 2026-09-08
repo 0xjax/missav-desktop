@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.36.4
+// @version      1.36.5
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -1434,20 +1434,26 @@
 		if (!flex) return null;
 		return flex.querySelector(":scope > [class*=\"hidden\"][class*=\"lg:flex\"]") ?? null;
 	}
+	function expand(alp) {
+		for (const el of document.querySelectorAll("[x-data]")) {
+			let d;
+			try {
+				d = alp.$data(el);
+			} catch {
+				continue;
+			}
+			if (d && "showPanel" in d) {
+				d.showPanel = "playlist";
+				return true;
+			}
+		}
+		return false;
+	}
 	function playlistDock() {
 		waitDOMContentLoaded(() => {
 			const mq = window.matchMedia(LG_QUERY);
 			let homeAnchor = null;
 			let docked = false;
-			const expand = () => {
-				const alp = alpine();
-				const panel = findPanel();
-				if (!alp || !panel) return false;
-				const data = alp.$data(panel);
-				if (typeof data?.showPanel !== "string") return false;
-				data.showPanel = "playlist";
-				return true;
-			};
 			const dock = () => {
 				const panel = findPanel();
 				const sidebar = findSidebar();
@@ -1457,7 +1463,6 @@
 				sidebar.insertBefore(panel, sidebar.firstChild);
 				docked = true;
 				panel.classList.add("mx-pl-docked");
-				expand();
 			};
 			const undock = () => {
 				const panel = findPanel();
@@ -1468,20 +1473,34 @@
 				homeAnchor = null;
 			};
 			const apply = () => {
-				if (mq.matches) dock();
-				else undock();
+				const alp = alpine();
+				if (mq.matches) {
+					if (alp) expand(alp);
+					dock();
+				} else undock();
 			};
-			const obs = new MutationObserver(() => {
-				if (!findPanel()) return;
-				obs.disconnect();
-				apply();
-				mq.addEventListener("change", apply);
-			});
-			obs.observe(document.body, {
-				childList: true,
-				subtree: true
-			});
-			setTimeout(() => obs.disconnect(), 2e4);
+			mq.addEventListener("change", apply);
+			const boot = async () => {
+				if (!mq.matches) return;
+				let alp;
+				for (let i = 0; i < 100 && !alp; i++) {
+					alp = alpine();
+					if (!alp) await new Promise((r) => setTimeout(r, 100));
+				}
+				if (!alp) return;
+				expand(alp);
+				const obs = new MutationObserver(() => {
+					if (!findPanel()) return;
+					obs.disconnect();
+					dock();
+				});
+				obs.observe(document.body, {
+					childList: true,
+					subtree: true
+				});
+				setTimeout(() => obs.disconnect(), 2e4);
+			};
+			boot();
 		});
 	}
 	(function() {

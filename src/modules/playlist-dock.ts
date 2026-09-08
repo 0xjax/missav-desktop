@@ -5,6 +5,10 @@ import { waitDOMContentLoaded } from '../utils/wait.ts'
 // 整体移入右侧栏推荐列表上方并自动展开；窄屏移回左列原位置，行为同原生。
 // 面板是站点 Alpine 组件（x-show="showPanel === 'playlist'"），容器级搬运
 // 不触碰 x-for 行节点，Alpine 状态天然保留。
+//
+// 面板 DOM 是懒渲染的：刷新后 showPanel 为 null，面板根本不会渲染。
+// 所以展开必须「状态先行」——showPanel 的宿主是左列 div.flex 这个 Alpine
+// 根（始终存在），先把它置为 'playlist'，面板渲染出来后再搬运进右栏。
 
 interface AlpineLike {
   $data: (el: Element) => Record<string, unknown>
@@ -38,24 +42,30 @@ function findSidebar(): HTMLElement | null {
   return (right as HTMLElement | null) ?? null
 }
 
+// showPanel 状态宿主扫描：遍历 x-data 根找持有 showPanel 键的组件
+// （面板未渲染时无法从面板向上找，只能全量扫；宿主唯一，扫到即用）
+function expand(alp: AlpineLike): boolean {
+  for (const el of document.querySelectorAll('[x-data]')) {
+    let d: Record<string, unknown> | undefined
+    try {
+      d = alp.$data(el)
+    } catch {
+      continue
+    }
+    if (d && 'showPanel' in d) {
+      d.showPanel = 'playlist'
+      return true
+    }
+  }
+  return false
+}
+
 export function playlistDock(): void {
   waitDOMContentLoaded(() => {
     const mq = window.matchMedia(LG_QUERY)
     // 原生锚点：面板在左列中的原始位置（用 nextSibling 精确还原）
     let homeAnchor: ChildNode | null = null
     let docked = false
-
-    const expand = (): boolean => {
-      const alp = alpine()
-      const panel = findPanel()
-      // 接不到 Alpine 就不展开：宁可不增强，不弄坏
-      if (!alp || !panel) return false
-      const data = alp.$data(panel)
-      const showPanel = data?.showPanel
-      if (typeof showPanel !== 'string') return false
-      data.showPanel = 'playlist'
-      return true
-    }
 
     const dock = (): void => {
       const panel = findPanel()
@@ -67,7 +77,6 @@ export function playlistDock(): void {
       docked = true
       // 面板容器在右栏时去掉底部留白，贴住推荐列表
       panel.classList.add('mx-pl-docked')
-      expand()
     }
 
     const undock = (): void => {
@@ -82,19 +91,36 @@ export function playlistDock(): void {
     }
 
     const apply = (): void => {
-      if (mq.matches) dock()
-      else undock()
+      const alp = alpine()
+      if (mq.matches) {
+        // 宽屏：每次都先置状态（断点切回/宿主重渲染都可能复位），再搬运
+        if (alp) expand(alp)
+        dock()
+      } else {
+        undock()
+      }
     }
 
-    // 面板 DOM 是懒渲染的（打开过一次才出现）：observer 等它出现，
-    // 出现后断点在宽屏就搬运；之后监听断点变化跟随窗口
-    const obs = new MutationObserver(() => {
-      if (!findPanel()) return
-      obs.disconnect()
-      apply()
-      mq.addEventListener('change', apply)
-    })
-    obs.observe(document.body, { childList: true, subtree: true })
-    setTimeout(() => obs.disconnect(), 20000)
+    mq.addEventListener('change', apply)
+
+    // 宽屏冷启动：Alpine 就绪后先置状态，面板渲染出来后 observer 负责搬运
+    const boot = async (): Promise<void> => {
+      if (!mq.matches) return
+      let alp: AlpineLike | undefined
+      for (let i = 0; i < 100 && !alp; i++) {
+        alp = alpine()
+        if (!alp) await new Promise((r) => setTimeout(r, 100))
+      }
+      if (!alp) return
+      expand(alp)
+      const obs = new MutationObserver(() => {
+        if (!findPanel()) return
+        obs.disconnect()
+        dock()
+      })
+      obs.observe(document.body, { childList: true, subtree: true })
+      setTimeout(() => obs.disconnect(), 20000)
+    }
+    boot()
   })
 }
