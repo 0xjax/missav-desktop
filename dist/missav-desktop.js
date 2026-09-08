@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.36.9
+// @version      1.36.10
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -1488,14 +1488,28 @@
 		if (!slug) return;
 		const url = `${location.origin}/api/playlists/${slug}`;
 		let tries = 0;
-		const tick = () => {
+		const timer = setInterval(() => {
 			tries++;
-			const panel = findPanel();
-			const d = panel ? alp.$data(panel) : void 0;
+			if (tries > 40) {
+				clearInterval(timer);
+				return;
+			}
+			const shell = document.querySelector("fieldset.mx-pl-grid, fieldset")?.closest("div.mb-5");
+			if (!shell) return;
+			let d;
+			try {
+				d = alp.$data(shell);
+			} catch {
+				return;
+			}
 			const loading = d?.loading;
 			const playlists = d?.playlists;
 			if (!d || !loading || !playlists) return;
-			if (playlists.length > 0 || loading.playlist) return;
+			if (playlists.length > 0) {
+				clearInterval(timer);
+				return;
+			}
+			if (loading.playlist) return;
 			loading.playlist = true;
 			fetch(url, {
 				credentials: "include",
@@ -1506,16 +1520,6 @@
 			}).catch(() => {}).finally(() => {
 				loading.playlist = false;
 			});
-		};
-		const timer = setInterval(() => {
-			if (tries > 40) {
-				clearInterval(timer);
-				return;
-			}
-			const panel = findPanel();
-			const d = panel ? alp.$data(panel) : void 0;
-			if (d && d.playlists?.length) clearInterval(timer);
-			else tick();
 		}, 250);
 		setTimeout(() => clearInterval(timer), 11e3);
 	}

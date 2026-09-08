@@ -83,22 +83,45 @@ function expand(alp: AlpineLike): boolean {
 // 站点把片单数据加载挂在 $watch('showPanel') 上：冷启动我们直接把
 // showPanel 从 null 置为 'playlist' 时 watcher 可能尚未注册，变更通知
 // 丢失，fetch 永不发生——表现为面板打开是空的，手动关开（第二次变更）
-// 才加载。置位后轮询兜底：数据仍空且不在 loading 就按站点同款逻辑补拉
+// 才加载。置位后轮询兜底：数据仍空且不在 loading 就按站点同款逻辑补拉。
+// WARNING 轮询必须锚定面板壳（fieldset 容器，showPanel 置位后即渲染），
+// 不能像旧代码那样等 checkbox 行——checkbox 行要等数据加载后才由 x-for
+// 渲染，等它就死锁了（数据等 fetch、fetch 等轮询、轮询等 checkbox）
 function ensurePlaylistLoaded(alp: AlpineLike): void {
   const slug = location.pathname.split('/').filter(Boolean).pop()
   if (!slug) return
   const url = `${location.origin}/api/playlists/${slug}`
   let tries = 0
-  const tick = (): void => {
+  const timer = setInterval(() => {
     tries++
-    const panel = findPanel()
-    const d = panel ? alp.$data(panel) : undefined
+    if (tries > 40) {
+      clearInterval(timer)
+      return
+    }
+    // 壳容器：fieldset 的 div.mb-5 祖先（showPanel 置位后 Alpine 即渲染壳）
+    const shell = document.querySelector(
+      'fieldset.mx-pl-grid, fieldset',
+    )?.closest('div.mb-5')
+    if (!shell) return
+    let d: Record<string, unknown> | undefined
+    try {
+      d = alp.$data(shell)
+    } catch {
+      return
+    }
     const loading = d?.loading as { playlist?: boolean } | undefined
     const playlists = d?.playlists as unknown[] | undefined
     if (!d || !loading || !playlists) return
-    if (playlists.length > 0 || loading.playlist) return
+    if (playlists.length > 0) {
+      clearInterval(timer)
+      return
+    }
+    if (loading.playlist) return
     loading.playlist = true
-    void fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } })
+    void fetch(url, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((j) => {
         const list = (j as { data?: unknown[] }).data ?? []
@@ -109,16 +132,6 @@ function ensurePlaylistLoaded(alp: AlpineLike): void {
       .finally(() => {
         loading.playlist = false
       })
-  }
-  const timer = setInterval(() => {
-    if (tries > 40) {
-      clearInterval(timer)
-      return
-    }
-    const panel = findPanel()
-    const d = panel ? alp.$data(panel) : undefined
-    if (d && (d.playlists as unknown[] | undefined)?.length) clearInterval(timer)
-    else tick()
   }, 250)
   setTimeout(() => clearInterval(timer), 11000)
 }
