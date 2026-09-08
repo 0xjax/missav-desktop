@@ -159,7 +159,7 @@ export function fmtTs(ts: number): string {
 
 export function snapshotStat(s: Snapshot): string {
   const videos = s.playlists.reduce((n, p) => n + p.videos.length, 0)
-  return `收藏 ${s.saved.length} 部 · 片单 ${s.playlists.length} 个 / 共 ${videos} 部`
+  return `${s.saved.length} 收藏 · ${s.playlists.length} 片单 · ${videos} 片`
 }
 
 function syncCounts(s: Snapshot): void {
