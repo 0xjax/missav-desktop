@@ -1,3 +1,5 @@
 node_modules/
 .tmp-build/
 .tmp-tm/
+.env
+dist/missav-desktop.user.js
