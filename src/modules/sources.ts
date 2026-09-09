@@ -1,9 +1,12 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 
-// 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中文字幕），
-// URL 后缀即源标识。详情页拉一次搜索页解析同源列表，在顶栏搜索图标左侧
-// 渲染胶囊三档分段器（原版/无码/中字），当前源实色档位，点档位直达对应源。
+// 多源显示与切换：同一番号在站点有多个源（原版/无码流出/字幕版），详情页拉一次
+// 搜索页解析同源列表，在顶栏搜索图标左侧渲染胶囊分段器（原版/无码/中字），
+// 当前源实色档位，点档位直达对应源。
+// 源类型判据按可信度：搜索卡片左下角徽章 class（主判据，跨语言稳定）→ URL 后缀
+// （兜底，站点偶有徽章缺失的条目，如 iesp-390-uncensored-leak）。
+// NOTE 无后缀 id 也可能是字幕版（如 fneo-014），纯后缀判断会误判成原版。
 // 顶栏是固定高度常驻区域，组件放这里从结构上杜绝下方内容布局跳动。
 
 interface Source {
@@ -13,15 +16,48 @@ interface Source {
   href: string
 }
 
-const SUFFIXES: [suffix: string, label: string, color: string][] = [
-  ['-uncensored-leak', '无码', '#2563eb'],
-  ['-chinese-subtitle', '中字', '#dc2626'],
+type Kind = 'original' | 'uncensored' | 'subtitle'
+
+// 源类型 → 分段器标签/配色；顺序即分段器排列顺序
+const KINDS: [Kind, string, string][] = [
+  ['original', '原版', '#4c566a'],
+  ['uncensored', '无码', '#2563eb'],
+  ['subtitle', '中字', '#dc2626'],
 ]
-const ORIGINAL: [string, string, string] = ['', '原版', '#4c566a']
+
+// URL 后缀 → 源类型（兜底判据）：中字后缀随站语言不同（/cn 中字、/en 英字）
+const SUFFIX_KIND: [string, Kind][] = [
+  ['-uncensored-leak', 'uncensored'],
+  ['-chinese-subtitle', 'subtitle'],
+  ['-english-subtitle', 'subtitle'],
+]
+
+// 搜索卡片左下角徽章 class → 源类型（主判据）：红=字幕版、蓝=无码版。
+// 徽章文本会本地化（中文字幕/English subtitle/…），class 跨语言稳定
+const BADGE_SEL = 'span.absolute.bottom-1.left-1'
+const BADGE_KIND: [string, Kind][] = [
+  ['bg-red-800', 'subtitle'],
+  ['bg-blue-800', 'uncensored'],
+]
+
+function kindOf(id: string, badgeCls: string | null): Kind {
+  if (badgeCls) {
+    const hit = BADGE_KIND.find(([cls]) => badgeCls.includes(cls))
+    if (hit) return hit[1]
+  }
+  return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? 'original'
+}
+
+function labelOf(kind: Kind): [string, string] {
+  const def = KINDS.find(([k]) => k === kind)!
+  return [def[1], def[2]]
+}
 
 // ---- 同源列表缓存：跨页面/跨会话（复观场景），7 天有效 ----
 
-const CACHE_KEY = 'sources-cache'
+// NOTE 判据换成徽章后必须换 key：旧缓存里的错误标签（无后缀字幕版记成原版）
+// 不会因 id 集合不变而重渲染，只能靠换 key 淘汰
+const CACHE_KEY = 'sources-cache-v2'
 const CACHE_TTL = 7 * 24 * 3600 * 1000
 type SourcesCache = Record<string, { ts: number; list: Source[] }>
 
@@ -38,13 +74,13 @@ function writeCache(base: string, list: Source[]): void {
   GM_setValue(CACHE_KEY, cache)
 }
 
-function parseVideoId(id: string): { base: string; suffix: string } | null {
+function parseVideoId(id: string): { base: string; kind: Kind } | null {
   // fc2 等没有多源体系
   if (id.startsWith('fc2-')) return null
-  for (const [suffix] of SUFFIXES) {
-    if (id.endsWith(suffix)) return { base: id.slice(0, -suffix.length), suffix }
+  for (const [suffix, kind] of SUFFIX_KIND) {
+    if (id.endsWith(suffix)) return { base: id.slice(0, -suffix.length), kind }
   }
-  return { base: id, suffix: '' }
+  return { base: id, kind: 'original' }
 }
 
 async function fetchSources(base: string, lang: string): Promise<Source[]> {
@@ -53,20 +89,22 @@ async function fetchSources(base: string, lang: string): Promise<Source[]> {
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const doc = new DOMParser().parseFromString(await res.text(), 'text/html')
-  const found = new Map<string, string>() // id -> href
-  doc.querySelectorAll('.thumbnail a[href]').forEach((a) => {
-    const href = a.getAttribute('href') || ''
+  const found = new Map<string, { href: string; kind: Kind }>()
+  doc.querySelectorAll('.thumbnail').forEach((card) => {
+    const href = card.querySelector('a[href]')?.getAttribute('href') || ''
     const id = href.split('/').filter(Boolean).pop() || ''
     // 只收本番号及其已知后缀的源，排除 sone-6690 这类误匹配
-    if (id === base || SUFFIXES.some(([s]) => id === base + s)) {
-      if (!found.has(id)) found.set(id, href)
-    }
+    if (id !== base && !SUFFIX_KIND.some(([suffix]) => id === base + suffix)) return
+    if (found.has(id)) return
+    const badgeCls = card.querySelector(BADGE_SEL)?.className ?? null
+    found.set(id, { href, kind: kindOf(id, badgeCls) })
   })
   const sources: Source[] = []
-  for (const [suffix, label, color] of [ORIGINAL, ...SUFFIXES]) {
-    const id = base + suffix
-    const href = found.get(id)
-    if (href) sources.push({ id, label, color, href })
+  // 按原版→无码→中字排序，分段器档位顺序稳定
+  for (const [kind, label, color] of KINDS) {
+    for (const [id, v] of found) {
+      if (v.kind === kind) sources.push({ id, label, color, href: v.href })
+    }
   }
   return sources
 }
@@ -152,11 +190,11 @@ export function sources(): void {
   const parsed = parseVideoId(id)
   if (!parsed) return
 
-  const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix)!
+  const [curLabel, curColor] = labelOf(parsed.kind)
   const current: Source = {
     id,
-    label: curDef[1],
-    color: curDef[2],
+    label: curLabel,
+    color: curColor,
     href: location.href,
   }
 

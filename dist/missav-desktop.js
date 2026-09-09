@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.36.11
+// @version      1.36.12
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -1331,21 +1331,42 @@
 			}, true);
 		});
 	}
-	var SUFFIXES = [[
-		"-uncensored-leak",
-		"无码",
-		"#2563eb"
-	], [
-		"-chinese-subtitle",
-		"中字",
-		"#dc2626"
-	]];
-	var ORIGINAL = [
-		"",
-		"原版",
-		"#4c566a"
+	var KINDS = [
+		[
+			"original",
+			"原版",
+			"#4c566a"
+		],
+		[
+			"uncensored",
+			"无码",
+			"#2563eb"
+		],
+		[
+			"subtitle",
+			"中字",
+			"#dc2626"
+		]
 	];
-	var CACHE_KEY = "sources-cache";
+	var SUFFIX_KIND = [
+		["-uncensored-leak", "uncensored"],
+		["-chinese-subtitle", "subtitle"],
+		["-english-subtitle", "subtitle"]
+	];
+	var BADGE_SEL = "span.absolute.bottom-1.left-1";
+	var BADGE_KIND = [["bg-red-800", "subtitle"], ["bg-blue-800", "uncensored"]];
+	function kindOf(id, badgeCls) {
+		if (badgeCls) {
+			const hit = BADGE_KIND.find(([cls]) => badgeCls.includes(cls));
+			if (hit) return hit[1];
+		}
+		return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? "original";
+	}
+	function labelOf(kind) {
+		const def = KINDS.find(([k]) => k === kind);
+		return [def[1], def[2]];
+	}
+	var CACHE_KEY = "sources-cache-v2";
 	var CACHE_TTL = 6048e5;
 	function readCache() {
 		return GM_getValue$1(CACHE_KEY, {});
@@ -1362,13 +1383,13 @@
 	}
 	function parseVideoId(id) {
 		if (id.startsWith("fc2-")) return null;
-		for (const [suffix] of SUFFIXES) if (id.endsWith(suffix)) return {
+		for (const [suffix, kind] of SUFFIX_KIND) if (id.endsWith(suffix)) return {
 			base: id.slice(0, -suffix.length),
-			suffix
+			kind
 		};
 		return {
 			base: id,
-			suffix: ""
+			kind: "original"
 		};
 	}
 	async function fetchSources(base, lang) {
@@ -1376,24 +1397,24 @@
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const doc = new DOMParser().parseFromString(await res.text(), "text/html");
 		const found = new Map();
-		doc.querySelectorAll(".thumbnail a[href]").forEach((a) => {
-			const href = a.getAttribute("href") || "";
+		doc.querySelectorAll(".thumbnail").forEach((card) => {
+			const href = card.querySelector("a[href]")?.getAttribute("href") || "";
 			const id = href.split("/").filter(Boolean).pop() || "";
-			if (id === base || SUFFIXES.some(([s]) => id === base + s)) {
-				if (!found.has(id)) found.set(id, href);
-			}
+			if (id !== base && !SUFFIX_KIND.some(([suffix]) => id === base + suffix)) return;
+			if (found.has(id)) return;
+			const badgeCls = card.querySelector(BADGE_SEL)?.className ?? null;
+			found.set(id, {
+				href,
+				kind: kindOf(id, badgeCls)
+			});
 		});
 		const sources = [];
-		for (const [suffix, label, color] of [ORIGINAL, ...SUFFIXES]) {
-			const id = base + suffix;
-			const href = found.get(id);
-			if (href) sources.push({
-				id,
-				label,
-				color,
-				href
-			});
-		}
+		for (const [kind, label, color] of KINDS) for (const [id, v] of found) if (v.kind === kind) sources.push({
+			id,
+			label,
+			color,
+			href: v.href
+		});
 		return sources;
 	}
 	function renderSegmented(sources, currentId, loading) {
@@ -1460,11 +1481,11 @@
 		const id = location.pathname.split("/").filter(Boolean).pop() || "";
 		const parsed = parseVideoId(id);
 		if (!parsed) return;
-		const curDef = [ORIGINAL, ...SUFFIXES].find(([s]) => s === parsed.suffix);
+		const [curLabel, curColor] = labelOf(parsed.kind);
 		const current = {
 			id,
-			label: curDef[1],
-			color: curDef[2],
+			label: curLabel,
+			color: curColor,
 			href: location.href
 		};
 		let injected = false;
