@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.16
+// @version         1.36.17
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -1079,13 +1079,27 @@
 			interceptSearch();
 		});
 	}
+	var TEXT_INPUT_TYPES = new Set([
+		"text",
+		"search",
+		"email",
+		"password",
+		"number",
+		"url",
+		"tel",
+		"date",
+		"time",
+		"datetime-local",
+		"month",
+		"week"
+	]);
 	function isTyping() {
 		const el = document.activeElement;
-		return !!el && ([
-			"INPUT",
-			"TEXTAREA",
-			"SELECT"
-		].includes(el.tagName) || el.isContentEditable);
+		if (!el) return false;
+		if (el.isContentEditable) return true;
+		if (el.tagName === "TEXTAREA" || el.tagName === "SELECT") return true;
+		if (el.tagName === "INPUT") return TEXT_INPUT_TYPES.has(el.type);
+		return false;
 	}
 	function clickByAlpineAction(action) {
 		const els = Array.from(document.querySelectorAll("button, a")).filter((e) => e.getAttributeNames().some((n) => n.startsWith("@click") && (e.getAttribute(n) || "").includes(action)));

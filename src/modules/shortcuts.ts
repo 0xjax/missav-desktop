@@ -4,13 +4,30 @@ import { t, type I18nKey } from '../utils/i18n.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toggleSettingPanel } from '../setting.ts'
 
+// 只有"真的在输入文字"才算：播放器里有点击后获得焦点的 input[type=range]
+// （Seek / Volume 滑块），把它当输入框会让 S/P 等快捷键在播放器上失效（实测）
+const TEXT_INPUT_TYPES = new Set([
+  'text',
+  'search',
+  'email',
+  'password',
+  'number',
+  'url',
+  'tel',
+  'date',
+  'time',
+  'datetime-local',
+  'month',
+  'week',
+])
+
 function isTyping(): boolean {
-  const el = document.activeElement
-  return (
-    !!el &&
-    (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) ||
-      (el as HTMLElement).isContentEditable)
-  )
+  const el = document.activeElement as HTMLElement | null
+  if (!el) return false
+  if (el.isContentEditable) return true
+  if (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return true
+  if (el.tagName === 'INPUT') return TEXT_INPUT_TYPES.has((el as HTMLInputElement).type)
+  return false
 }
 
 // 复用站点的 Alpine 动作（@click 绑定在 button/a 上），优先可见元素
