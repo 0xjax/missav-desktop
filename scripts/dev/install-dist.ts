@@ -87,8 +87,9 @@ function evalOn(wsUrl: string, expression: string): Promise<unknown> {
   })
 }
 
-const cleanup = async () => {
-  for (const t of await list()) if (isInstallTab(t)) await closeTab(t.id)
+const cleanup = async (extra: string[] = []) => {
+  for (const t of await list())
+    if (isInstallTab(t) || extra.includes(t.id)) await closeTab(t.id)
   server.stop()
 }
 
@@ -99,21 +100,23 @@ const created = (await (
   await fetch(`${CDP}/json/new?${encodeURIComponent(installUrl)}`, { method: 'PUT' })
 ).json()) as Target
 
-// 等 TM 接管：同版本 → ask.html 弹窗；版本更高且 TM 开了自动更新 → 安装页自行关闭
+// 等 TM 接管：同版本/更高版本都会弹 ask.html；版本更高且 TM 开了自动更新时安装页自行关闭。
+// WARNING 窗口要给足：TM 会先跳 tampermonkey.net/script_installation.php 再拉起 ask.html，
+// 该站点不通时要等它超时（实测本机约 12-15s），窗口太短会误判成"TM 未接管"
 let ask: Target | undefined
-for (let i = 0; i < 40; i++) {
-  await sleep(400)
+for (let i = 0; i < 80; i++) {
+  await sleep(500)
   const targets = await list()
   ask = targets.find(isAskTab)
   if (ask) break
   if (!targets.some((t) => t.id === created.id)) {
-    await cleanup()
+    await cleanup([created.id])
     console.log(`v${version} 已由 TM 自动更新（安装页自行关闭，无弹窗）`)
     process.exit(0)
   }
 }
 if (!ask) {
-  await cleanup()
+  await cleanup([created.id])
   console.error('TM 未接管：ask.html 未出现（TM 是否已安装/已启用？）')
   process.exit(1)
 }
@@ -135,7 +138,7 @@ for (let i = 0; i < 20 && !label; i++) {
 }
 
 await sleep(1500) // 等 TM 落盘再关页面
-await cleanup()
+await cleanup([created.id])
 if (!label) {
   console.error('未找到安装按钮（TM 安装页结构可能已变）')
   process.exit(1)
