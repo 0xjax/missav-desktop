@@ -8,19 +8,24 @@
    ```
    "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir=D:\chrome-debug-profile
    ```
+   **WARNING 调试 Chrome 每次冷启动 = 扩展和登录态都可能不齐**，重启后必须先过一遍以下清单，否则后续实测会莫名失败白耗时间：
+   - **Tampermonkey 扩展是 CDP `Extensions.loadUnpacked` 临时加载的，重启即丢**，必须重新加载：源用日常 Chrome 的安装目录复制到无空格路径再 load（路径含空格会报 `File path cannot be resolved`，如 `C:\Users\g1169\AppData\Local\Google\Chrome\User Data\...` 要先复制到 `D:\` 下）；复制源：`...User Data\Default\Extensions\dhdgffkkebhmkfjojejmpbldmpobfkfo\<版本>_0`；**path 参数用 `D:/xxx` 正斜杠形式（不带 `file://` 前缀，带前缀反而报 resolve 失败）**
+   - 装好后**主动请用户配合**（比脚本摸黑操作快得多）：1) TM 详情页允许运行用户脚本/开发者模式；2) 打开 `.user.js` 安装 URL 后点确认安装；3) 登录 missav.ai（session 会过期）
+   - 验证链路齐了再开工：页面里能找到脚本注入痕迹（如 `.mx-segmented`）+ `/api/me` 返回 200
 2. **Tampermonkey**（装在调试 Chrome 上）：
    - 扩展管理页打开「开发者模式」→ 详情里打开「允许运行用户脚本」
-   - 安装脚本：开发用指向 dev server 的壳脚本（`bun run dev` 启动后 vite-plugin-monkey 给出的地址），或直接装 `dist/missav-desktop.js`
-   - **WARNING dev 壳脚本 vs dist 的本质差异**：dev 脚本要从 5173 拉模块（loader ~200ms 才启动），站点 SSR 首绘 ~160-310ms，**脚本物理上跑不赢首绘**——凡依赖"先于站点渲染生效"的功能（如图标替换防闪烁、首帧占位）在 dev 模式必然失效/闪现，这不是代码 bug。验证这类功能必须把 `dist/missav-desktop.js` 装进 Tampermonkey（本地文件导入），dev 模式截图/时序测出来的"闪烁"不代表生产
+   - **实测一律装 `dist/missav-desktop.js`（本地静态服务或文件导入），不用 `bun run dev` 的 dev 壳脚本**——历史上多次出现 dev 与 build 产物行为不一致，dev 实测通过不代表生产行为，以 dist 实测为唯一标准
+   - 安装方式：`bun run build` 后把 `dist/missav-desktop.js` 复制为 `dist/missav-desktop.user.js`，经本地静态服务（如 `bun -e "Bun.serve(...)"`）以 `.user.js` URL 打开让 TM 捕获安装；每次改代码 → build → 重开安装 URL（TM 同名自动覆盖更新）
+   - **WARNING dev 模式时序失真**：dev 脚本要从 5173 拉模块（loader ~200ms 才启动），站点 SSR 首绘 ~160-310ms，**脚本物理上跑不赢首绘**——凡依赖"先于站点渲染生效"的功能（如图标替换防闪烁、首帧占位）在 dev 模式必然失效/闪现，这不是代码 bug，是 dev 模式固有失真，不构成实测依据
 3. 登录 missav.ai（收藏/片单/备份功能都依赖真实登录态）
 
 ## 日常启动
 
 ```bash
-bun run dev        # 必须占住 5173 端口；被占用会掉到 5174，Tampermonkey 壳脚本会静默失效
+bun run dev        # 仅用于热改代码时快速试；实测必须用 dist（见上）
 ```
 
-然后刷新 missav.ai 页面即加载最新 `src/` 代码（无需 build）。
+实测标准流程：`bun run build` → 复制 `dist/missav-desktop.js` 为 `.user.js` → 静态服务 → TM 安装/更新 → 刷新 missav 页面。
 
 ## CDP 调试脚本（scripts/cdp/，9222 端口直连）
 
