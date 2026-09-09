@@ -50,10 +50,11 @@ const DICT = {
   'help.fullscreen': ['全屏（站点自带）', 'Fullscreen (site built-in)'],
 
   // ---- 多源分段器档位 ----
-  // 字幕档只对应站点当前语言的字幕版本（cn 站中字、en 站英字），不并列两种字幕
+  // 档位按源自己的字幕语言分（中字/英字），不跟站点语言走：同一个番号可能同时有两者
   'source.original': ['原版', 'Original'],
   'source.uncensored': ['无码', 'Uncensored'],
-  'source.subtitle': ['中字', 'Eng sub'],
+  'source.cnsub': ['中字', 'Chinese sub'],
+  'source.ensub': ['英字', 'Eng sub'],
 
   // ---- 收藏 / 片单反馈 ----
   'save.saved': ['已收藏', 'Saved'],

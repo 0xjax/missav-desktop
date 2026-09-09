@@ -2,12 +2,14 @@ import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 import { t, type I18nKey } from '../utils/i18n.ts'
 
-// 多源显示与切换：同一番号在站点有多个源（原版/无码流出/字幕版），详情页拉一次
-// 搜索页解析同源列表，在顶栏搜索图标左侧渲染胶囊分段器（原版/无码/中字），
-// 当前源实色档位，点档位直达对应源。
-// 源类型判据按可信度：搜索卡片左下角徽章 class（主判据，跨语言稳定）→ URL 后缀
-// （兜底，站点偶有徽章缺失的条目，如 iesp-390-uncensored-leak）。
+// 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中字/英字），详情页拉一次
+// 搜索页解析同源列表，在顶栏搜索图标左侧渲染胶囊分段器，当前源实色档位，点档位直达。
+// 源类型判据：URL 后缀（自带字幕语言，最精确）→ 搜索卡片左下角徽章 class（只判"是否
+// 字幕/无码"，跨语言稳定；裸番号的字幕语言由"它出现在哪个语言的搜索页"决定）→ 原版兜底。
 // NOTE 无后缀 id 也可能是字幕版（如 fneo-014），纯后缀判断会误判成原版。
+// WARNING 站点搜索页按语言过滤源：/cn 不返回 -english-subtitle，/en 不返回 -chinese-subtitle，
+// 故必须取 cn/en 两个搜索页的并集，否则跨语言字幕源会漏（实测 snos-163 / roe-459：
+// 原版页看不到也跳不到英字版，而站点自己的版本菜单列了它）。
 // 顶栏是固定高度常驻区域，组件放这里从结构上杜绝下方内容布局跳动。
 
 interface Source {
@@ -16,37 +18,47 @@ interface Source {
   href: string
 }
 
-type Kind = 'original' | 'uncensored' | 'subtitle'
+type Kind = 'original' | 'uncensored' | 'cnsub' | 'ensub'
 
-// 源类型 → 文案键/配色；顺序即分段器排列顺序。
+// 源类型 → 文案键/配色；顺序即分段器排列顺序（原版→无码→中字→英字）。
 // 文案在渲染时取（见 labelOf），缓存只存 kind，避免切站点语言后残留旧语言标签
 const KINDS: [Kind, I18nKey, string][] = [
   ['original', 'source.original', '#4c566a'],
   ['uncensored', 'source.uncensored', '#2563eb'],
-  ['subtitle', 'source.subtitle', '#dc2626'],
+  ['cnsub', 'source.cnsub', '#dc2626'],
+  ['ensub', 'source.ensub', '#dc2626'],
 ]
 
-// URL 后缀 → 源类型（兜底判据）：中字后缀随站语言不同（/cn 中字、/en 英字）
+const KIND_ORDER = new Map(KINDS.map(([kind], i) => [kind, i]))
+
+// URL 后缀 → 源类型：字幕后缀自带语言，比徽章更精确
 const SUFFIX_KIND: [string, Kind][] = [
   ['-uncensored-leak', 'uncensored'],
-  ['-chinese-subtitle', 'subtitle'],
-  ['-english-subtitle', 'subtitle'],
+  ['-chinese-subtitle', 'cnsub'],
+  ['-english-subtitle', 'ensub'],
 ]
 
-// 搜索卡片左下角徽章 class → 源类型（主判据）：红=字幕版、蓝=无码版。
-// 徽章文本会本地化（中文字幕/English subtitle/…），class 跨语言稳定
+// 搜索卡片左下角徽章 class：红=字幕版、蓝=无码版。徽章文本会本地化
+// （中文字幕/English subtitle/…），class 跨语言稳定；但它不区分字幕语言。
+// WARNING 只能读搜索页的 SSR 卡片：详情页的推荐卡片每张同时含 3 个徽章 span
+// （中文字幕/英文字幕/无码影片，靠站点 x-show 切换可见性），在活 DOM 上
+// querySelector 会永远命中第一个 bg-red-800，把全部条目判成字幕版
 const BADGE_SEL = 'span.absolute.bottom-1.left-1'
-const BADGE_KIND: [string, Kind][] = [
+const BADGE_KIND: [string, 'subtitle' | 'uncensored'][] = [
   ['bg-red-800', 'subtitle'],
   ['bg-blue-800', 'uncensored'],
 ]
 
-function kindOf(id: string, badgeCls: string | null): Kind {
-  if (badgeCls) {
-    const hit = BADGE_KIND.find(([cls]) => badgeCls.includes(cls))
-    if (hit) return hit[1]
-  }
-  return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? 'original'
+function kindOf(id: string, badgeCls: string | null, lang: string): Kind {
+  const bySuffix = SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1]
+  if (bySuffix) return bySuffix
+  const byBadge = badgeCls
+    ? BADGE_KIND.find(([cls]) => badgeCls.includes(cls))?.[1]
+    : undefined
+  if (byBadge === 'uncensored') return 'uncensored'
+  // 裸番号带字幕徽章：搜索页按语言过滤，出现在 /cn 的是中字版、/en 的是英字版
+  if (byBadge === 'subtitle') return lang === 'cn' ? 'cnsub' : 'ensub'
+  return 'original'
 }
 
 function labelOf(kind: Kind): [string, string] {
@@ -56,10 +68,9 @@ function labelOf(kind: Kind): [string, string] {
 
 // ---- 同源列表缓存：跨页面/跨会话（复观场景），7 天有效 ----
 
-// NOTE 缓存结构从"存标签"改为"存 kind"（标签随站点语言变），旧缓存形状不兼容，故换 key；
-// 条目键带站点语言前缀：搜索页按语言过滤源，同番号在 cn/en 下的源集合本就不同，
-// 不分语言会把中文站点的列表渲染到英文站点上
-const CACHE_KEY = 'sources-cache-v3'
+// NOTE 判据加了"字幕语言"后 kind 取值变化，旧缓存形状不兼容，故换 key；
+// 条目键用纯番号：并集结果与站点语言无关（两种语言的搜索页都取），标签在渲染时才本地化
+const CACHE_KEY = 'sources-cache-v4'
 const CACHE_TTL = 7 * 24 * 3600 * 1000
 type SourcesCache = Record<string, { ts: number; list: Source[] }>
 
@@ -85,11 +96,7 @@ function parseVideoId(id: string): { base: string; kind: Kind } | null {
   return { base: id, kind: 'original' }
 }
 
-async function fetchSources(
-  base: string,
-  lang: string,
-  current: Source,
-): Promise<Source[]> {
+async function fetchSources(base: string, lang: string): Promise<Source[]> {
   const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, {
     credentials: 'include',
   })
@@ -103,14 +110,10 @@ async function fetchSources(
     if (id !== base && !SUFFIX_KIND.some(([suffix]) => id === base + suffix)) return
     if (found.has(id)) return
     const badgeCls = card.querySelector(BADGE_SEL)?.className ?? null
-    found.set(id, { href, kind: kindOf(id, badgeCls) })
+    found.set(id, { href, kind: kindOf(id, badgeCls, lang) })
   })
-  // WARNING 搜索页按站点语言过滤源：当前页是"非该语言"的版本时连自己都不返回
-  // （实测 /en/search 对中文字幕裸番号页 sdmf-008/ipx-988 漏掉该 id），
-  // 必须把当前源补回，否则分段器没有当前档、只剩可跳转的兄弟档
-  if (!found.has(current.id)) found.set(current.id, { href: current.href, kind: current.kind })
   const sources: Source[] = []
-  // 按原版→无码→字幕排序，分段器档位顺序稳定
+  // 按原版→无码→中字→英字排序，分段器档位顺序稳定
   for (const [kind] of KINDS) {
     for (const [id, v] of found) {
       if (v.kind === kind) sources.push({ id, kind, href: v.href })
@@ -119,11 +122,11 @@ async function fetchSources(
   return sources
 }
 
-// ---- 顶栏胶囊三档分段器 ----
+// ---- 顶栏胶囊分段器 ----
 
 // 渲染/更新分段器。锚定顶栏按钮组（搜索 a 的父级 flex 行），与齿轮同位置体系。
 // 始终显示，按源数自适应形态：拉取中（单颗骨架档）、单源（单档锁定态，当前源
-// 实色但禁用）、双/三源（多档可选，当前档实色）。列表页（无番号）整组不渲染。
+// 实色但禁用）、多源（多档可选，当前档实色）。列表页（无番号）整组不渲染。
 function renderSegmented(
   sources: Source[],
   currentId: string,
@@ -207,7 +210,9 @@ export function sources(): void {
     href: location.href,
   }
   const lang = currentLang() ?? 'cn'
-  const cacheKey = `${lang}:${parsed.base}`
+  // 另一个语言的搜索页用来补跨语言字幕源（见文件头 WARNING）
+  const otherLang = lang === 'cn' ? 'en' : 'cn'
+  const cacheKey = parsed.base
 
   // 骨架态先行：顶栏一出就显示拉取中，无内容高度参与
   let injected = false
@@ -227,7 +232,20 @@ export function sources(): void {
 
     ;(async () => {
       try {
-        const list = await fetchSources(parsed.base, lang, current)
+        // 两个语言的搜索页并行取并集；另一个语言拉不到就降级为单语言结果
+        const [primary, secondary] = await Promise.all([
+          fetchSources(parsed.base, lang),
+          fetchSources(parsed.base, otherLang).catch(() => [] as Source[]),
+        ])
+        // 同 id 以当前语言搜索页的判定为准（先到先得）
+        const merged = new Map([...primary, ...secondary].map((s) => [s.id, s]))
+        // WARNING 搜索页按语言过滤源，可能连当前页自己都不返回（实测 /en/search 漏掉
+        // 中文字幕裸番号页 sdmf-008/ipx-988）；当前源只作兜底补入，不能先入为主——
+        // 它只有 URL 后缀判据，会盖掉搜索页徽章给出的更准确类型（如 /en/fneo-014）
+        if (!merged.has(current.id)) merged.set(current.id, current)
+        const list = [...merged.values()].sort(
+          (a, b) => KIND_ORDER.get(a.kind)! - KIND_ORDER.get(b.kind)!,
+        )
         writeCache(cacheKey, list)
         // 缓存命中时只有内容变化才重渲染，无变化零感知
         if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) {

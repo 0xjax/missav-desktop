@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.13
+// @version         1.36.14
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -200,7 +200,8 @@
 		"help.fullscreen": ["全屏（站点自带）", "Fullscreen (site built-in)"],
 		"source.original": ["原版", "Original"],
 		"source.uncensored": ["无码", "Uncensored"],
-		"source.subtitle": ["中字", "Eng sub"],
+		"source.cnsub": ["中字", "Chinese sub"],
+		"source.ensub": ["英字", "Eng sub"],
 		"save.saved": ["已收藏", "Saved"],
 		"save.unsaved": ["已取消收藏", "Removed from saved"],
 		"save.added": ["已加入片单", "Added to playlist"],
@@ -1434,30 +1435,37 @@
 			"#2563eb"
 		],
 		[
-			"subtitle",
-			"source.subtitle",
+			"cnsub",
+			"source.cnsub",
+			"#dc2626"
+		],
+		[
+			"ensub",
+			"source.ensub",
 			"#dc2626"
 		]
 	];
+	var KIND_ORDER = new Map(KINDS.map(([kind], i) => [kind, i]));
 	var SUFFIX_KIND = [
 		["-uncensored-leak", "uncensored"],
-		["-chinese-subtitle", "subtitle"],
-		["-english-subtitle", "subtitle"]
+		["-chinese-subtitle", "cnsub"],
+		["-english-subtitle", "ensub"]
 	];
 	var BADGE_SEL = "span.absolute.bottom-1.left-1";
 	var BADGE_KIND = [["bg-red-800", "subtitle"], ["bg-blue-800", "uncensored"]];
-	function kindOf(id, badgeCls) {
-		if (badgeCls) {
-			const hit = BADGE_KIND.find(([cls]) => badgeCls.includes(cls));
-			if (hit) return hit[1];
-		}
-		return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? "original";
+	function kindOf(id, badgeCls, lang) {
+		const bySuffix = SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1];
+		if (bySuffix) return bySuffix;
+		const byBadge = badgeCls ? BADGE_KIND.find(([cls]) => badgeCls.includes(cls))?.[1] : void 0;
+		if (byBadge === "uncensored") return "uncensored";
+		if (byBadge === "subtitle") return lang === "cn" ? "cnsub" : "ensub";
+		return "original";
 	}
 	function labelOf(kind) {
 		const def = KINDS.find(([k]) => k === kind);
 		return [t(def[1]), def[2]];
 	}
-	var CACHE_KEY = "sources-cache-v3";
+	var CACHE_KEY = "sources-cache-v4";
 	var CACHE_TTL = 6048e5;
 	function readCache() {
 		return GM_getValue$1(CACHE_KEY, {});
@@ -1483,7 +1491,7 @@
 			kind: "original"
 		};
 	}
-	async function fetchSources(base, lang, current) {
+	async function fetchSources(base, lang) {
 		const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, { credentials: "include" });
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const doc = new DOMParser().parseFromString(await res.text(), "text/html");
@@ -1496,12 +1504,8 @@
 			const badgeCls = card.querySelector(BADGE_SEL)?.className ?? null;
 			found.set(id, {
 				href,
-				kind: kindOf(id, badgeCls)
+				kind: kindOf(id, badgeCls, lang)
 			});
-		});
-		if (!found.has(current.id)) found.set(current.id, {
-			href: current.href,
-			kind: current.kind
 		});
 		const sources = [];
 		for (const [kind] of KINDS) for (const [id, v] of found) if (v.kind === kind) sources.push({
@@ -1582,7 +1586,8 @@
 			href: location.href
 		};
 		const lang = currentLang() ?? "cn";
-		const cacheKey = `${lang}:${parsed.base}`;
+		const otherLang = lang === "cn" ? "en" : "cn";
+		const cacheKey = parsed.base;
 		let injected = false;
 		const init = () => {
 			if (injected) return true;
@@ -1594,7 +1599,10 @@
 			if (cacheFresh && cached.list.length) renderSegmented(cached.list, id, false);
 			(async () => {
 				try {
-					const list = await fetchSources(parsed.base, lang, current);
+					const [primary, secondary] = await Promise.all([fetchSources(parsed.base, lang), fetchSources(parsed.base, otherLang).catch(() => [])]);
+					const merged = new Map([...primary, ...secondary].map((s) => [s.id, s]));
+					if (!merged.has(current.id)) merged.set(current.id, current);
+					const list = [...merged.values()].sort((a, b) => KIND_ORDER.get(a.kind) - KIND_ORDER.get(b.kind));
 					writeCache(cacheKey, list);
 					if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) renderSegmented(list, id, false);
 				} catch {

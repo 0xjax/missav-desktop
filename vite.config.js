@@ -14,7 +14,7 @@ export default defineConfig({
                     "": "增强 missav 网站的桌面端浏览体验。",
                     en: "Enhanced desktop browsing experience for missav.",
                 },
-                version: "1.36.13",
+                version: "1.36.14",
                 author: "0xjax",
                 license: "MIT",
                 "run-at": "document-start",
