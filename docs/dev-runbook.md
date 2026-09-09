@@ -52,6 +52,28 @@ bun run dev        # 仅用于热改代码时快速试；实测必须用 dist（
 - **用户的真实环境实测是唯一验收标准**：自己环境"验证通过"而用户仍失败时，一律视为未修复；要怀疑的是验证路径差异（合成事件 ≠ 真实输入），而不是用户的操作
 - **同一 bug 两次修复无效 = 止损线**：停止修症状，回头质疑架构（如"把状态同步托付给站点 Alpine effect"这类外部依赖），换接管方案
 
+## 浏览器工具分工：纯 CDP vs agent-browser
+
+**纯 CDP（`scripts/cdp/`、`scripts/dev/`）**：确定性环境脚本——登录、清 emulation、导航、截图。要求一条命令可复现、零配置、可入库，不要替换成浏览器代理。
+
+**agent-browser（已全局安装，交互式排查用它）**：
+
+```bash
+export AGENT_BROWSER_SESSION=mx-debug            # 命名会话，别用默认共享会话
+agent-browser --cdp 9222 snapshot -i -c          # 附着 9222，看交互树 + @eN refs
+agent-browser --cdp 9222 click @e5
+agent-browser --cdp 9222 wait --text "我的帐户"   # 替代手写轮询确认
+agent-browser --cdp 9222 record start /tmp/t.webm # 录屏验证闪烁/布局跳动（需 ffmpeg）
+agent-browser --cdp 9222 state save /tmp/auth.json # 存登录态复用
+agent-browser --cdp 9222 close                   # 用完关掉，别留常驻进程
+```
+
+相比手写探针脚本的收益（都是本仓库实际踩过的坑）：找 SPA 隐藏入口/多表单时一条 `snapshot -i` 顶七八个探针脚本；refs 免去手写选择器；`wait` 替代手写 25×1s 轮询；**布局跳动/闪烁类 bug 用 `record` 录视频，截图证明不了**。
+
+**chrome-devtools-mcp：暂不引入**。强项是 perf trace / network / emulation 深查，但需在 kimi-code 加 MCP 配置且工具 schema 常驻每次对话。真需要时按 `npx chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222 --slim` 加；其 extensions 类工具只支持 pipe 连接、不支持 browserUrl，油猴管理仍归 CDP 脚本。
+
+**WARNING 任何工具都不许自己起浏览器或 `--profile` 新开实例**：油猴是 CDP `Extensions.loadUnpacked` 临时加载的，新实例既无脚本也无登录态，实测会假失败（空面板误判、847px 小窗口都源于此）。一律附着运行中的 9222（`--cdp 9222` / `--browserUrl`）。
+
 ## 验证闭环
 
 1. `bun run lint && bun run typecheck`
@@ -67,5 +89,6 @@ bun run dev        # 仅用于热改代码时快速试；实测必须用 dist（
 - 调试 Chrome 多开会积累大量 tab，卡顿时先清理
 - **绝不用 `taskkill //IM chrome.exe` 关调试 Chrome**：会误杀用户正在使用的日常浏览器；只允许经 CDP `Browser.close`（只作用于 9222 调试 profile）
 - 页面挂 `beforeunload` 确认弹窗（如备份抓取中）时，原生确认框会阻塞该 tab 的 `Runtime.evaluate` 和截图——CDP 全线超时先想到这一层，不是页面死了；长耗时流程（备份）测试中不要导航页面
-- Tampermonkey 装到调试 Chrome：Chrome 137+ 已忽略 `--load-extension`，用 CDP `Extensions.loadUnpacked`（browser endpoint，路径必须是 `file:///D:/...` 正斜杠格式）
+- Tampermonkey 装到调试 Chrome：Chrome 137+ 已忽略 `--load-extension`，用 CDP `Extensions.loadUnpacked`（browser endpoint，**path 用 `D:/xxx` 正斜杠且不带 `file://` 前缀**；实测带 `file://` 反而报 `File path cannot be resolved`，且源目录不能含空格，需先复制到 `D:\` 下）
+- **WARNING `curl -X PUT /json/new` 新开的 tab 可能落在独立小窗口**（实测视口只有 847px），宽屏专属功能（如片单停靠 ≥1024px）会静默不激活，看起来像功能失效。`Browser.setWindowBounds` 对这类 tab 常改不动；可靠做法是在用户已拉大的窗口里新开 tab，或用 `agent-browser --cdp 9222` 直接操作用户当前 tab
 - **WARNING CDP `Emulation.setDeviceMetricsOverride`（设备模拟）会跨刷新/跨导航持续生效**：一旦设过，页面刷新后视口仍是固定尺寸（如 1200×800），看起来像"视口不自适应"。这不是脚本 bug，是 DevTools 模拟残留。清除必须走 `cdp-clear-emulation.ts`：先设 0×0（0 = 跟随窗口）再 clear，**直接 clear 对已固定的 tab 常不生效**；清除后可能需改一下窗口尺寸才立即生效
