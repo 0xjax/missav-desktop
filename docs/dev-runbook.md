@@ -89,6 +89,7 @@ agent-browser --cdp 9222 close                   # 用完关掉，别留常驻�
 - **测试会动真实账号数据**：收藏/片单操作后必须恢复原状
 - **fast-save 自 v1.36.15 起是单一实现**：收藏/片单点击无条件拦截、请求一律由脚本发出（keepalive），Alpine 只作状态来源的首选（不再是拦截前提），反馈（跨标签 toast / saved-cache / 备份快照）乐观写在请求发出后。改它必须用 `cdp-press.ts` 真实输入复测勾选/计数/回滚——片单 checkbox 的激活序列（pre-click 翻转 checked、取消后回滚、x-model effect 部分失效）是硬啃出来的，合成点击验证不出来
 - **判定收藏是否真的落库**：用 item hash 查 `/api/items/<hash>/view`（hash 在页面 `x-init` 里）；`/cn/saved` 页面 HTML 里的番号字符串会命中推荐位，不能拿它当判据（实测误报）。同一番号的不同版本是**不同条目**（hash 不同），收藏 A 版本不影响 B 版本
+- **WARNING `Ctrl+Shift+T` 恢复的 tab 是关闭前的冻结页面**（bfcache/会话恢复，不重新加载）：脚本不重跑、DOM 停在关闭那一刻，所以「重开仍显示未收藏」**不代表请求没送达**——服务器可能早已成功，刷新一次就对了。验证异步操作是否落库必须刷新页面或直接查接口，别拿恢复出来的页面当判据（实测踩坑：为此排查了一轮 keepalive）
 - 页面 JS 死循环卡死时 Runtime.evaluate 也会超时，用 `cdp-reset.ts` 浏览器级重开
 - 调试 Chrome 多开会积累大量 tab，卡顿时先清理
 - **绝不用 `taskkill //IM chrome.exe` 关调试 Chrome**：会误杀用户正在使用的日常浏览器；只允许经 CDP `Browser.close`（只作用于 9222 调试 profile）
