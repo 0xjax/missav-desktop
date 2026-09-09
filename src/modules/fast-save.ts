@@ -1,6 +1,6 @@
 import { GM_getValue, GM_setValue, readMainWorld } from '../utils/gm.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
-import { toast, toastBroadcast, listenToastChannel } from '../utils/toast.ts'
+import { toastBroadcast, listenToastChannel } from '../utils/toast.ts'
 import { t } from '../utils/i18n.ts'
 import { adjustPlaylistCount } from './playlist-panel.ts'
 import { applyChangeToLatestSnapshot } from './backup-export.ts'
@@ -8,8 +8,13 @@ import { applyChangeToLatestSnapshot } from './backup-export.ts'
 // 站点收藏/片单的问题：1) 收藏状态要等 /api/items/{id}/view 返回才显示；
 // 2) toggleSave 乐观翻转 UI 但请求无失败处理，关标签页可能丢请求；
 // 3) user 未就位时 requireLogin 误弹登录框。
-// 本模块统一接管：keepalive 请求保证关标签页也送达；GM 缓存秒显收藏状态，
-// 服务器 /view 返回后自动校准；操作结果 toast 反馈，失败回滚。
+// 本模块统一接管：无条件拦截点击，请求一律由本模块发出（keepalive，关标签页也送达）。
+// NOTE 站点自己的点击处理器同样是 Alpine 绑定的——Alpine 未就绪时它根本没绑定，
+// 所以"读不到 Alpine 就放行站点原生流程"放行也没人接，反而让请求丢掉 keepalive。
+// 故 Alpine 只作"状态来源的首选"，不是拦截的前提。
+// WARNING 反馈（跨标签 toast / 秒显缓存 / 备份快照）必须乐观写在请求发出之后，
+// 不能等响应：关标签页后 .then() 永不执行，反馈会全丢（实测 gm:mx-toast 与
+// saved-cache 均无写入，而服务器已收藏成功）。失败时若页面还在再回滚。
 
 interface ComponentData {
   user?: unknown
@@ -140,44 +145,30 @@ function findSaveUrl(btn: Element): string | null {
 
 // ---- 收藏/取消 ----
 
-// ---- 绕过路径的快照兜底：Alpine 接不了管时放行站点原生流程，
-// 延迟读 DOM 真实结果（checkbox checked / 收藏图标可见性），
-// 状态确实翻转才回写最新快照。登录框弹出、请求失败时状态不变，不会误记。
+// Alpine 组件数据：元素不在组件内时 $data 会抛错
+function componentData(alp: AlpineLike, el: Element): ComponentData | null {
+  try {
+    return alp.$data(el) ?? null
+  } catch {
+    return null
+  }
+}
 
-function domSavedState(): boolean | null {
-  const btn = [...document.querySelectorAll('button')].find((b) =>
-    alpineAction(b, 'toggleSave'),
+// Alpine 未接管时两个图标同时可见（x-show 还没生效）→ 判不出来返回 null。
+// 那种情况下站点 UI 必然显示"未收藏"（x-data 初值 saved:false 且 /view 未回），
+// 调用方按"收藏"处理即可
+// NOTE 站点第二个图标的属性是 x-show="! saved"（感叹号后有空格），不能写死选择器
+function domSavedState(btn: Element): boolean | null {
+  const icons = [...btn.querySelectorAll('svg[x-show]')]
+  const on = icons.find((s) => s.getAttribute('x-show') === 'saved')
+  const off = icons.find(
+    (s) => (s.getAttribute('x-show') || '').replace(/\s+/g, '') === '!saved',
   )
-  const svg = btn?.querySelector('svg[x-show="saved"]')
-  if (!svg) return null
-  return getComputedStyle(svg).display !== 'none'
-}
-
-function fallbackPlaylistSync(input: HTMLInputElement): void {
-  const before = input.checked
-  const dvdId = dvdIdOf(input)
-  if (!dvdId) return
-  // 原生流程：等请求发出、乐观 UI 翻转完成后再读；太早会读到旧值
-  setTimeout(() => {
-    if (input.checked === before) return
-    applyChangeToLatestSnapshot(currentVideo(dvdId), input.checked, input.id)
-  }, 1500)
-}
-
-function fallbackSaveSync(): void {
-  const before = domSavedState()
-  if (before === null) return
-  setTimeout(() => {
-    const after = domSavedState()
-    if (after === null || after === before) return
-    const dvdId =
-      dvdIdOf(
-        [...document.querySelectorAll('button')].find((b) =>
-          alpineAction(b, 'toggleSave'),
-        )!,
-      ) ?? location.pathname.split('/').filter(Boolean).pop()
-    if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), after)
-  }, 1500)
+  if (!on || !off) return null
+  const onVisible = getComputedStyle(on).display !== 'none'
+  const offVisible = getComputedStyle(off).display !== 'none'
+  if (onVisible === offVisible) return null
+  return onVisible
 }
 
 // toast 里的 AV 番号：优先取 h1 首个词（站点自身格式，如 UMD-1017），
@@ -188,46 +179,53 @@ function avCode(dvdId: string): string {
 }
 
 function onSaveClick(e: MouseEvent, btn: Element): void {
-  const alp = alpine()
-  // 接不了管（Alpine 读不到等）就不拦截：放行站点原生处理器，宁可不加速不能弄坏
-  if (!alp) {
-    fallbackSaveSync()
-    return
-  }
-  const data = alp.$data(btn)
   const url = findSaveUrl(btn)
-  if (!data || !url) return
-
+  // 连请求地址都拿不到就什么都不做，也不拦截（放行站点，避免点了没反应）
+  if (!url) return
   e.preventDefault()
   e.stopImmediatePropagation()
 
-  const target = !data.saved
+  const alp = alpine()
+  const data = alp ? componentData(alp, btn) : null
+  // 状态来源：Alpine 优先，其次图标可见性；都判不出（页面刚加载）按"收藏"处理
+  const state = data ? data.saved : domSavedState(btn)
+  const target = state !== true
   const dvdId = dvdIdOf(btn)
   const code = dvdId ? avCode(dvdId) : undefined
-  data.saved = target
-  data.loading = true
+
+  if (data) {
+    data.saved = target
+    data.loading = true
+  }
+  // 乐观写：关标签页后 .then() 不会执行，反馈只能在这里落地
+  const commit = (saved: boolean): void => {
+    if (!dvdId) return
+    writeCache(dvdId, saved)
+    applyChangeToLatestSnapshot(currentVideo(dvdId), saved)
+  }
+  commit(target)
+  toastBroadcast(target ? t('save.saved') : t('save.unsaved'), {
+    code,
+    type: 'success',
+  })
+
   apiFetch(url, target ? 'POST' : 'DELETE')
     .then((r) => {
-      data.loading = false
-      if (r.ok) {
-        if (dvdId) {
-          writeCache(dvdId, target)
-          applyChangeToLatestSnapshot(currentVideo(dvdId), target)
-        }
-        toastBroadcast(target ? t('save.saved') : t('save.unsaved'), {
-          code,
-          type: 'success',
-        })
-      } else {
-        data.saved = !target
-        if (r.status === 401) openLoginModal(data)
-        else toast(t('save.failed'), { code, type: 'error' })
-      }
+      if (data) data.loading = false
+      if (r.ok) return
+      // 回滚（页面还在才有意义）：本地状态与反馈都要撤回
+      if (data) data.saved = !target
+      commit(!target)
+      if (r.status === 401) openLoginModal(data ?? {})
+      else toastBroadcast(t('save.failed'), { code, type: 'error' })
     })
     .catch(() => {
-      data.loading = false
-      data.saved = !target
-      toast(t('save.netError'), { code, type: 'error' })
+      if (data) {
+        data.loading = false
+        data.saved = !target
+      }
+      commit(!target)
+      toastBroadcast(t('save.netError'), { code, type: 'error' })
     })
 }
 
@@ -250,61 +248,58 @@ function onPlaylistOpenClick(e: MouseEvent, btn: Element): void {
 }
 
 function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
-  const alp = alpine()
-  // WARNING 必须先确认能接管再拦截：此前无条件 preventDefault +
-  // stopImmediatePropagation 后才发现 Alpine 读不到，原生流程已被杀死，
-  // 表现为"点片单没反应"（诊断日志定位的根因）
-  if (!alp) {
-    fallbackPlaylistSync(input)
-    return
-  }
+  const dvdId = dvdIdOf(input)
+  // 没有 dvdId 就发不出请求：不拦截，放行站点原生流程
+  if (!dvdId) return
+  // 真实按压的激活序列：pre-click 已翻转 checked，取消点击后浏览器才回滚，
+  // 所以此刻的 input.checked 就是用户想要的目标状态（Alpine 读不到时的状态来源）
+  const checkedByUser = input.checked
   e.preventDefault()
   e.stopImmediatePropagation()
+
+  const alp = alpine()
   // 面板组件数据含 playlists（x-model 绑定的项即 checkbox 状态来源）
-  const data = alp.$data(input)
-  const list = data.playlists as PlaylistItem[] | undefined
+  const data = alp ? componentData(alp, input) : null
+  const list = data?.playlists as PlaylistItem[] | undefined
   const item = list?.find((p) => p.key === input.id)
-  const dvdId = dvdIdOf(input)
-  if (!item || !dvdId) {
-    // 数据侧接不了管仍放行原生，但快照兜底照走（不依赖 Alpine 数据）
-    if (dvdId) fallbackPlaylistSync(input)
-    return
-  }
-  const target = !item.is_added
+  const target = item ? !item.is_added : checkedByUser
   const code = avCode(dvdId)
-  item.is_added = target
-  // 真实按压的激活序列：pre-click 翻转 checked，click 被我们取消后同步回滚，
-  // 且全程不派发 change/input（实测埋点确认）。更关键的是这些行的 x-model
-  // 数据→DOM effect 会部分失效（实测：is_added=true 但 checked 永不刷新），
-  // 所以 checked 不能交给站点 effect 同步——等回滚结束后由我们直接写死
+
+  const setLocal = (on: boolean, delta: number): void => {
+    if (item) item.is_added = on
+    input.checked = on
+    adjustPlaylistCount(input.id, delta)
+    applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id)
+  }
+  if (item) item.is_added = target
+  // 这些行的 x-model 数据→DOM effect 会部分失效（实测：is_added=true 但 checked
+  // 永不刷新），且回滚发生在本拍之后，故回滚结束后由我们直接写死
   setTimeout(() => {
-    item.is_added = target
+    if (item) item.is_added = target
     input.checked = target
   }, 0)
+  // 乐观写：关标签页后 .then() 不会执行，反馈只能在这里落地
+  setLocal(target, target ? 1 : -1)
+  toastBroadcast(target ? t('save.added') : t('save.removed'), {
+    code,
+    type: 'success',
+  })
+
   apiFetch(
     `${location.origin}/api/playlists/${target ? 'add' : 'remove'}`,
     'POST',
-    { dvdId, key: item.key },
+    { dvdId, key: input.id },
   )
     .then((r) => {
-      if (r.ok) {
-        adjustPlaylistCount(item.key, target ? 1 : -1)
-        if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), target, item.key)
-        toastBroadcast(target ? t('save.added') : t('save.removed'), {
-          code,
-          type: 'success',
-        })
-      } else {
-        item.is_added = !target
-        input.checked = !target
-        if (r.status === 401) openLoginModal(data)
-        else toast(t('save.failed'), { code, type: 'error' })
-      }
+      if (r.ok) return
+      // 回滚（页面还在才有意义）
+      setLocal(!target, target ? -1 : 1)
+      if (r.status === 401) openLoginModal(data ?? {})
+      else toastBroadcast(t('save.failed'), { code, type: 'error' })
     })
     .catch(() => {
-      item.is_added = !target
-      input.checked = !target
-      toast(t('save.netError'), { code, type: 'error' })
+      setLocal(!target, target ? -1 : 1)
+      toastBroadcast(t('save.netError'), { code, type: 'error' })
     })
 }
 

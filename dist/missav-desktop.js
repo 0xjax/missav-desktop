@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.14
+// @version         1.36.15
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -1259,73 +1259,67 @@
 		}
 		return null;
 	}
-	function domSavedState() {
-		const svg = [...document.querySelectorAll("button")].find((b) => alpineAction(b, "toggleSave"))?.querySelector("svg[x-show=\"saved\"]");
-		if (!svg) return null;
-		return getComputedStyle(svg).display !== "none";
+	function componentData(alp, el) {
+		try {
+			return alp.$data(el) ?? null;
+		} catch {
+			return null;
+		}
 	}
-	function fallbackPlaylistSync(input) {
-		const before = input.checked;
-		const dvdId = dvdIdOf(input);
-		if (!dvdId) return;
-		setTimeout(() => {
-			if (input.checked === before) return;
-			applyChangeToLatestSnapshot(currentVideo(dvdId), input.checked, input.id);
-		}, 1500);
-	}
-	function fallbackSaveSync() {
-		const before = domSavedState();
-		if (before === null) return;
-		setTimeout(() => {
-			const after = domSavedState();
-			if (after === null || after === before) return;
-			const dvdId = dvdIdOf([...document.querySelectorAll("button")].find((b) => alpineAction(b, "toggleSave"))) ?? location.pathname.split("/").filter(Boolean).pop();
-			if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), after);
-		}, 1500);
+	function domSavedState(btn) {
+		const icons = [...btn.querySelectorAll("svg[x-show]")];
+		const on = icons.find((s) => s.getAttribute("x-show") === "saved");
+		const off = icons.find((s) => (s.getAttribute("x-show") || "").replace(/\s+/g, "") === "!saved");
+		if (!on || !off) return null;
+		const onVisible = getComputedStyle(on).display !== "none";
+		if (onVisible === (getComputedStyle(off).display !== "none")) return null;
+		return onVisible;
 	}
 	function avCode(dvdId) {
 		const first = document.querySelector("h1")?.textContent?.trim().split(/\s+/)[0];
 		return first && /^[a-z]+-\d/i.test(first) ? first : dvdId.toUpperCase();
 	}
 	function onSaveClick(e, btn) {
-		const alp = alpine$1();
-		if (!alp) {
-			fallbackSaveSync();
-			return;
-		}
-		const data = alp.$data(btn);
 		const url = findSaveUrl(btn);
-		if (!data || !url) return;
+		if (!url) return;
 		e.preventDefault();
 		e.stopImmediatePropagation();
-		const target = !data.saved;
+		const alp = alpine$1();
+		const data = alp ? componentData(alp, btn) : null;
+		const target = (data ? data.saved : domSavedState(btn)) !== true;
 		const dvdId = dvdIdOf(btn);
 		const code = dvdId ? avCode(dvdId) : void 0;
-		data.saved = target;
-		data.loading = true;
+		if (data) {
+			data.saved = target;
+			data.loading = true;
+		}
+		const commit = (saved) => {
+			if (!dvdId) return;
+			writeCache$1(dvdId, saved);
+			applyChangeToLatestSnapshot(currentVideo(dvdId), saved);
+		};
+		commit(target);
+		toastBroadcast(target ? t("save.saved") : t("save.unsaved"), {
+			code,
+			type: "success"
+		});
 		apiFetch(url, target ? "POST" : "DELETE").then((r) => {
-			data.loading = false;
-			if (r.ok) {
-				if (dvdId) {
-					writeCache$1(dvdId, target);
-					applyChangeToLatestSnapshot(currentVideo(dvdId), target);
-				}
-				toastBroadcast(target ? t("save.saved") : t("save.unsaved"), {
-					code,
-					type: "success"
-				});
-			} else {
-				data.saved = !target;
-				if (r.status === 401) openLoginModal(data);
-				else toast(t("save.failed"), {
-					code,
-					type: "error"
-				});
-			}
+			if (data) data.loading = false;
+			if (r.ok) return;
+			if (data) data.saved = !target;
+			commit(!target);
+			if (r.status === 401) openLoginModal(data ?? {});
+			else toastBroadcast(t("save.failed"), {
+				code,
+				type: "error"
+			});
 		}).catch(() => {
-			data.loading = false;
-			data.saved = !target;
-			toast(t("save.netError"), {
+			if (data) {
+				data.loading = false;
+				data.saved = !target;
+			}
+			commit(!target);
+			toastBroadcast(t("save.netError"), {
 				code,
 				type: "error"
 			});
@@ -1341,51 +1335,46 @@
 		data.togglePanel("playlist");
 	}
 	function onPlaylistToggle(e, input) {
-		const alp = alpine$1();
-		if (!alp) {
-			fallbackPlaylistSync(input);
-			return;
-		}
+		const dvdId = dvdIdOf(input);
+		if (!dvdId) return;
+		const checkedByUser = input.checked;
 		e.preventDefault();
 		e.stopImmediatePropagation();
-		const data = alp.$data(input);
-		const item = data.playlists?.find((p) => p.key === input.id);
-		const dvdId = dvdIdOf(input);
-		if (!item || !dvdId) {
-			if (dvdId) fallbackPlaylistSync(input);
-			return;
-		}
-		const target = !item.is_added;
+		const alp = alpine$1();
+		const data = alp ? componentData(alp, input) : null;
+		const item = (data?.playlists)?.find((p) => p.key === input.id);
+		const target = item ? !item.is_added : checkedByUser;
 		const code = avCode(dvdId);
-		item.is_added = target;
+		const setLocal = (on, delta) => {
+			if (item) item.is_added = on;
+			input.checked = on;
+			adjustPlaylistCount(input.id, delta);
+			applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id);
+		};
+		if (item) item.is_added = target;
 		setTimeout(() => {
-			item.is_added = target;
+			if (item) item.is_added = target;
 			input.checked = target;
 		}, 0);
+		setLocal(target, target ? 1 : -1);
+		toastBroadcast(target ? t("save.added") : t("save.removed"), {
+			code,
+			type: "success"
+		});
 		apiFetch(`${location.origin}/api/playlists/${target ? "add" : "remove"}`, "POST", {
 			dvdId,
-			key: item.key
+			key: input.id
 		}).then((r) => {
-			if (r.ok) {
-				adjustPlaylistCount(item.key, target ? 1 : -1);
-				if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), target, item.key);
-				toastBroadcast(target ? t("save.added") : t("save.removed"), {
-					code,
-					type: "success"
-				});
-			} else {
-				item.is_added = !target;
-				input.checked = !target;
-				if (r.status === 401) openLoginModal(data);
-				else toast(t("save.failed"), {
-					code,
-					type: "error"
-				});
-			}
+			if (r.ok) return;
+			setLocal(!target, target ? -1 : 1);
+			if (r.status === 401) openLoginModal(data ?? {});
+			else toastBroadcast(t("save.failed"), {
+				code,
+				type: "error"
+			});
 		}).catch(() => {
-			item.is_added = !target;
-			input.checked = !target;
-			toast(t("save.netError"), {
+			setLocal(!target, target ? -1 : 1);
+			toastBroadcast(t("save.netError"), {
 				code,
 				type: "error"
 			});
