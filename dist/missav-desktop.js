@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.17
+// @version         1.36.18
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -1555,7 +1555,7 @@
 			}));
 		}
 	}
-	var ID_RE = /^[a-z]{2,6}-\d{2,6}(-[a-z-]+)?$/;
+	var ID_RE = /^[a-z]{2,6}-\d{2,6}(-[a-z0-9-]+)?$/;
 	var FC2_RE = /^fc2(-\d+)?(-[a-z-]+)?$/;
 	var RESERVED = new Set([
 		"search",
@@ -1575,6 +1575,8 @@
 	]);
 	function isVideoPath() {
 		const parts = location.pathname.split("/").filter(Boolean);
+		const prev = parts[parts.length - 2] || "";
+		if (!LANG_RE.test(prev)) return false;
 		const id = parts[parts.length - 1] || "";
 		if (!id || RESERVED.has(id)) return false;
 		return ID_RE.test(id) || FC2_RE.test(id);

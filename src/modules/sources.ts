@@ -1,5 +1,5 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
-import { currentLang } from '../utils/lang.ts'
+import { LANG_RE, currentLang } from '../utils/lang.ts'
 import { t, type I18nKey } from '../utils/i18n.ts'
 
 // 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中字/英字），详情页拉一次，
@@ -199,14 +199,20 @@ function renderSegmented(
 }
 
 // 详情页 URL 判据（document-start 即可算，不等 Vue 水合）：
-// 末段为番号格式（前缀-数字 或 fc2-数字，可带源后缀）；排除 search 等功能路径
-const ID_RE = /^[a-z]{2,6}-\d{2,6}(-[a-z-]+)?$/
+// 末段为番号格式（前缀-数字，可带 `-数字` 分部或源后缀，如 gs-372-2 / id-004-16）；
+// 排除 search 等功能路径。
+// NOTE 后缀段要允许数字：`gs-372-2`（系列分部）、`id-004-16` 实测都被旧的 [a-z-] 判否，
+// 导致整个 sources 模块不启动（分段器完全不显示）
+const ID_RE = /^[a-z]{2,6}-\d{2,6}(-[a-z0-9-]+)?$/
 const FC2_RE = /^fc2(-\d+)?(-[a-z-]+)?$/
 const RESERVED = new Set(['search', 'new', 'best', 'genres', 'actresses', 'series', 'makers', 'leak', 'ranking', 'settings', 'login', 'register', 'dm4', 'dm539'])
 
 function isVideoPath(): boolean {
   const parts = location.pathname.split('/').filter(Boolean)
-  // 详情页路径两段起（dm 前缀段 + lang + 番号），末段必须是番号且不在保留词内
+  // 番号前一段必须是语言段（/cn/<番号> 或 /dm31/cn/<番号>）：否则
+  // /cn/playlists/create/sdmf-050 这类"末段恰好像番号"的功能页会被误判成详情页
+  const prev = parts[parts.length - 2] || ''
+  if (!LANG_RE.test(prev)) return false
   const id = parts[parts.length - 1] || ''
   if (!id || RESERVED.has(id)) return false
   return ID_RE.test(id) || FC2_RE.test(id)
