@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.15
+// @version         1.36.16
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -1450,11 +1450,14 @@
 		if (byBadge === "subtitle") return lang === "cn" ? "cnsub" : "ensub";
 		return "original";
 	}
+	function kindOfId(id, badgeKind) {
+		return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? badgeKind ?? "original";
+	}
 	function labelOf(kind) {
 		const def = KINDS.find(([k]) => k === kind);
 		return [t(def[1]), def[2]];
 	}
-	var CACHE_KEY = "sources-cache-v4";
+	var CACHE_KEY = "sources-cache-v5";
 	var CACHE_TTL = 6048e5;
 	function readCache() {
 		return GM_getValue$1(CACHE_KEY, {});
@@ -1480,31 +1483,29 @@
 			kind: "original"
 		};
 	}
-	async function fetchSources(base, lang) {
+	var MENU_SEL = "[aria-labelledby=\"download-option-menu-button\"]";
+	async function fetchMenuIds(base, lang) {
+		const res = await fetch(`${location.origin}/${lang}/${base}`, { credentials: "include" });
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const menu = new DOMParser().parseFromString(await res.text(), "text/html").querySelector(MENU_SEL);
+		if (!menu) return null;
+		return [...menu.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")?.split("/").filter(Boolean).pop() || "").filter((id) => id === base || SUFFIX_KIND.some(([suffix]) => id === base + suffix));
+	}
+	async function fetchBadges(base, lang) {
 		const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, { credentials: "include" });
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const doc = new DOMParser().parseFromString(await res.text(), "text/html");
-		const found = new Map();
+		const badges = new Map();
 		doc.querySelectorAll(".thumbnail").forEach((card) => {
-			const href = card.querySelector("a[href]")?.getAttribute("href") || "";
-			const id = href.split("/").filter(Boolean).pop() || "";
+			const id = card.querySelector("a[href]")?.getAttribute("href")?.split("/").filter(Boolean).pop() || "";
 			if (id !== base && !SUFFIX_KIND.some(([suffix]) => id === base + suffix)) return;
-			if (found.has(id)) return;
-			const badgeCls = card.querySelector(BADGE_SEL)?.className ?? null;
-			found.set(id, {
-				href,
-				kind: kindOf(id, badgeCls, lang)
-			});
+			if (badges.has(id)) return;
+			badges.set(id, kindOf(id, card.querySelector(BADGE_SEL)?.className ?? null, lang));
 		});
-		const sources = [];
-		for (const [kind] of KINDS) for (const [id, v] of found) if (v.kind === kind) sources.push({
-			id,
-			kind,
-			href: v.href
-		});
-		return sources;
+		return badges;
 	}
 	function renderSegmented(sources, currentId, loading) {
+		const lang = currentLang() ?? "cn";
 		const groups = new Set();
 		for (const a of document.querySelectorAll("a")) if (a.getAttributeNames().some((n) => (a.getAttribute(n) || "").includes("toggleSearch"))) groups.add(a.parentElement);
 		if (!groups.size) return;
@@ -1534,7 +1535,7 @@
 					b.disabled = true;
 					if (sources.length < 2) b.classList.add("mx-seg-locked");
 				} else b.addEventListener("click", () => {
-					location.href = s.href;
+					location.href = `/${lang}/${s.id}`;
 				});
 				return b;
 			}));
@@ -1571,11 +1572,9 @@
 		if (!parsed) return;
 		const current = {
 			id,
-			kind: parsed.kind,
-			href: location.href
+			kind: parsed.kind
 		};
 		const lang = currentLang() ?? "cn";
-		const otherLang = lang === "cn" ? "en" : "cn";
 		const cacheKey = parsed.base;
 		let injected = false;
 		const init = () => {
@@ -1588,11 +1587,18 @@
 			if (cacheFresh && cached.list.length) renderSegmented(cached.list, id, false);
 			(async () => {
 				try {
-					const [primary, secondary] = await Promise.all([fetchSources(parsed.base, lang), fetchSources(parsed.base, otherLang).catch(() => [])]);
-					const merged = new Map([...primary, ...secondary].map((s) => [s.id, s]));
-					if (!merged.has(current.id)) merged.set(current.id, current);
-					const list = [...merged.values()].sort((a, b) => KIND_ORDER.get(a.kind) - KIND_ORDER.get(b.kind));
-					writeCache(cacheKey, list);
+					const [menuIds, badges] = await Promise.all([fetchMenuIds(parsed.base, lang), fetchBadges(parsed.base, lang).catch(() => null)]);
+					const cachedKind = (x) => cached?.list.find((s) => s.id === x)?.kind;
+					const list = [...new Set([
+						parsed.base,
+						id,
+						...menuIds ?? [],
+						...badges?.keys() ?? []
+					])].map((x) => ({
+						id: x,
+						kind: kindOfId(x, badges?.get(x) ?? cachedKind(x))
+					})).sort((a, b) => KIND_ORDER.get(a.kind) - KIND_ORDER.get(b.kind));
+					if (badges) writeCache(cacheKey, list);
 					if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) renderSegmented(list, id, false);
 				} catch {
 					if (!cacheFresh) renderSegmented(cached?.list ?? [current], id, false);

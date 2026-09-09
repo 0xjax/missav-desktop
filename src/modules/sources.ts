@@ -2,20 +2,22 @@ import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 import { t, type I18nKey } from '../utils/i18n.ts'
 
-// 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中字/英字），详情页拉一次
-// 搜索页解析同源列表，在顶栏搜索图标左侧渲染胶囊分段器，当前源实色档位，点档位直达。
-// 源类型判据：URL 后缀（自带字幕语言，最精确）→ 搜索卡片左下角徽章 class（只判"是否
-// 字幕/无码"，跨语言稳定；裸番号的字幕语言由"它出现在哪个语言的搜索页"决定）→ 原版兜底。
+// 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中字/英字），详情页拉一次，
+// 在顶栏搜索图标左侧渲染胶囊分段器，当前源实色档位，点档位直达对应源。
+// 兄弟源列表以**站点自己的版本切换菜单**为准（`[aria-labelledby=download-option-menu-button]`，
+// 只出现在裸番号主条目页的 SSR 里；实测每个番号都有裸页，菜单列的就是全部兄弟源）；
+// 同语言搜索页只用来给裸番号定类型（徽章）。源类型判据：URL 后缀（自带字幕语言，最精确）
+// → 搜索卡片左下角徽章 class（只判"是否字幕/无码"）→ 原版兜底。
+// WARNING 不能只靠搜索页：实测 sdmf-009 / har-050 / umd-971 / har-068 等番号搜索页
+// 一张匹配卡片都不返回，而站点菜单列着兄弟源——只用搜索页时分段器只剩当前档。
 // NOTE 无后缀 id 也可能是字幕版（如 fneo-014），纯后缀判断会误判成原版。
-// WARNING 站点搜索页按语言过滤源：/cn 不返回 -english-subtitle，/en 不返回 -chinese-subtitle，
-// 故必须取 cn/en 两个搜索页的并集，否则跨语言字幕源会漏（实测 snos-163 / roe-459：
-// 原版页看不到也跳不到英字版，而站点自己的版本菜单列了它）。
+// NOTE 档位链接一律按当前站点语言拼 `/{lang}/{id}`：缓存不分语言，若存下别的语言的
+// 链接，点击会先跳英文页再被 lang-pref 弹回中文（实测页面中英来回跳）。
 // 顶栏是固定高度常驻区域，组件放这里从结构上杜绝下方内容布局跳动。
 
 interface Source {
   id: string
   kind: Kind
-  href: string
 }
 
 type Kind = 'original' | 'uncensored' | 'cnsub' | 'ensub'
@@ -61,6 +63,11 @@ function kindOf(id: string, badgeCls: string | null, lang: string): Kind {
   return 'original'
 }
 
+// 源类型：后缀最精确（自带字幕语言）→ 搜索页徽章（给裸番号定类型）→ 原版
+function kindOfId(id: string, badgeKind: Kind | undefined): Kind {
+  return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? badgeKind ?? 'original'
+}
+
 function labelOf(kind: Kind): [string, string] {
   const def = KINDS.find(([k]) => k === kind)!
   return [t(def[1]), def[2]]
@@ -68,9 +75,9 @@ function labelOf(kind: Kind): [string, string] {
 
 // ---- 同源列表缓存：跨页面/跨会话（复观场景），7 天有效 ----
 
-// NOTE 判据加了"字幕语言"后 kind 取值变化，旧缓存形状不兼容，故换 key；
-// 条目键用纯番号：并集结果与站点语言无关（两种语言的搜索页都取），标签在渲染时才本地化
-const CACHE_KEY = 'sources-cache-v4'
+// NOTE 缓存条目从"存 href"改为"只存 id + kind"（href 按当前站点语言在渲染时拼），
+// 旧形状不兼容故换 key；条目键用纯番号：兄弟源列表与站点语言无关
+const CACHE_KEY = 'sources-cache-v5'
 const CACHE_TTL = 7 * 24 * 3600 * 1000
 type SourcesCache = Record<string, { ts: number; list: Source[] }>
 
@@ -96,30 +103,38 @@ function parseVideoId(id: string): { base: string; kind: Kind } | null {
   return { base: id, kind: 'original' }
 }
 
-async function fetchSources(base: string, lang: string): Promise<Source[]> {
+// 裸番号主条目页里的版本切换菜单 = 站点给出的全部兄弟源（不含当前条目自己）
+const MENU_SEL = '[aria-labelledby="download-option-menu-button"]'
+
+async function fetchMenuIds(base: string, lang: string): Promise<string[] | null> {
+  const res = await fetch(`${location.origin}/${lang}/${base}`, {
+    credentials: 'include',
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const doc = new DOMParser().parseFromString(await res.text(), 'text/html')
+  const menu = doc.querySelector(MENU_SEL)
+  if (!menu) return null
+  return [...menu.querySelectorAll('a[href]')]
+    .map((a) => a.getAttribute('href')?.split('/').filter(Boolean).pop() || '')
+    .filter((id) => id === base || SUFFIX_KIND.some(([suffix]) => id === base + suffix))
+}
+
+// 搜索页只取类型（徽章）：裸番号可能是中字版（fneo-014），后缀判不出来
+async function fetchBadges(base: string, lang: string): Promise<Map<string, Kind>> {
   const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, {
     credentials: 'include',
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const doc = new DOMParser().parseFromString(await res.text(), 'text/html')
-  const found = new Map<string, { href: string; kind: Kind }>()
+  const badges = new Map<string, Kind>()
   doc.querySelectorAll('.thumbnail').forEach((card) => {
-    const href = card.querySelector('a[href]')?.getAttribute('href') || ''
-    const id = href.split('/').filter(Boolean).pop() || ''
+    const id = card.querySelector('a[href]')?.getAttribute('href')?.split('/').filter(Boolean).pop() || ''
     // 只收本番号及其已知后缀的源，排除 sone-6690 这类误匹配
     if (id !== base && !SUFFIX_KIND.some(([suffix]) => id === base + suffix)) return
-    if (found.has(id)) return
-    const badgeCls = card.querySelector(BADGE_SEL)?.className ?? null
-    found.set(id, { href, kind: kindOf(id, badgeCls, lang) })
+    if (badges.has(id)) return
+    badges.set(id, kindOf(id, card.querySelector(BADGE_SEL)?.className ?? null, lang))
   })
-  const sources: Source[] = []
-  // 按原版→无码→中字→英字排序，分段器档位顺序稳定
-  for (const [kind] of KINDS) {
-    for (const [id, v] of found) {
-      if (v.kind === kind) sources.push({ id, kind, href: v.href })
-    }
-  }
-  return sources
+  return badges
 }
 
 // ---- 顶栏胶囊分段器 ----
@@ -132,6 +147,7 @@ function renderSegmented(
   currentId: string,
   loading: boolean,
 ): void {
+  const lang = currentLang() ?? 'cn'
   // 两套响应式容器都要注入（同齿轮）；锚点组 = 搜索 a 的父级
   const groups = new Set<Element>()
   for (const a of document.querySelectorAll('a')) {
@@ -172,7 +188,8 @@ function renderSegmented(
           if (sources.length < 2) b.classList.add('mx-seg-locked')
         } else {
           b.addEventListener('click', () => {
-            location.href = s.href
+            // 一律按当前站点语言拼链接，避免跳到别的语言页被 lang-pref 弹回
+            location.href = `/${lang}/${s.id}`
           })
         }
         return b
@@ -204,14 +221,8 @@ export function sources(): void {
   const parsed = parseVideoId(id)
   if (!parsed) return
 
-  const current: Source = {
-    id,
-    kind: parsed.kind,
-    href: location.href,
-  }
+  const current: Source = { id, kind: parsed.kind }
   const lang = currentLang() ?? 'cn'
-  // 另一个语言的搜索页用来补跨语言字幕源（见文件头 WARNING）
-  const otherLang = lang === 'cn' ? 'en' : 'cn'
   const cacheKey = parsed.base
 
   // 骨架态先行：顶栏一出就显示拉取中，无内容高度参与
@@ -232,21 +243,25 @@ export function sources(): void {
 
     ;(async () => {
       try {
-        // 两个语言的搜索页并行取并集；另一个语言拉不到就降级为单语言结果
-        const [primary, secondary] = await Promise.all([
-          fetchSources(parsed.base, lang),
-          fetchSources(parsed.base, otherLang).catch(() => [] as Source[]),
+        // 菜单是权威兄弟列表；搜索页只供徽章，失败只影响裸番号的类型判定
+        const [menuIds, badges] = await Promise.all([
+          fetchMenuIds(parsed.base, lang),
+          fetchBadges(parsed.base, lang).catch(() => null),
         ])
-        // 同 id 以当前语言搜索页的判定为准（先到先得）
-        const merged = new Map([...primary, ...secondary].map((s) => [s.id, s]))
-        // WARNING 搜索页按语言过滤源，可能连当前页自己都不返回（实测 /en/search 漏掉
-        // 中文字幕裸番号页 sdmf-008/ipx-988）；当前源只作兜底补入，不能先入为主——
-        // 它只有 URL 后缀判据，会盖掉搜索页徽章给出的更准确类型（如 /en/fneo-014）
-        if (!merged.has(current.id)) merged.set(current.id, current)
-        const list = [...merged.values()].sort(
-          (a, b) => KIND_ORDER.get(a.kind)! - KIND_ORDER.get(b.kind)!,
-        )
-        writeCache(cacheKey, list)
+        // 搜索页失败时用上次缓存的类型兜底，避免裸番号类型忽原忽中
+        const cachedKind = (x: string): Kind | undefined =>
+          cached?.list.find((s) => s.id === x)?.kind
+        const ids = new Set<string>([
+          parsed.base,
+          id,
+          ...(menuIds ?? []),
+          ...(badges?.keys() ?? []),
+        ])
+        const list = [...ids]
+          .map((x) => ({ id: x, kind: kindOfId(x, badges?.get(x) ?? cachedKind(x)) }))
+          .sort((a, b) => KIND_ORDER.get(a.kind)! - KIND_ORDER.get(b.kind)!)
+        // 搜索页没拿到徽章时不写缓存：裸番号类型可能判错，别固化 7 天
+        if (badges) writeCache(cacheKey, list)
         // 缓存命中时只有内容变化才重渲染，无变化零感知
         if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) {
           renderSegmented(list, id, false)
