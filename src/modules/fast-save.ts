@@ -233,7 +233,18 @@ function onSaveClick(e: MouseEvent, btn: Element): void {
 
 interface PlaylistItem {
   key: string
+  name?: string
   is_added: boolean
+}
+
+// 片单名：Alpine 数据（实测字段 {is_added, key, name}）优先，其次面板行 label。
+// 快照里没有该片单时要靠它补建条目（名字错就没法回溯是哪个片单）
+function playlistName(input: HTMLInputElement, item?: PlaylistItem): string | undefined {
+  if (item?.name) return item.name
+  return (
+    input.closest('div.relative')?.querySelector('label')?.textContent?.trim() ||
+    undefined
+  )
 }
 
 function onPlaylistOpenClick(e: MouseEvent, btn: Element): void {
@@ -263,13 +274,14 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
   const list = data?.playlists as PlaylistItem[] | undefined
   const item = list?.find((p) => p.key === input.id)
   const target = item ? !item.is_added : checkedByUser
+  const name = playlistName(input, item)
   const code = avCode(dvdId)
 
   const setLocal = (on: boolean, delta: number): void => {
     if (item) item.is_added = on
     input.checked = on
     adjustPlaylistCount(input.id, delta)
-    applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id)
+    applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id, name)
   }
   if (item) item.is_added = target
   // 这些行的 x-model 数据→DOM effect 会部分失效（实测：is_added=true 但 checked

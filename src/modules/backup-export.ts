@@ -181,10 +181,14 @@ function saveSnapshot(s: Snapshot): void {
 
 // 收藏/片单操作成功后回写最新快照：立即备份一次，后续操作让快照保持近乎最新。
 // 没有任何快照时是空操作
+// NOTE 片单不在快照里是常态：上次备份之后新建的片单快照当然没有，此时必须
+// 补建条目，否则这次更新会被静默丢弃，且此后该片单的勾选/取消全部失效
+// （实测：快照 34 个片单、面板 36 个，差的两个正是新建后没进快照的）
 export function applyChangeToLatestSnapshot(
   video: { id: string; title: string; url: string },
   added: boolean,
   playlistKey?: string,
+  playlistName?: string,
 ): void {
   const list = readSnapshots()
   const latest = list[0]
@@ -194,8 +198,15 @@ export function applyChangeToLatestSnapshot(
       ? [video, ...latest.saved.filter((v) => v.id !== video.id)]
       : latest.saved.filter((v) => v.id !== video.id)
   } else {
-    const pl = latest.playlists.find((p) => p.key === playlistKey)
-    if (!pl) return
+    let pl = latest.playlists.find((p) => p.key === playlistKey)
+    if (!pl) {
+      // 取消勾选时没有可删的东西，不必建条目
+      if (!added) return
+      // 插队首：站点片单列表页是新的在前，抓取顺序即快照顺序，这样与下次
+      // 真备份的排列一致（不是随意的顺序）
+      pl = { key: playlistKey, name: playlistName || playlistKey, videos: [] }
+      latest.playlists.unshift(pl)
+    }
     pl.videos = added
       ? [video, ...pl.videos.filter((v) => v.id !== video.id)]
       : pl.videos.filter((v) => v.id !== video.id)

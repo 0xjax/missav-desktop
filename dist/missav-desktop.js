@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.18
+// @version         1.36.19
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -451,14 +451,22 @@
 		GM_setValue$1(LAST_BACKUP_KEY, s.ts);
 		syncCounts(s);
 	}
-	function applyChangeToLatestSnapshot(video, added, playlistKey) {
+	function applyChangeToLatestSnapshot(video, added, playlistKey, playlistName) {
 		const list = readSnapshots();
 		const latest = list[0];
 		if (!latest) return;
 		if (playlistKey === void 0) latest.saved = added ? [video, ...latest.saved.filter((v) => v.id !== video.id)] : latest.saved.filter((v) => v.id !== video.id);
 		else {
-			const pl = latest.playlists.find((p) => p.key === playlistKey);
-			if (!pl) return;
+			let pl = latest.playlists.find((p) => p.key === playlistKey);
+			if (!pl) {
+				if (!added) return;
+				pl = {
+					key: playlistKey,
+					name: playlistName || playlistKey,
+					videos: []
+				};
+				latest.playlists.unshift(pl);
+			}
 			pl.videos = added ? [video, ...pl.videos.filter((v) => v.id !== video.id)] : pl.videos.filter((v) => v.id !== video.id);
 		}
 		GM_setValue$1(SNAPSHOTS_KEY, list);
@@ -1339,6 +1347,10 @@
 			});
 		});
 	}
+	function playlistName(input, item) {
+		if (item?.name) return item.name;
+		return input.closest("div.relative")?.querySelector("label")?.textContent?.trim() || void 0;
+	}
 	function onPlaylistOpenClick(e, btn) {
 		const alp = alpine$1();
 		if (!alp) return;
@@ -1358,12 +1370,13 @@
 		const data = alp ? componentData(alp, input) : null;
 		const item = (data?.playlists)?.find((p) => p.key === input.id);
 		const target = item ? !item.is_added : checkedByUser;
+		const name = playlistName(input, item);
 		const code = avCode(dvdId);
 		const setLocal = (on, delta) => {
 			if (item) item.is_added = on;
 			input.checked = on;
 			adjustPlaylistCount(input.id, delta);
-			applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id);
+			applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id, name);
 		};
 		if (item) item.is_added = target;
 		setTimeout(() => {
