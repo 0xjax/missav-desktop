@@ -38,6 +38,9 @@ async function evalJs(expression) {
 ws.onopen = async () => {
   try {
     await send('Runtime.enable')
+    // 后台标签页 visibilityState=hidden 时 Chrome 直接丢弃输入事件（埋点日志为空、
+    // 状态不变，看起来像"点了没反应"），按压前必须把 tab 置前
+    await send('Page.bringToFront')
     // 1) 装埋点并取目标坐标
     const setup = await evalJs(`(() => {
       const inp = document.getElementById(${JSON.stringify(boxId)})
