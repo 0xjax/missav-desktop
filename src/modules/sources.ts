@@ -1,5 +1,6 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
+import { t, type I18nKey } from '../utils/i18n.ts'
 
 // 多源显示与切换：同一番号在站点有多个源（原版/无码流出/字幕版），详情页拉一次
 // 搜索页解析同源列表，在顶栏搜索图标左侧渲染胶囊分段器（原版/无码/中字），
@@ -11,18 +12,18 @@ import { currentLang } from '../utils/lang.ts'
 
 interface Source {
   id: string
-  label: string
-  color: string
+  kind: Kind
   href: string
 }
 
 type Kind = 'original' | 'uncensored' | 'subtitle'
 
-// 源类型 → 分段器标签/配色；顺序即分段器排列顺序
-const KINDS: [Kind, string, string][] = [
-  ['original', '原版', '#4c566a'],
-  ['uncensored', '无码', '#2563eb'],
-  ['subtitle', '中字', '#dc2626'],
+// 源类型 → 文案键/配色；顺序即分段器排列顺序。
+// 文案在渲染时取（见 labelOf），缓存只存 kind，避免切站点语言后残留旧语言标签
+const KINDS: [Kind, I18nKey, string][] = [
+  ['original', 'source.original', '#4c566a'],
+  ['uncensored', 'source.uncensored', '#2563eb'],
+  ['subtitle', 'source.subtitle', '#dc2626'],
 ]
 
 // URL 后缀 → 源类型（兜底判据）：中字后缀随站语言不同（/cn 中字、/en 英字）
@@ -50,14 +51,15 @@ function kindOf(id: string, badgeCls: string | null): Kind {
 
 function labelOf(kind: Kind): [string, string] {
   const def = KINDS.find(([k]) => k === kind)!
-  return [def[1], def[2]]
+  return [t(def[1]), def[2]]
 }
 
 // ---- 同源列表缓存：跨页面/跨会话（复观场景），7 天有效 ----
 
-// NOTE 判据换成徽章后必须换 key：旧缓存里的错误标签（无后缀字幕版记成原版）
-// 不会因 id 集合不变而重渲染，只能靠换 key 淘汰
-const CACHE_KEY = 'sources-cache-v2'
+// NOTE 缓存结构从"存标签"改为"存 kind"（标签随站点语言变），旧缓存形状不兼容，故换 key；
+// 条目键带站点语言前缀：搜索页按语言过滤源，同番号在 cn/en 下的源集合本就不同，
+// 不分语言会把中文站点的列表渲染到英文站点上
+const CACHE_KEY = 'sources-cache-v3'
 const CACHE_TTL = 7 * 24 * 3600 * 1000
 type SourcesCache = Record<string, { ts: number; list: Source[] }>
 
@@ -65,9 +67,9 @@ function readCache(): SourcesCache {
   return GM_getValue<SourcesCache>(CACHE_KEY, {})
 }
 
-function writeCache(base: string, list: Source[]): void {
+function writeCache(cacheKey: string, list: Source[]): void {
   const cache = readCache()
-  cache[base] = { ts: Date.now(), list }
+  cache[cacheKey] = { ts: Date.now(), list }
   // 限量 500 条，超出丢弃最早的
   const keys = Object.keys(cache)
   if (keys.length > 500) keys.slice(0, 100).forEach((k) => delete cache[k])
@@ -83,7 +85,11 @@ function parseVideoId(id: string): { base: string; kind: Kind } | null {
   return { base: id, kind: 'original' }
 }
 
-async function fetchSources(base: string, lang: string): Promise<Source[]> {
+async function fetchSources(
+  base: string,
+  lang: string,
+  current: Source,
+): Promise<Source[]> {
   const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, {
     credentials: 'include',
   })
@@ -99,11 +105,15 @@ async function fetchSources(base: string, lang: string): Promise<Source[]> {
     const badgeCls = card.querySelector(BADGE_SEL)?.className ?? null
     found.set(id, { href, kind: kindOf(id, badgeCls) })
   })
+  // WARNING 搜索页按站点语言过滤源：当前页是"非该语言"的版本时连自己都不返回
+  // （实测 /en/search 对中文字幕裸番号页 sdmf-008/ipx-988 漏掉该 id），
+  // 必须把当前源补回，否则分段器没有当前档、只剩可跳转的兄弟档
+  if (!found.has(current.id)) found.set(current.id, { href: current.href, kind: current.kind })
   const sources: Source[] = []
-  // 按原版→无码→中字排序，分段器档位顺序稳定
-  for (const [kind, label, color] of KINDS) {
+  // 按原版→无码→字幕排序，分段器档位顺序稳定
+  for (const [kind] of KINDS) {
     for (const [id, v] of found) {
-      if (v.kind === kind) sources.push({ id, label, color, href: v.href })
+      if (v.kind === kind) sources.push({ id, kind, href: v.href })
     }
   }
   return sources
@@ -146,14 +156,15 @@ function renderSegmented(
     seg.className = 'mx-segmented'
     seg.replaceChildren(
       ...sources.map((s) => {
+        const [label, color] = labelOf(s.kind)
         const b = document.createElement('button')
         b.type = 'button'
         const isCurrent = s.id === currentId
         b.className = 'mx-seg' + (isCurrent ? ' mx-seg-current' : '')
-        b.textContent = s.label
+        b.textContent = label
         if (isCurrent) {
           // 当前档实色；单源时额外加锁定态（无切换意义，仅作标识）
-          b.style.background = s.color
+          b.style.background = color
           b.disabled = true
           if (sources.length < 2) b.classList.add('mx-seg-locked')
         } else {
@@ -190,13 +201,13 @@ export function sources(): void {
   const parsed = parseVideoId(id)
   if (!parsed) return
 
-  const [curLabel, curColor] = labelOf(parsed.kind)
   const current: Source = {
     id,
-    label: curLabel,
-    color: curColor,
+    kind: parsed.kind,
     href: location.href,
   }
+  const lang = currentLang() ?? 'cn'
+  const cacheKey = `${lang}:${parsed.base}`
 
   // 骨架态先行：顶栏一出就显示拉取中，无内容高度参与
   let injected = false
@@ -210,23 +221,21 @@ export function sources(): void {
     renderSegmented([], id, true)
 
     // 有新鲜缓存则直接渲染完整分段器，后台静默校验
-    const cached = readCache()[parsed.base]
+    const cached = readCache()[cacheKey]
     const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL
     if (cacheFresh && cached.list.length) renderSegmented(cached.list, id, false)
 
     ;(async () => {
       try {
-        const lang = currentLang() ?? 'cn'
-        const list = await fetchSources(parsed.base, lang)
-        if (!list.length) list.push(current)
-        writeCache(parsed.base, list)
+        const list = await fetchSources(parsed.base, lang, current)
+        writeCache(cacheKey, list)
         // 缓存命中时只有内容变化才重渲染，无变化零感知
         if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) {
           renderSegmented(list, id, false)
         }
       } catch {
-        // 拉取失败：有缓存用缓存，否则保留骨架（下页重试）
-        if (!cacheFresh) renderSegmented(cached?.list ?? [], id, false)
+        // 拉取失败：有缓存用缓存，否则只显示当前源（下页重试）
+        if (!cacheFresh) renderSegmented(cached?.list ?? [current], id, false)
       }
     })()
     return true

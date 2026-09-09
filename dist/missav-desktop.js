@@ -1,19 +1,21 @@
 // ==UserScript==
-// @name         missav 桌面端
-// @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.36.12
-// @author       0xjax
-// @description  增强 missav 网站的桌面端浏览体验。
-// @license      MIT
-// @icon         https://missav.ws/favicon.ico
-// @match        https://missav.ws/*
-// @match        https://missav.ai/*
-// @grant        GM_addStyle
-// @grant        GM_getValue
-// @grant        GM_registerMenuCommand
-// @grant        GM_setValue
-// @grant        unsafeWindow
-// @run-at       document-start
+// @name            missav 桌面端
+// @name:en         MissAV Desktop
+// @namespace       https://github.com/0xjax/missav-desktop
+// @version         1.36.13
+// @author          0xjax
+// @description     增强 missav 网站的桌面端浏览体验。
+// @description:en  Enhanced desktop browsing experience for missav.
+// @license         MIT
+// @icon            https://missav.ws/favicon.ico
+// @match           https://missav.ws/*
+// @match           https://missav.ai/*
+// @grant           GM_addStyle
+// @grant           GM_getValue
+// @grant           GM_registerMenuCommand
+// @grant           GM_setValue
+// @grant           unsafeWindow
+// @run-at          document-start
 // ==/UserScript==
 
 (function() {
@@ -164,6 +166,71 @@
 	function currentLang() {
 		return location.pathname.split("/").filter(Boolean).find((s) => LANG_RE.test(s)) ?? null;
 	}
+	var DICT = {
+		"setting.title": ["脚本设置", "Script Settings"],
+		"setting.cancel": ["取消", "Cancel"],
+		"setting.save": ["保存", "Save"],
+		"setting.export": ["导出备份", "Export Backup"],
+		"setting.back": ["← 返回", "← Back"],
+		"setting.backupHint": ["立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载", "A backup takes about 1–3 minutes. Don't close this tab; when done it overwrites today's snapshot and downloads it."],
+		"setting.backupNow": ["立即备份", "Back Up Now"],
+		"setting.download": ["下载", "Download"],
+		"setting.emptySlot": ["（空槽位，等待自动备份）", "(empty slot, awaiting auto backup)"],
+		"setting.exported": ["已导出历史备份", "Historical backup exported"],
+		"opt.block-ads": ["去广告", "Block Ads"],
+		"opt.lang-pref": ["语言偏好", "Language Preference"],
+		"opt.search-pref": ["搜索偏好", "Search Preference"],
+		"opt.shortcut-keys": ["快捷操作", "Keyboard Shortcuts"],
+		"opt.fast-save": ["收藏片单增强", "Enhanced Save & Playlists"],
+		"opt.auto-backup": ["自动备份（每 3 天）", "Auto Backup (every 3 days)"],
+		"opt.sources": ["多源显示切换", "Multi-source Switcher"],
+		"opt.playlist-panel": ["片单面板优化", "Playlist Panel Tuning"],
+		"opt.playlist-dock": ["片单右侧栏（宽屏自动展开）", "Playlist Sidebar (auto-expand on wide screens)"],
+		"opt.topbar-ui": ["顶栏增强（设置入口 + 图标统一）", "Topbar Enhancements (settings entry + unified icons)"],
+		"help.title": ["快捷键", "Shortcuts"],
+		"help.playPause": ["播放 / 暂停", "Play / Pause"],
+		"help.save": ["收藏 / 取消收藏", "Save / Unsave"],
+		"help.playlist": ["展开 / 收起片单", "Open / Close Playlists"],
+		"help.search": ["聚焦搜索框", "Focus Search Box"],
+		"help.home": ["回到首页", "Go to Homepage"],
+		"help.saved": ["打开我的收藏", "Open My Collection"],
+		"help.history": ["打开观看历史", "Open Watch History"],
+		"help.settings": ["脚本设置", "Script Settings"],
+		"help.help": ["快捷键帮助", "Shortcut Help"],
+		"help.fullscreen": ["全屏（站点自带）", "Fullscreen (site built-in)"],
+		"source.original": ["原版", "Original"],
+		"source.uncensored": ["无码", "Uncensored"],
+		"source.subtitle": ["中字", "Eng sub"],
+		"save.saved": ["已收藏", "Saved"],
+		"save.unsaved": ["已取消收藏", "Removed from saved"],
+		"save.added": ["已加入片单", "Added to playlist"],
+		"save.removed": ["已移出片单", "Removed from playlist"],
+		"save.failed": ["操作失败，请重试", "Action failed, please retry"],
+		"save.netError": ["网络错误，操作未生效", "Network error, action not applied"],
+		"backup.saved": ["备份收藏", "Backing up saved"],
+		"backup.savedDone": ["收藏 {n} 部，开始备份片单", "{n} saved items, backing up playlists"],
+		"backup.playlistList": ["备份片单列表：第 {page} 页", "Backing up playlist list: page {page}"],
+		"backup.playlist": ["片单 {i}/{total}「{name}」", "Playlist {i}/{total} \"{name}\""],
+		"backup.progress": ["{label}：第 {page} 页（已抓 {n} 条）", "{label}: page {page} ({n} items)"],
+		"backup.stat": ["{saved} 收藏 · {lists} 片单 · {videos} 片", "{saved} saved · {lists} playlists · {videos} videos"],
+		"backup.done": ["备份完成：收藏 {saved} 部，片单 {lists} 个", "Backup complete: {saved} saved, {lists} playlists"],
+		"backup.running": ["备份进行中，请稍候", "Backup already running, please wait"],
+		"backup.confirm": ["距离上次备份仅 {min} 分钟，数据可能没什么变化。确定要重新备份吗？", "The last backup was only {min} minutes ago, so data may be unchanged. Back up again?"],
+		"backup.failed": ["备份失败：{msg}", "Backup failed: {msg}"],
+		"backup.autoStart": ["开始自动备份收藏与片单…", "Starting auto backup of saved items and playlists…"],
+		"backup.autoFailed": ["自动备份失败：{msg}", "Auto backup failed: {msg}"],
+		"backup.netError": ["网络异常", "network error"],
+		"backup.denied": ["HTTP {status}（重试后仍被拒绝）", "HTTP {status} (still refused after retries)"],
+		"ad.manga": ["漫画", "Manga"]
+	};
+	function uiLang() {
+		return currentLang() === "cn" ? "cn" : "en";
+	}
+	function t(key, params) {
+		let s = DICT[key][uiLang() === "cn" ? 0 : 1];
+		if (params) for (const [k, v] of Object.entries(params)) s = s.replaceAll(`{${k}}`, String(v));
+		return s;
+	}
 	var COUNTS_KEY = "playlist-counts";
 	var ITEM_SEL = "input[x-model=\"playlist.is_added\"]";
 	function readPlaylistCounts() {
@@ -261,7 +328,7 @@
 			lastStatus = res.status;
 			if (res.status !== 403) break;
 		}
-		throw new Error(`HTTP ${lastStatus}（重试后仍被拒绝）`);
+		throw new Error(t("backup.denied", { status: lastStatus }));
 	}
 	function parseVideos(doc) {
 		const items = [];
@@ -287,7 +354,11 @@
 		const all = [];
 		const seen = new Set();
 		for (let page = 1; page <= 100; page++) {
-			stickyToast(STICKY_ID, `${label}：第 ${page} 页（已抓 ${all.length} 条）`);
+			stickyToast(STICKY_ID, t("backup.progress", {
+				label,
+				page,
+				n: all.length
+			}));
 			const fresh = parseVideos(await fetchDoc(`${baseUrl}?page=${page}`)).filter((i) => !seen.has(i.id));
 			fresh.forEach((i) => {
 				seen.add(i.id);
@@ -301,7 +372,7 @@
 	async function crawlPlaylists(lang) {
 		const map = new Map();
 		for (let page = 1; page <= 20; page++) {
-			stickyToast(STICKY_ID, `备份片单列表：第 ${page} 页`);
+			stickyToast(STICKY_ID, t("backup.playlistList", { page }));
 			const doc = await fetchDoc(`${location.origin}/${lang}/playlists?page=${page}`);
 			const before = map.size;
 			doc.querySelectorAll("a[href*=\"/playlists/\"]").forEach((a) => {
@@ -323,7 +394,11 @@
 			playlists.push({
 				key,
 				name,
-				videos: await crawlVideos(url, `片单 ${i}/${map.size}「${name}」`)
+				videos: await crawlVideos(url, t("backup.playlist", {
+					i,
+					total: map.size,
+					name
+				}))
 			});
 			await sleep(400);
 		}
@@ -356,7 +431,11 @@
 	}
 	function snapshotStat(s) {
 		const videos = s.playlists.reduce((n, p) => n + p.videos.length, 0);
-		return `${s.saved.length} 收藏 · ${s.playlists.length} 片单 · ${videos} 片`;
+		return t("backup.stat", {
+			saved: s.saved.length,
+			lists: s.playlists.length,
+			videos
+		});
 	}
 	function syncCounts(s) {
 		const counts = {};
@@ -400,7 +479,10 @@
 			saveSnapshot(snap);
 			downloadSnapshot(snap);
 			stickyToast(STICKY_ID);
-			toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`);
+			toast(t("backup.done", {
+				saved: saved.length,
+				lists: playlists.length
+			}));
 		} catch (err) {
 			stickyToast(STICKY_ID);
 			throw err;
@@ -420,8 +502,8 @@
 	}
 	async function crawlAll() {
 		const lang = currentLang() ?? "cn";
-		const saved = await crawlVideos(`${location.origin}/${lang}/saved`, "备份收藏");
-		stickyToast(STICKY_ID, `收藏 ${saved.length} 部，开始备份片单`);
+		const saved = await crawlVideos(`${location.origin}/${lang}/saved`, t("backup.saved"));
+		stickyToast(STICKY_ID, t("backup.savedDone", { n: saved.length }));
 		return {
 			saved,
 			playlists: await crawlPlaylists(lang)
@@ -429,19 +511,19 @@
 	}
 	async function backupNow() {
 		if (exporting) {
-			toast("备份进行中，请稍候");
+			toast(t("backup.running"));
 			return;
 		}
 		const last = GM_getValue$1(LAST_BACKUP_KEY, 0);
 		const gapMin = Math.round((Date.now() - last) / 6e4);
 		if (gapMin < 10) {
-			if (!window.confirm(`距离上次备份仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新备份吗？`)) return;
+			if (!window.confirm(t("backup.confirm", { min: gapMin }))) return;
 		}
 		exporting = true;
 		try {
 			await runBackup();
 		} catch (err) {
-			toast(`备份失败：${err instanceof Error ? err.message : "网络异常"}`);
+			toast(t("backup.failed", { msg: err instanceof Error ? err.message : t("backup.netError") }));
 		} finally {
 			exporting = false;
 		}
@@ -455,10 +537,10 @@
 				if (Date.now() - last < AUTO_INTERVAL) return;
 				GM_setValue$1(LAST_BACKUP_KEY, Date.now());
 				exporting = true;
-				toast("开始自动备份收藏与片单…");
+				toast(t("backup.autoStart"));
 				runBackup().catch((err) => {
 					GM_setValue$1(LAST_BACKUP_KEY, last);
-					toast(`自动备份失败：${err instanceof Error ? err.message : "网络异常"}`);
+					toast(t("backup.autoFailed", { msg: err instanceof Error ? err.message : t("backup.netError") }));
 				}).finally(() => {
 					exporting = false;
 				});
@@ -466,16 +548,16 @@
 		});
 	}
 	var keyValues = {
-		"block-ads": "去广告",
-		"lang-pref": "语言偏好",
-		"search-pref": "搜索偏好",
-		"shortcut-keys": "快捷操作",
-		"fast-save": "收藏片单增强",
-		"auto-backup": "自动备份（每 3 天）",
-		"sources": "多源显示切换",
-		"playlist-panel": "片单面板优化",
-		"playlist-dock": "片单右侧栏（宽屏自动展开）",
-		"topbar-ui": "顶栏增强（设置入口 + 图标统一）"
+		"block-ads": "opt.block-ads",
+		"lang-pref": "opt.lang-pref",
+		"search-pref": "opt.search-pref",
+		"shortcut-keys": "opt.shortcut-keys",
+		"fast-save": "opt.fast-save",
+		"auto-backup": "opt.auto-backup",
+		"sources": "opt.sources",
+		"playlist-panel": "opt.playlist-panel",
+		"playlist-dock": "opt.playlist-dock",
+		"topbar-ui": "opt.topbar-ui"
 	};
 	var keyDefaults = {
 		"block-ads": true,
@@ -494,16 +576,16 @@
 			id: "setting-panel",
 			innerHTML: `
       <div id="setting-view">
-        <div class="setting-title">脚本设置</div>
+        <div class="setting-title">${t("setting.title")}</div>
         <div class="setting-checkboxes">
           ${Object.entries(keyValues).map(([key, label]) => `
-            <label><input type="checkbox" data-key="${key}"><span>${label}</span></label>
+            <label><input type="checkbox" data-key="${key}"><span>${t(label)}</span></label>
           `).join("")}
         </div>
         <div class="setting-actions dialog-footer">
-          <button class="dialog-cancel" type="button">取消</button>
-          <button id="setting-export" type="button">导出备份</button>
-          <button id="setting-save" type="button">保存</button>
+          <button class="dialog-cancel" type="button">${t("setting.cancel")}</button>
+          <button id="setting-export" type="button">${t("setting.export")}</button>
+          <button id="setting-save" type="button">${t("setting.save")}</button>
         </div>
       </div>
       <div id="backup-view" style="display: none"></div>
@@ -540,12 +622,12 @@
 				className: "backup-render",
 				innerHTML: `
         <div class="dialog-header">
-          <button class="dialog-back" type="button">← 返回</button>
-          <span class="setting-title">导出备份</span>
+          <button class="dialog-back" type="button">${t("setting.back")}</button>
+          <span class="setting-title">${t("setting.export")}</span>
         </div>
-        <div class="backup-hint">立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载</div>
+        <div class="backup-hint">${t("setting.backupHint")}</div>
         <div class="setting-actions backup-latest">
-          <button id="backup-latest-btn" type="button">立即备份</button>
+          <button id="backup-latest-btn" type="button">${t("setting.backupNow")}</button>
         </div>
         ${`<div class="backup-list">${[
 					0,
@@ -555,15 +637,15 @@
 					4
 				].map((i) => {
 					const s = snapshots[i];
-					if (!s) return "<div class=\"backup-row backup-empty\"><span>（空槽位，等待自动备份）</span></div>";
+					if (!s) return `<div class="backup-row backup-empty"><span>${t("setting.emptySlot")}</span></div>`;
 					return `
               <div class="backup-row">
                 <span><b>${fmtTs(s.ts)}</b> · ${snapshotStat(s)}</span>
-                <button type="button" data-i="${i}">下载</button>
+                <button type="button" data-i="${i}">${t("setting.download")}</button>
               </div>`;
 				}).join("")}</div>`}
         <div class="setting-actions dialog-footer">
-          <button class="dialog-cancel" type="button">取消</button>
+          <button class="dialog-cancel" type="button">${t("setting.cancel")}</button>
         </div>
       `
 			});
@@ -584,7 +666,7 @@
 					const s = readSnapshots()[Number(b.dataset.i)];
 					if (s) {
 						downloadSnapshot(s);
-						toast("已导出历史备份");
+						toast(t("setting.exported"));
 					}
 					panel.remove();
 				});
@@ -604,7 +686,7 @@
 		document.body.appendChild(createSettingPanel());
 	}
 	function registerSettingMenu() {
-		GM_registerMenuCommand$1("脚本设置", () => {
+		GM_registerMenuCommand$1(t("setting.title"), () => {
 			waitDOMContentLoaded(toggleSettingPanel);
 		});
 	}
@@ -612,6 +694,10 @@
 	var GEAR_SVG = svg(`<path fill-rule="evenodd" clip-rule="evenodd" d="M11.4892 3.17094C11.1102 1.60969 8.8898 1.60969 8.51078 3.17094C8.26594 4.17949 7.11045 4.65811 6.22416 4.11809C4.85218 3.28212 3.28212 4.85218 4.11809 6.22416C4.65811 7.11045 4.17949 8.26593 3.17094 8.51078C1.60969 8.8898 1.60969 11.1102 3.17094 11.4892C4.17949 11.7341 4.65811 12.8896 4.11809 13.7758C3.28212 15.1478 4.85218 16.7179 6.22417 15.8819C7.11045 15.3419 8.26594 15.8205 8.51078 16.8291C8.8898 18.3903 11.1102 18.3903 11.4892 16.8291C11.7341 15.8205 12.8896 15.3419 13.7758 15.8819C15.1478 16.7179 16.7179 15.1478 15.8819 13.7758C15.3419 12.8896 15.8205 11.7341 16.8291 11.4892C18.3903 11.1102 18.3903 8.8898 16.8291 8.51078C15.8205 8.26593 15.3419 7.11045 15.8819 6.22416C16.7179 4.85218 15.1478 3.28212 13.7758 4.11809C12.8896 4.65811 11.7341 4.17949 11.4892 3.17094ZM10 13C11.6569 13 13 11.6569 13 10C13 8.34315 11.6569 7 10 7C8.34315 7 7 8.34315 7 10C7 11.6569 8.34315 13 10 13Z"/>`);
 	var GLOBE_SVG = svg(`<path fill-rule="evenodd" clip-rule="evenodd" d="M4.08296 9H6.02863C6.11783 7.45361 6.41228 6.02907 6.86644 4.88228C5.41752 5.77135 4.37513 7.25848 4.08296 9ZM10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2ZM10 4C9.92395 4 9.76787 4.03173 9.5347 4.26184C9.29723 4.4962 9.03751 4.8849 8.79782 5.44417C8.40914 6.3511 8.12491 7.58559 8.03237 9H11.9676C11.8751 7.58559 11.5909 6.3511 11.2022 5.44417C10.2321 4.03173 10.076 4 10 4ZM13.9714 9C13.8822 7.45361 13.5877 6.02907 13.1336 4.88228C14.5825 5.77135 15.6249 7.25848 15.917 9H13.9714ZM11.9676 11H8.03237C8.12491 12.4144 8.40914 13.6489 8.79782 14.5558C9.03751 15.1151 9.29723 15.5038 9.5347 15.7382C9.76787 15.9683 9.92395 16 10 16C10.076 16 10.2321 15.9683 10.4653 15.7382C10.7028 15.5038 10.9625 15.1151 11.2022 14.5558C11.5909 13.6489 11.8751 12.4144 11.9676 11ZM13.1336 15.1177C13.5877 13.9709 13.8822 12.5464 13.9714 11H15.917C15.6249 12.7415 14.5825 14.2287 13.1336 15.1177ZM6.86644 15.1177C6.41228 13.9709 6.11783 12.5464 6.02863 11H4.08296C4.37513 12.7415 5.41752 14.2287 6.86644 15.1177Z"/>`);
 	var MENU_SVG = svg(`<path fill-rule="evenodd" clip-rule="evenodd" d="M3 5C3 4.44772 3.44772 4 4 4H16C16.5523 4 17 4.44772 17 5C17 5.55228 16.5523 6 16 6H4C3.44772 6 3 5.55228 3 5Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M3 10C3 9.44772 3.44772 9 4 9H16C16.5523 9 17 9.44772 17 10C17 10.5523 16.5523 11 16 11H4C3.44772 11 3 10.5523 3 10Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M3 15C3 14.4477 3.44772 14 4 14H16C16.5523 14 17 14.4477 17 15C17 15.5523 16.5523 16 16 16H4C3.44772 16 3 15.5523 3 15Z"/>`);
+	var NAV_RENAME = {
+		cn: ["观看日本 AV", "日本 AV"],
+		en: ["Watch JAV", "JAV"]
+	};
 	function injectSettingIcon(container) {
 		const groups = new Set();
 		for (const a of container.querySelectorAll("a")) if (a.getAttributeNames().some((n) => (a.getAttribute(n) || "").includes("toggleSearch"))) groups.add(a.parentElement);
@@ -624,7 +710,7 @@
 			});
 			icon.setAttribute("data-setting-icon", "");
 			icon.setAttribute("class", "rounded-md text-nord6 hover:text-primary focus:outline-none");
-			icon.setAttribute("alt", "脚本设置");
+			icon.setAttribute("alt", t("setting.title"));
 			icon.addEventListener("click", (e) => {
 				e.preventDefault();
 				toggleSettingPanel();
@@ -659,8 +745,9 @@
 			}
 			if (actions.includes("howDropdown") && actions.includes("jav")) {
 				const span = a.querySelector("span");
-				if (span && span.textContent.trim() === "观看日本 AV") {
-					span.textContent = "日本 AV";
+				const rename = NAV_RENAME[currentLang() ?? ""];
+				if (span && rename && span.textContent.trim() === rename[0]) {
+					span.textContent = rename[1];
 					touched = true;
 				}
 			}
@@ -720,13 +807,14 @@
 		"theporndude.com",
 		"tsyndicate.com"
 	];
-	var RENAME_LINKS = [["mycomic.com", "漫画"]];
+	var RENAME_LINKS = [["mycomic.com", "ad.manga"]];
 	function renameLink(el) {
 		if (el.tagName !== "A") return false;
 		const href = el.getAttribute("href");
 		const hit = RENAME_LINKS.find(([host]) => href?.includes(host));
 		if (!hit) return false;
-		if (el.textContent?.trim() !== hit[1]) el.textContent = hit[1];
+		const want = t(hit[1]);
+		if (el.textContent?.trim() !== want) el.textContent = want;
 		return true;
 	}
 	var AD_SELECTORS = [
@@ -734,11 +822,14 @@
 		"iframe[width=\"1\"][height=\"1\"]:not([src])",
 		"ul.list-none.text-nord14"
 	];
-	var AD_MENU_TEXTS = ["更多好站"];
+	var AD_MENU_TEXTS = {
+		cn: ["更多好站"],
+		en: ["More sites"]
+	};
 	function matchAdMenu(el) {
 		if (el.tagName !== "A") return false;
 		const text = el.textContent?.trim() ?? "";
-		return AD_MENU_TEXTS.some((t) => text.startsWith(t));
+		return !!AD_MENU_TEXTS[currentLang() ?? ""]?.some((t) => text.startsWith(t));
 	}
 	function isAdUrl(url) {
 		return !!url && AD_HOSTS.some((host) => url.includes(host));
@@ -1027,16 +1118,16 @@
 		else video.pause();
 	}
 	var shortcutList = [
-		["Space", "播放 / 暂停"],
-		["S", "收藏 / 取消收藏"],
-		["P", "展开 / 收起片单"],
-		["/", "聚焦搜索框"],
-		["G", "回到首页"],
-		["B", "打开我的收藏"],
-		["H", "打开观看历史"],
-		[",", "脚本设置"],
-		["?", "快捷键帮助"],
-		["F", "全屏（站点自带）"]
+		["Space", "help.playPause"],
+		["S", "help.save"],
+		["P", "help.playlist"],
+		["/", "help.search"],
+		["G", "help.home"],
+		["B", "help.saved"],
+		["H", "help.history"],
+		[",", "help.settings"],
+		["?", "help.help"],
+		["F", "help.fullscreen"]
 	];
 	function toggleHelpPanel() {
 		const exist = document.getElementById("shortcut-help");
@@ -1047,9 +1138,9 @@
 		const panel = Object.assign(document.createElement("div"), {
 			id: "shortcut-help",
 			innerHTML: `
-      <div class="help-title">快捷键</div>
+      <div class="help-title">${t("help.title")}</div>
       <div class="help-list">
-        ${shortcutList.map(([key, desc]) => `<kbd>${key}</kbd><span>${desc}</span>`).join("")}
+        ${shortcutList.map(([key, desc]) => `<kbd>${key}</kbd><span>${t(desc)}</span>`).join("")}
       </div>
     `
 		});
@@ -1218,14 +1309,14 @@
 					writeCache$1(dvdId, target);
 					applyChangeToLatestSnapshot(currentVideo(dvdId), target);
 				}
-				toastBroadcast(target ? "已收藏" : "已取消收藏", {
+				toastBroadcast(target ? t("save.saved") : t("save.unsaved"), {
 					code,
 					type: "success"
 				});
 			} else {
 				data.saved = !target;
 				if (r.status === 401) openLoginModal(data);
-				else toast("操作失败，请重试", {
+				else toast(t("save.failed"), {
 					code,
 					type: "error"
 				});
@@ -1233,7 +1324,7 @@
 		}).catch(() => {
 			data.loading = false;
 			data.saved = !target;
-			toast("网络错误，操作未生效", {
+			toast(t("save.netError"), {
 				code,
 				type: "error"
 			});
@@ -1277,7 +1368,7 @@
 			if (r.ok) {
 				adjustPlaylistCount(item.key, target ? 1 : -1);
 				if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), target, item.key);
-				toastBroadcast(target ? "已加入片单" : "已移出片单", {
+				toastBroadcast(target ? t("save.added") : t("save.removed"), {
 					code,
 					type: "success"
 				});
@@ -1285,7 +1376,7 @@
 				item.is_added = !target;
 				input.checked = !target;
 				if (r.status === 401) openLoginModal(data);
-				else toast("操作失败，请重试", {
+				else toast(t("save.failed"), {
 					code,
 					type: "error"
 				});
@@ -1293,7 +1384,7 @@
 		}).catch(() => {
 			item.is_added = !target;
 			input.checked = !target;
-			toast("网络错误，操作未生效", {
+			toast(t("save.netError"), {
 				code,
 				type: "error"
 			});
@@ -1334,17 +1425,17 @@
 	var KINDS = [
 		[
 			"original",
-			"原版",
+			"source.original",
 			"#4c566a"
 		],
 		[
 			"uncensored",
-			"无码",
+			"source.uncensored",
 			"#2563eb"
 		],
 		[
 			"subtitle",
-			"中字",
+			"source.subtitle",
 			"#dc2626"
 		]
 	];
@@ -1364,16 +1455,16 @@
 	}
 	function labelOf(kind) {
 		const def = KINDS.find(([k]) => k === kind);
-		return [def[1], def[2]];
+		return [t(def[1]), def[2]];
 	}
-	var CACHE_KEY = "sources-cache-v2";
+	var CACHE_KEY = "sources-cache-v3";
 	var CACHE_TTL = 6048e5;
 	function readCache() {
 		return GM_getValue$1(CACHE_KEY, {});
 	}
-	function writeCache(base, list) {
+	function writeCache(cacheKey, list) {
 		const cache = readCache();
-		cache[base] = {
+		cache[cacheKey] = {
 			ts: Date.now(),
 			list
 		};
@@ -1392,7 +1483,7 @@
 			kind: "original"
 		};
 	}
-	async function fetchSources(base, lang) {
+	async function fetchSources(base, lang, current) {
 		const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, { credentials: "include" });
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const doc = new DOMParser().parseFromString(await res.text(), "text/html");
@@ -1408,11 +1499,14 @@
 				kind: kindOf(id, badgeCls)
 			});
 		});
+		if (!found.has(current.id)) found.set(current.id, {
+			href: current.href,
+			kind: current.kind
+		});
 		const sources = [];
-		for (const [kind, label, color] of KINDS) for (const [id, v] of found) if (v.kind === kind) sources.push({
+		for (const [kind] of KINDS) for (const [id, v] of found) if (v.kind === kind) sources.push({
 			id,
-			label,
-			color,
+			kind,
 			href: v.href
 		});
 		return sources;
@@ -1436,13 +1530,14 @@
 			}
 			seg.className = "mx-segmented";
 			seg.replaceChildren(...sources.map((s) => {
+				const [label, color] = labelOf(s.kind);
 				const b = document.createElement("button");
 				b.type = "button";
 				const isCurrent = s.id === currentId;
 				b.className = "mx-seg" + (isCurrent ? " mx-seg-current" : "");
-				b.textContent = s.label;
+				b.textContent = label;
 				if (isCurrent) {
-					b.style.background = s.color;
+					b.style.background = color;
 					b.disabled = true;
 					if (sources.length < 2) b.classList.add("mx-seg-locked");
 				} else b.addEventListener("click", () => {
@@ -1481,31 +1576,29 @@
 		const id = location.pathname.split("/").filter(Boolean).pop() || "";
 		const parsed = parseVideoId(id);
 		if (!parsed) return;
-		const [curLabel, curColor] = labelOf(parsed.kind);
 		const current = {
 			id,
-			label: curLabel,
-			color: curColor,
+			kind: parsed.kind,
 			href: location.href
 		};
+		const lang = currentLang() ?? "cn";
+		const cacheKey = `${lang}:${parsed.base}`;
 		let injected = false;
 		const init = () => {
 			if (injected) return true;
 			if (![...document.querySelectorAll("a")].some((a) => a.getAttributeNames().some((n) => (a.getAttribute(n) || "").includes("toggleSearch")))) return false;
 			injected = true;
 			renderSegmented([], id, true);
-			const cached = readCache()[parsed.base];
+			const cached = readCache()[cacheKey];
 			const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL;
 			if (cacheFresh && cached.list.length) renderSegmented(cached.list, id, false);
 			(async () => {
 				try {
-					const lang = currentLang() ?? "cn";
-					const list = await fetchSources(parsed.base, lang);
-					if (!list.length) list.push(current);
-					writeCache(parsed.base, list);
+					const list = await fetchSources(parsed.base, lang, current);
+					writeCache(cacheKey, list);
 					if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) renderSegmented(list, id, false);
 				} catch {
-					if (!cacheFresh) renderSegmented(cached?.list ?? [], id, false);
+					if (!cacheFresh) renderSegmented(cached?.list ?? [current], id, false);
 				}
 			})();
 			return true;

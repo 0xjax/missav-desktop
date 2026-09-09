@@ -1,5 +1,7 @@
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { hijackMainWorld } from '../utils/gm.ts'
+import { currentLang } from '../utils/lang.ts'
+import { t, type I18nKey } from '../utils/i18n.ts'
 
 // 广告域名黑名单（比站点的 hash 类名稳定），漏广告时在此补充
 const AD_HOSTS = [
@@ -15,8 +17,8 @@ const AD_HOSTS = [
   'tsyndicate.com',
 ]
 
-// 保留但精简文字的推广链接：不删，只把冗长文案改短
-const RENAME_LINKS: [host: string, text: string][] = [['mycomic.com', '漫画']]
+// 保留但精简文字的推广链接：不删，只把冗长文案改短（替换文案随站点语言）
+const RENAME_LINKS: [host: string, text: I18nKey][] = [['mycomic.com', 'ad.manga']]
 
 // 命中重命名列表则改写文字并返回 true（调用方跳过后续删除逻辑）
 function renameLink(el: Element): boolean {
@@ -24,7 +26,8 @@ function renameLink(el: Element): boolean {
   const href = el.getAttribute('href')
   const hit = RENAME_LINKS.find(([host]) => href?.includes(host))
   if (!hit) return false
-  if (el.textContent?.trim() !== hit[1]) el.textContent = hit[1]
+  const want = t(hit[1])
+  if (el.textContent?.trim() !== want) el.textContent = want
   return true
 }
 
@@ -36,13 +39,18 @@ const AD_SELECTORS = [
   'ul.list-none.text-nord14',
 ]
 
-// 纯广告菜单：文案匹配（类名是通用 Tailwind，不可靠）
-const AD_MENU_TEXTS = ['更多好站']
+// 纯广告菜单：文案匹配（类名是通用 Tailwind，不可靠）。
+// 站点文案随语言本地化，故按站点语言取表；表未覆盖的语言退化为不匹配（少删不误删）
+const AD_MENU_TEXTS: Record<string, string[]> = {
+  cn: ['更多好站'],
+  en: ['More sites'],
+}
 
 function matchAdMenu(el: Element): boolean {
   if (el.tagName !== 'A') return false
   const text = el.textContent?.trim() ?? ''
-  return AD_MENU_TEXTS.some((t) => text.startsWith(t))
+  const texts = AD_MENU_TEXTS[currentLang() ?? '']
+  return !!texts?.some((t) => text.startsWith(t))
 }
 
 function isAdUrl(url: string | null): boolean {

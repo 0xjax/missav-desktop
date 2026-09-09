@@ -1,6 +1,7 @@
 import { GM_getValue, GM_setValue, readMainWorld } from '../utils/gm.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toast, toastBroadcast, listenToastChannel } from '../utils/toast.ts'
+import { t } from '../utils/i18n.ts'
 import { adjustPlaylistCount } from './playlist-panel.ts'
 import { applyChangeToLatestSnapshot } from './backup-export.ts'
 
@@ -213,20 +214,20 @@ function onSaveClick(e: MouseEvent, btn: Element): void {
           writeCache(dvdId, target)
           applyChangeToLatestSnapshot(currentVideo(dvdId), target)
         }
-        toastBroadcast(target ? '已收藏' : '已取消收藏', {
+        toastBroadcast(target ? t('save.saved') : t('save.unsaved'), {
           code,
           type: 'success',
         })
       } else {
         data.saved = !target
         if (r.status === 401) openLoginModal(data)
-        else toast('操作失败，请重试', { code, type: 'error' })
+        else toast(t('save.failed'), { code, type: 'error' })
       }
     })
     .catch(() => {
       data.loading = false
       data.saved = !target
-      toast('网络错误，操作未生效', { code, type: 'error' })
+      toast(t('save.netError'), { code, type: 'error' })
     })
 }
 
@@ -289,7 +290,7 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
       if (r.ok) {
         adjustPlaylistCount(item.key, target ? 1 : -1)
         if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), target, item.key)
-        toastBroadcast(target ? '已加入片单' : '已移出片单', {
+        toastBroadcast(target ? t('save.added') : t('save.removed'), {
           code,
           type: 'success',
         })
@@ -297,13 +298,13 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
         item.is_added = !target
         input.checked = !target
         if (r.status === 401) openLoginModal(data)
-        else toast('操作失败，请重试', { code, type: 'error' })
+        else toast(t('save.failed'), { code, type: 'error' })
       }
     })
     .catch(() => {
       item.is_added = !target
       input.checked = !target
-      toast('网络错误，操作未生效', { code, type: 'error' })
+      toast(t('save.netError'), { code, type: 'error' })
     })
 }
 

@@ -1,5 +1,6 @@
 import { GM_getValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
+import { t, type I18nKey } from '../utils/i18n.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toggleSettingPanel } from '../setting.ts'
 
@@ -66,17 +67,17 @@ function togglePlay(): void {
   else video.pause()
 }
 
-const shortcutList: [string, string][] = [
-  ['Space', '播放 / 暂停'],
-  ['S', '收藏 / 取消收藏'],
-  ['P', '展开 / 收起片单'],
-  ['/', '聚焦搜索框'],
-  ['G', '回到首页'],
-  ['B', '打开我的收藏'],
-  ['H', '打开观看历史'],
-  [',', '脚本设置'],
-  ['?', '快捷键帮助'],
-  ['F', '全屏（站点自带）'],
+const shortcutList: [string, I18nKey][] = [
+  ['Space', 'help.playPause'],
+  ['S', 'help.save'],
+  ['P', 'help.playlist'],
+  ['/', 'help.search'],
+  ['G', 'help.home'],
+  ['B', 'help.saved'],
+  ['H', 'help.history'],
+  [',', 'help.settings'],
+  ['?', 'help.help'],
+  ['F', 'help.fullscreen'],
 ]
 
 function toggleHelpPanel(): void {
@@ -88,10 +89,10 @@ function toggleHelpPanel(): void {
   const panel = Object.assign(document.createElement('div'), {
     id: 'shortcut-help',
     innerHTML: `
-      <div class="help-title">快捷键</div>
+      <div class="help-title">${t('help.title')}</div>
       <div class="help-list">
         ${shortcutList
-          .map(([key, desc]) => `<kbd>${key}</kbd><span>${desc}</span>`)
+          .map(([key, desc]) => `<kbd>${key}</kbd><span>${t(desc)}</span>`)
           .join('')}
       </div>
     `,

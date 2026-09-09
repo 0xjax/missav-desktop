@@ -1,5 +1,6 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
+import { t } from '../utils/i18n.ts'
 import { stickyToast, toast } from '../utils/toast.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { setPlaylistCounts } from './playlist-panel.ts'
@@ -38,7 +39,7 @@ async function fetchDoc(url: string): Promise<Document> {
     lastStatus = res.status
     if (res.status !== 403) break // 403 之外的错误重试无意义
   }
-  throw new Error(`HTTP ${lastStatus}（重试后仍被拒绝）`)
+  throw new Error(t('backup.denied', { status: lastStatus }))
 }
 
 // 视频卡片：.thumbnail 内的 a（href 为视频页，alt 为番号，img alt 为标题）
@@ -68,7 +69,7 @@ async function crawlVideos(baseUrl: string, label: string): Promise<VideoItem[]>
   const all: VideoItem[] = []
   const seen = new Set<string>()
   for (let page = 1; page <= 100; page++) {
-    stickyToast(STICKY_ID, `${label}：第 ${page} 页（已抓 ${all.length} 条）`)
+    stickyToast(STICKY_ID, t('backup.progress', { label, page, n: all.length }))
     const doc = await fetchDoc(`${baseUrl}?page=${page}`)
     const fresh = parseVideos(doc).filter((i) => !seen.has(i.id))
     fresh.forEach((i) => {
@@ -85,7 +86,7 @@ async function crawlPlaylists(lang: string): Promise<PlaylistData[]> {
   // 片单列表本身也分页（12 个/页），某页没有新片单时结束（20 页兜底）
   const map = new Map<string, { name: string; url: string }>()
   for (let page = 1; page <= 20; page++) {
-    stickyToast(STICKY_ID, `备份片单列表：第 ${page} 页`)
+    stickyToast(STICKY_ID, t('backup.playlistList', { page }))
     const doc = await fetchDoc(`${location.origin}/${lang}/playlists?page=${page}`)
     const before = map.size
     doc.querySelectorAll('a[href*="/playlists/"]').forEach((a) => {
@@ -108,7 +109,7 @@ async function crawlPlaylists(lang: string): Promise<PlaylistData[]> {
     playlists.push({
       key,
       name,
-      videos: await crawlVideos(url, `片单 ${i}/${map.size}「${name}」`),
+      videos: await crawlVideos(url, t('backup.playlist', { i, total: map.size, name })),
     })
     await sleep(400)
   }
@@ -159,7 +160,7 @@ export function fmtTs(ts: number): string {
 
 export function snapshotStat(s: Snapshot): string {
   const videos = s.playlists.reduce((n, p) => n + p.videos.length, 0)
-  return `${s.saved.length} 收藏 · ${s.playlists.length} 片单 · ${videos} 片`
+  return t('backup.stat', { saved: s.saved.length, lists: s.playlists.length, videos })
 }
 
 function syncCounts(s: Snapshot): void {
@@ -218,7 +219,7 @@ async function runBackup(): Promise<void> {
     saveSnapshot(snap)
     downloadSnapshot(snap)
     stickyToast(STICKY_ID) // 移除常驻进度条
-    toast(`备份完成：收藏 ${saved.length} 部，片单 ${playlists.length} 个`)
+    toast(t('backup.done', { saved: saved.length, lists: playlists.length }))
   } catch (err) {
     stickyToast(STICKY_ID)
     throw err
@@ -246,8 +247,8 @@ async function crawlAll(): Promise<{
   playlists: PlaylistData[]
 }> {
   const lang = currentLang() ?? 'cn'
-  const saved = await crawlVideos(`${location.origin}/${lang}/saved`, '备份收藏')
-  stickyToast(STICKY_ID, `收藏 ${saved.length} 部，开始备份片单`)
+  const saved = await crawlVideos(`${location.origin}/${lang}/saved`, t('backup.saved'))
+  stickyToast(STICKY_ID, t('backup.savedDone', { n: saved.length }))
   const playlists = await crawlPlaylists(lang)
   return { saved, playlists }
 }
@@ -259,23 +260,21 @@ async function crawlAll(): Promise<{
 
 export async function backupNow(): Promise<void> {
   if (exporting) {
-    toast('备份进行中，请稍候')
+    toast(t('backup.running'))
     return
   }
   // 距最近一次备份（立即或自动）不足 10 分钟时二次确认
   const last = GM_getValue<number>(LAST_BACKUP_KEY, 0)
   const gapMin = Math.round((Date.now() - last) / 60000)
   if (gapMin < 10) {
-    const ok = window.confirm(
-      `距离上次备份仅 ${gapMin} 分钟，数据可能没什么变化。确定要重新备份吗？`,
-    )
+    const ok = window.confirm(t('backup.confirm', { min: gapMin }))
     if (!ok) return
   }
   exporting = true
   try {
     await runBackup()
   } catch (err) {
-    toast(`备份失败：${err instanceof Error ? err.message : '网络异常'}`)
+    toast(t('backup.failed', { msg: err instanceof Error ? err.message : t('backup.netError') }))
   } finally {
     exporting = false
   }
@@ -295,12 +294,16 @@ export function autoBackup(): void {
       // 先写入时间戳占位，其他标签页看到新鲜值就会跳过
       GM_setValue(LAST_BACKUP_KEY, Date.now())
       exporting = true
-      toast('开始自动备份收藏与片单…')
+      toast(t('backup.autoStart'))
       runBackup()
         .catch((err) => {
           // 失败则回滚时间戳，下次打开页面重试
           GM_setValue(LAST_BACKUP_KEY, last)
-          toast(`自动备份失败：${err instanceof Error ? err.message : '网络异常'}`)
+          toast(
+            t('backup.autoFailed', {
+              msg: err instanceof Error ? err.message : t('backup.netError'),
+            }),
+          )
         })
         .finally(() => {
           exporting = false

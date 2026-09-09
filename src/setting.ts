@@ -1,6 +1,8 @@
 import { GM_getValue, GM_setValue, GM_registerMenuCommand } from './utils/gm.ts'
 import { toast } from './utils/toast.ts'
 import { waitDOMContentLoaded } from './utils/wait.ts'
+import { t, type I18nKey } from './utils/i18n.ts'
+import { currentLang } from './utils/lang.ts'
 import {
   backupNow,
   downloadSnapshot,
@@ -9,18 +11,18 @@ import {
   fmtTs,
 } from './modules/backup-export.ts'
 
-// 新增设置项：在 keyValues 加键（键名即存储 key，值为面板显示文案）
-const keyValues: Record<string, string> = {
-  'block-ads': '去广告',
-  'lang-pref': '语言偏好',
-  'search-pref': '搜索偏好',
-  'shortcut-keys': '快捷操作',
-  'fast-save': '收藏片单增强',
-  'auto-backup': '自动备份（每 3 天）',
-  'sources': '多源显示切换',
-  'playlist-panel': '片单面板优化',
-  'playlist-dock': '片单右侧栏（宽屏自动展开）',
-  'topbar-ui': '顶栏增强（设置入口 + 图标统一）',
+// 新增设置项：在 keyValues 加键（键名即存储 key，值为面板文案的 i18n 键）
+const keyValues: Record<string, I18nKey> = {
+  'block-ads': 'opt.block-ads',
+  'lang-pref': 'opt.lang-pref',
+  'search-pref': 'opt.search-pref',
+  'shortcut-keys': 'opt.shortcut-keys',
+  'fast-save': 'opt.fast-save',
+  'auto-backup': 'opt.auto-backup',
+  'sources': 'opt.sources',
+  'playlist-panel': 'opt.playlist-panel',
+  'playlist-dock': 'opt.playlist-dock',
+  'topbar-ui': 'opt.topbar-ui',
 }
 
 // 设置项默认值，未列出的键默认为 false
@@ -42,20 +44,20 @@ function createSettingPanel(): HTMLElement {
     id: 'setting-panel',
     innerHTML: `
       <div id="setting-view">
-        <div class="setting-title">脚本设置</div>
+        <div class="setting-title">${t('setting.title')}</div>
         <div class="setting-checkboxes">
           ${Object.entries(keyValues)
             .map(
               ([key, label]) => `
-            <label><input type="checkbox" data-key="${key}"><span>${label}</span></label>
+            <label><input type="checkbox" data-key="${key}"><span>${t(label)}</span></label>
           `,
             )
             .join('')}
         </div>
         <div class="setting-actions dialog-footer">
-          <button class="dialog-cancel" type="button">取消</button>
-          <button id="setting-export" type="button">导出备份</button>
-          <button id="setting-save" type="button">保存</button>
+          <button class="dialog-cancel" type="button">${t('setting.cancel')}</button>
+          <button id="setting-export" type="button">${t('setting.export')}</button>
+          <button id="setting-save" type="button">${t('setting.save')}</button>
         </div>
       </div>
       <div id="backup-view" style="display: none"></div>
@@ -104,12 +106,12 @@ function showBackupView(panel: HTMLElement): void {
       className: 'backup-render',
       innerHTML: `
         <div class="dialog-header">
-          <button class="dialog-back" type="button">← 返回</button>
-          <span class="setting-title">导出备份</span>
+          <button class="dialog-back" type="button">${t('setting.back')}</button>
+          <span class="setting-title">${t('setting.export')}</span>
         </div>
-        <div class="backup-hint">立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载</div>
+        <div class="backup-hint">${t('setting.backupHint')}</div>
         <div class="setting-actions backup-latest">
-          <button id="backup-latest-btn" type="button">立即备份</button>
+          <button id="backup-latest-btn" type="button">${t('setting.backupNow')}</button>
         </div>
         ${
           // 固定渲染 5 个槽位，高度恒定；行内"时间 + 统计"单行排布保持紧凑
@@ -117,17 +119,17 @@ function showBackupView(panel: HTMLElement): void {
             .map((i) => {
               const s = snapshots[i]
               if (!s)
-                return '<div class="backup-row backup-empty"><span>（空槽位，等待自动备份）</span></div>'
+                return `<div class="backup-row backup-empty"><span>${t('setting.emptySlot')}</span></div>`
               return `
               <div class="backup-row">
                 <span><b>${fmtTs(s.ts)}</b> · ${snapshotStat(s)}</span>
-                <button type="button" data-i="${i}">下载</button>
+                <button type="button" data-i="${i}">${t('setting.download')}</button>
               </div>`
             })
             .join('')}</div>`
         }
         <div class="setting-actions dialog-footer">
-          <button class="dialog-cancel" type="button">取消</button>
+          <button class="dialog-cancel" type="button">${t('setting.cancel')}</button>
         </div>
       `,
     })
@@ -148,7 +150,7 @@ function showBackupView(panel: HTMLElement): void {
         const s = readSnapshots()[Number(b.dataset.i)]
         if (s) {
           downloadSnapshot(s)
-          toast('已导出历史备份')
+          toast(t('setting.exported'))
         }
         panel.remove()
       })
@@ -171,7 +173,7 @@ export function toggleSettingPanel(): void {
 
 // 通过油猴菜单注册设置入口
 export function registerSettingMenu(): void {
-  GM_registerMenuCommand('脚本设置', () => {
+  GM_registerMenuCommand(t('setting.title'), () => {
     waitDOMContentLoaded(toggleSettingPanel)
   })
 }
@@ -197,6 +199,12 @@ const MENU_SVG = svg(
   `<path fill-rule="evenodd" clip-rule="evenodd" d="M3 5C3 4.44772 3.44772 4 4 4H16C16.5523 4 17 4.44772 17 5C17 5.55228 16.5523 6 16 6H4C3.44772 6 3 5.55228 3 5Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M3 10C3 9.44772 3.44772 9 4 9H16C16.5523 9 17 9.44772 17 10C17 10.5523 16.5523 11 16 11H4C3.44772 11 3 10.5523 3 10Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M3 15C3 14.4477 3.44772 14 4 14H16C16.5523 14 17 14.4477 17 15C17 15.5523 16.5523 16 16 16H4C3.44772 16 3 15.5523 3 15Z"/>`,
 )
 
+// 站点导航文案随语言本地化，改名表按站点语言取（只覆盖 cn/en，其他语言不改）
+const NAV_RENAME: Record<string, [from: string, to: string]> = {
+  cn: ['观看日本 AV', '日本 AV'],
+  en: ['Watch JAV', 'JAV'],
+}
+
 function injectSettingIcon(container: Element): boolean {
   // 按钮组锚点：搜索 icon（Alpine action 名，全站稳定）。
   // group = 搜索 a 的直接父级 = 按钮组 flex 行（两套响应式容器结构一致）；
@@ -216,7 +224,7 @@ function injectSettingIcon(container: Element): boolean {
     })
     icon.setAttribute('data-setting-icon', '')
     icon.setAttribute('class', 'rounded-md text-nord6 hover:text-primary focus:outline-none')
-    icon.setAttribute('alt', '脚本设置')
+    icon.setAttribute('alt', t('setting.title'))
     icon.addEventListener('click', (e) => {
       e.preventDefault()
       toggleSettingPanel()
@@ -265,8 +273,9 @@ function unifyIcons(container: Element): boolean {
     // "观看日本 AV" → "日本 AV"：与其他 2-4 字导航项长度对齐，视觉更整齐
     if (actions.includes('howDropdown') && actions.includes('jav')) {
       const span = a.querySelector('span')
-      if (span && span.textContent.trim() === '观看日本 AV') {
-        span.textContent = '日本 AV'
+      const rename = NAV_RENAME[currentLang() ?? '']
+      if (span && rename && span.textContent.trim() === rename[0]) {
+        span.textContent = rename[1]
         touched = true
       }
     }
