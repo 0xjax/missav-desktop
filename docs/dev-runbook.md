@@ -17,6 +17,7 @@
    - 扩展管理页打开「开发者模式」→ 详情里打开「允许运行用户脚本」
    - **实测一律装 `dist/missav-desktop.js`（本地静态服务或文件导入），不用 `bun run dev` 的 dev 壳脚本**——历史上多次出现 dev 与 build 产物行为不一致，dev 实测通过不代表生产行为，以 dist 实测为唯一标准
    - 安装方式：`bun run build` 后把 `dist/missav-desktop.js` 复制为 `dist/missav-desktop.user.js`，经本地静态服务（如 `bun -e "Bun.serve(...)"`）以 `.user.js` URL 打开让 TM 捕获安装；每次改代码 → build → 重开安装 URL（TM 同名自动覆盖更新）
+   - **省事路径**：`bun scripts/dev/install-dist.ts`——自起临时静态服务（随机端口，不落 `.user.js` 文件）+ 打开安装 URL + 自动点 TM 的「安装/重新安装」弹窗，一条命令搞定；TM 自动更新时安装页自行关闭，脚本按「已自动更新」正常返回
    - **WARNING dev 模式时序失真**：dev 脚本要从 5173 拉模块（loader ~200ms 才启动），站点 SSR 首绘 ~160-310ms，**脚本物理上跑不赢首绘**——凡依赖"先于站点渲染生效"的功能（如图标替换防闪烁、首帧占位）在 dev 模式必然失效/闪现，这不是代码 bug，是 dev 模式固有失真，不构成实测依据
 3. 登录 missav.ai（收藏/片单/备份功能都依赖真实登录态）
 
@@ -26,7 +27,8 @@
 bun run dev        # 仅用于热改代码时快速试；实测必须用 dist（见上）
 ```
 
-实测标准流程：`bun run build` → 复制 `dist/missav-desktop.js` 为 `.user.js` → 静态服务 → TM 安装/更新 → 刷新 missav 页面。
+实测标准流程：`bun run build` → `bun scripts/dev/install-dist.ts` → 刷新 missav 页面。
+（手工等价步骤：复制 `dist/missav-desktop.js` 为 `.user.js` → 起静态服务 → 打开 `.user.js` URL → TM 弹窗点安装/更新）
 
 ## CDP 调试脚本（scripts/cdp/，9222 端口直连）
 
@@ -54,7 +56,7 @@ bun run dev        # 仅用于热改代码时快速试；实测必须用 dist（
 
 ## 浏览器工具分工：纯 CDP vs agent-browser
 
-**纯 CDP（`scripts/cdp/`、`scripts/dev/`）**：确定性环境脚本——登录、清 emulation、导航、截图。要求一条命令可复现、零配置、可入库，不要替换成浏览器代理。
+**纯 CDP（`scripts/cdp/`、`scripts/dev/`）**：确定性环境脚本——登录、装 dist、清 emulation、导航、截图。要求一条命令可复现、零配置、可入库，不要替换成浏览器代理。
 
 **agent-browser（已全局安装，交互式排查用它）**：
 
