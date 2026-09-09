@@ -179,6 +179,13 @@ function fallbackSaveSync(): void {
   }, 1500)
 }
 
+// toast 里的 AV 番号：优先取 h1 首个词（站点自身格式，如 UMD-1017），
+// 取不到时回退 URL slug 大写
+function avCode(dvdId: string): string {
+  const first = document.querySelector('h1')?.textContent?.trim().split(/\s+/)[0]
+  return first && /^[a-z]+-\d/i.test(first) ? first : dvdId.toUpperCase()
+}
+
 function onSaveClick(e: MouseEvent, btn: Element): void {
   const alp = alpine()
   // 接不了管（Alpine 读不到等）就不拦截：放行站点原生处理器，宁可不加速不能弄坏
@@ -195,6 +202,7 @@ function onSaveClick(e: MouseEvent, btn: Element): void {
 
   const target = !data.saved
   const dvdId = dvdIdOf(btn)
+  const code = dvdId ? avCode(dvdId) : undefined
   data.saved = target
   data.loading = true
   apiFetch(url, target ? 'POST' : 'DELETE')
@@ -205,17 +213,20 @@ function onSaveClick(e: MouseEvent, btn: Element): void {
           writeCache(dvdId, target)
           applyChangeToLatestSnapshot(currentVideo(dvdId), target)
         }
-        toastBroadcast(target ? '已收藏' : '已取消收藏')
+        toastBroadcast(target ? '已收藏' : '已取消收藏', {
+          code,
+          type: 'success',
+        })
       } else {
         data.saved = !target
         if (r.status === 401) openLoginModal(data)
-        else toast('操作失败，请重试')
+        else toast('操作失败，请重试', { code, type: 'error' })
       }
     })
     .catch(() => {
       data.loading = false
       data.saved = !target
-      toast('网络错误，操作未生效')
+      toast('网络错误，操作未生效', { code, type: 'error' })
     })
 }
 
@@ -259,6 +270,7 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
     return
   }
   const target = !item.is_added
+  const code = avCode(dvdId)
   item.is_added = target
   // 真实按压的激活序列：pre-click 翻转 checked，click 被我们取消后同步回滚，
   // 且全程不派发 change/input（实测埋点确认）。更关键的是这些行的 x-model
@@ -277,18 +289,21 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
       if (r.ok) {
         adjustPlaylistCount(item.key, target ? 1 : -1)
         if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), target, item.key)
-        toastBroadcast(target ? '已加入片单' : '已移出片单')
+        toastBroadcast(target ? '已加入片单' : '已移出片单', {
+          code,
+          type: 'success',
+        })
       } else {
         item.is_added = !target
         input.checked = !target
         if (r.status === 401) openLoginModal(data)
-        else toast('操作失败，请重试')
+        else toast('操作失败，请重试', { code, type: 'error' })
       }
     })
     .catch(() => {
       item.is_added = !target
       input.checked = !target
-      toast('网络错误，操作未生效')
+      toast('网络错误，操作未生效', { code, type: 'error' })
     })
 }
 

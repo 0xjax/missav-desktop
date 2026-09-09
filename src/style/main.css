@@ -293,33 +293,70 @@
   text-align: center;
 }
 
-/* 收藏/片单操作反馈 toast：垂直堆叠，互不遮挡 */
+/* 收藏/片单操作反馈 toast：左上堆叠（与详情页播放器顶边对齐），
+   最多同屏 4 条、超出排队，互不遮挡 */
 #mx-toast-box {
   position: fixed;
   top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 24px;
   z-index: 99999;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   pointer-events: none;
 }
 
 .mx-toast {
-  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(340px, calc(100vw - 48px));
+  padding: 9px 14px;
   background: #2e3440;
   color: #e5e9f0;
   border: 1px solid #4c566a;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 60%);
+  border-left: 3px solid #7b88a1;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 55%);
   font-size: 14px;
-  transition: opacity 0.4s;
+  animation: mx-toast-in 0.18s ease-out;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.mx-toast-success {
+  border-left-color: #8fbc6a;
+}
+
+.mx-toast-error {
+  border-left-color: #d06a6a;
+}
+
+.mx-toast-code {
+  padding: 1px 7px;
+  background: rgb(255 255 255 / 8%);
+  border-radius: 4px;
+  color: #d8dee9;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.02em;
 }
 
 .mx-toast-out {
   opacity: 0;
+  transform: translateX(-8px);
+}
+
+@keyframes mx-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* 常驻状态条（备份抓取进度）：不自动消失，指针穿透同普通 toast */

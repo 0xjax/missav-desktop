@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         missav 桌面端
 // @namespace    https://github.com/0xjax/missav-desktop
-// @version      1.36.10
+// @version      1.36.11
 // @author       0xjax
 // @description  增强 missav 网站的桌面端浏览体验。
 // @license      MIT
@@ -27,7 +27,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel #setting-view,#setting-panel #backup-view,#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:none;border-radius:8px;padding:2px 10px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-locked{opacity:.85}.mx-seg-skeleton{cursor:default;color:#d8dee9}[x-show*=showLocaleSwitcher]{max-height:45vh!important}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;top:80px;left:50%;transform:translate(-50%)}.mx-toast{color:#e5e9f0;background:#2e3440;border:1px solid #4c566a;border-radius:6px;padding:8px 20px;font-size:14px;transition:opacity .4s;box-shadow:0 4px 16px #0009}.mx-toast-out{opacity:0}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>a{order:-2;grid-column:1/-1;margin-bottom:8px}fieldset.mx-pl-grid>hr{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}.mx-pl-docked{height:520px;max-height:calc(100vh - 6rem);overflow-y:auto;padding:.75rem!important;display:block!important}.mx-pl-dock-slot{flex-shrink:0;height:520px}.mx-pl-docked fieldset.mx-pl-grid{grid-template-columns:minmax(0,1fr)}:has(>.mx-pl-docked){flex-direction:column!important}*{scrollbar-width:thin;scrollbar-color:#4c566a transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#4c566a;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#5e81ac}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel #setting-view,#setting-panel #backup-view,#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:none;border-radius:8px;padding:2px 10px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-locked{opacity:.85}.mx-seg-skeleton{cursor:default;color:#d8dee9}[x-show*=showLocaleSwitcher]{max-height:45vh!important}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:flex-start;gap:8px;display:flex;position:fixed;top:80px;left:24px}.mx-toast{color:#e5e9f0;background:#2e3440;border:1px solid #4c566a;border-left:3px solid #7b88a1;border-radius:8px;align-items:center;gap:10px;max-width:min(340px,100vw - 48px);padding:9px 14px;font-size:14px;transition:opacity .3s,transform .3s;animation:.18s ease-out mx-toast-in;display:flex;box-shadow:0 6px 20px #0000008c}.mx-toast-success{border-left-color:#8fbc6a}.mx-toast-error{border-left-color:#d06a6a}.mx-toast-code{color:#d8dee9;letter-spacing:.02em;background:#ffffff14;border-radius:4px;padding:1px 7px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}.mx-toast-out{opacity:0;transform:translate(-8px)}@keyframes mx-toast-in{0%{opacity:0;transform:translate(-12px)}to{opacity:1;transform:none}}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>a{order:-2;grid-column:1/-1;margin-bottom:8px}fieldset.mx-pl-grid>hr{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}.mx-pl-docked{height:520px;max-height:calc(100vh - 6rem);overflow-y:auto;padding:.75rem!important;display:block!important}.mx-pl-dock-slot{flex-shrink:0;height:520px}.mx-pl-docked fieldset.mx-pl-grid{grid-template-columns:minmax(0,1fr)}:has(>.mx-pl-docked){flex-direction:column!important}*{scrollbar-width:thin;scrollbar-color:#4c566a transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#4c566a;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#5e81ac}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -75,30 +75,59 @@
 			globalThis[name] = replacement;
 		}
 	}
-	function toast(msg) {
+	var SHOW_MS = 3500;
+	var MAX_VISIBLE = 4;
+	var queue = [];
+	var visible = 0;
+	function ensureBox() {
 		let box = document.getElementById("mx-toast-box");
 		if (!box) {
 			box = Object.assign(document.createElement("div"), { id: "mx-toast-box" });
 			document.body.appendChild(box);
 		}
-		const el = Object.assign(document.createElement("div"), {
-			className: "mx-toast",
-			textContent: msg
-		});
+		return box;
+	}
+	function render(item) {
+		const box = ensureBox();
+		const el = document.createElement("div");
+		el.className = item.type ? `mx-toast mx-toast-${item.type}` : "mx-toast";
+		const text = document.createElement("span");
+		text.textContent = item.msg;
+		el.append(text);
+		if (item.code) {
+			const code = document.createElement("span");
+			code.className = "mx-toast-code";
+			code.textContent = item.code;
+			el.append(code);
+		}
 		box.appendChild(el);
-		setTimeout(() => el.classList.add("mx-toast-out"), 1800);
+		visible++;
+		setTimeout(() => el.classList.add("mx-toast-out"), SHOW_MS);
 		setTimeout(() => {
 			el.remove();
+			visible--;
+			drain();
 			if (!box.children.length) box.remove();
-		}, 2200);
+		}, 3800);
+	}
+	function drain() {
+		while (visible < MAX_VISIBLE && queue.length) render(queue.shift());
+	}
+	function toast(msg, opts) {
+		queue.push({
+			msg,
+			...opts
+		});
+		drain();
 	}
 	var TOAST_CHANNEL = "gm:mx-toast";
 	var lastToastTs = 0;
-	function toastBroadcast(msg) {
-		toast(msg);
+	function toastBroadcast(msg, opts) {
+		toast(msg, opts);
 		lastToastTs = Date.now();
 		localStorage.setItem(TOAST_CHANNEL, JSON.stringify({
 			text: msg,
+			...opts,
 			ts: lastToastTs
 		}));
 	}
@@ -106,14 +135,9 @@
 		let el = document.getElementById(id);
 		if (!el) {
 			if (msg === void 0) return;
-			let box = document.getElementById("mx-toast-box");
-			if (!box) {
-				box = Object.assign(document.createElement("div"), { id: "mx-toast-box" });
-				document.body.appendChild(box);
-			}
 			el = Object.assign(document.createElement("div"), { id });
 			el.className = "mx-toast mx-toast-sticky";
-			box.appendChild(el);
+			ensureBox().appendChild(el);
 		}
 		if (msg === void 0) el.remove();
 		else el.textContent = msg;
@@ -122,10 +146,13 @@
 		window.addEventListener("storage", (e) => {
 			if (e.key !== TOAST_CHANNEL || !e.newValue) return;
 			try {
-				const { text, ts } = JSON.parse(e.newValue);
+				const { text, code, type, ts } = JSON.parse(e.newValue);
 				if (ts <= lastToastTs) return;
 				lastToastTs = ts;
-				toast(text);
+				toast(text, {
+					code,
+					type
+				});
 			} catch {}
 		});
 	}
@@ -1164,6 +1191,10 @@
 			if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), after);
 		}, 1500);
 	}
+	function avCode(dvdId) {
+		const first = document.querySelector("h1")?.textContent?.trim().split(/\s+/)[0];
+		return first && /^[a-z]+-\d/i.test(first) ? first : dvdId.toUpperCase();
+	}
 	function onSaveClick(e, btn) {
 		const alp = alpine$1();
 		if (!alp) {
@@ -1177,6 +1208,7 @@
 		e.stopImmediatePropagation();
 		const target = !data.saved;
 		const dvdId = dvdIdOf(btn);
+		const code = dvdId ? avCode(dvdId) : void 0;
 		data.saved = target;
 		data.loading = true;
 		apiFetch(url, target ? "POST" : "DELETE").then((r) => {
@@ -1186,16 +1218,25 @@
 					writeCache$1(dvdId, target);
 					applyChangeToLatestSnapshot(currentVideo(dvdId), target);
 				}
-				toastBroadcast(target ? "已收藏" : "已取消收藏");
+				toastBroadcast(target ? "已收藏" : "已取消收藏", {
+					code,
+					type: "success"
+				});
 			} else {
 				data.saved = !target;
 				if (r.status === 401) openLoginModal(data);
-				else toast("操作失败，请重试");
+				else toast("操作失败，请重试", {
+					code,
+					type: "error"
+				});
 			}
 		}).catch(() => {
 			data.loading = false;
 			data.saved = !target;
-			toast("网络错误，操作未生效");
+			toast("网络错误，操作未生效", {
+				code,
+				type: "error"
+			});
 		});
 	}
 	function onPlaylistOpenClick(e, btn) {
@@ -1223,6 +1264,7 @@
 			return;
 		}
 		const target = !item.is_added;
+		const code = avCode(dvdId);
 		item.is_added = target;
 		setTimeout(() => {
 			item.is_added = target;
@@ -1235,17 +1277,26 @@
 			if (r.ok) {
 				adjustPlaylistCount(item.key, target ? 1 : -1);
 				if (dvdId) applyChangeToLatestSnapshot(currentVideo(dvdId), target, item.key);
-				toastBroadcast(target ? "已加入片单" : "已移出片单");
+				toastBroadcast(target ? "已加入片单" : "已移出片单", {
+					code,
+					type: "success"
+				});
 			} else {
 				item.is_added = !target;
 				input.checked = !target;
 				if (r.status === 401) openLoginModal(data);
-				else toast("操作失败，请重试");
+				else toast("操作失败，请重试", {
+					code,
+					type: "error"
+				});
 			}
 		}).catch(() => {
 			item.is_added = !target;
 			input.checked = !target;
-			toast("网络错误，操作未生效");
+			toast("网络错误，操作未生效", {
+				code,
+				type: "error"
+			});
 		});
 	}
 	function fastSave() {
