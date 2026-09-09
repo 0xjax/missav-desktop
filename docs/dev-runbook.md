@@ -92,3 +92,6 @@ agent-browser --cdp 9222 close                   # 用完关掉，别留常驻�
 - Tampermonkey 装到调试 Chrome：Chrome 137+ 已忽略 `--load-extension`，用 CDP `Extensions.loadUnpacked`（browser endpoint，**path 用 `D:/xxx` 正斜杠且不带 `file://` 前缀**；实测带 `file://` 反而报 `File path cannot be resolved`，且源目录不能含空格，需先复制到 `D:\` 下）
 - **WARNING `curl -X PUT /json/new` 新开的 tab 可能落在独立小窗口**（实测视口只有 847px），宽屏专属功能（如片单停靠 ≥1024px）会静默不激活，看起来像功能失效。`Browser.setWindowBounds` 对这类 tab 常改不动；可靠做法是在用户已拉大的窗口里新开 tab，或用 `agent-browser --cdp 9222` 直接操作用户当前 tab
 - **WARNING CDP `Emulation.setDeviceMetricsOverride`（设备模拟）会跨刷新/跨导航持续生效**：一旦设过，页面刷新后视口仍是固定尺寸（如 1200×800），看起来像"视口不自适应"。这不是脚本 bug，是 DevTools 模拟残留。清除必须走 `cdp-clear-emulation.ts`：先设 0×0（0 = 跟随窗口）再 clear，**直接 clear 对已固定的 tab 常不生效**；清除后可能需改一下窗口尺寸才立即生效
+- **WARNING `pref-lang` 会把 URL 弹回偏好语言**：lang-pref 在 document-start 按偏好跳转，所以 `cdp-nav` 到 `/en/xxx` 会被立刻弹回 `/cn/xxx`（实测踩坑）。测非偏好语言的站点必须先用**站点语言切换器**切过去（脚本从菜单项 href 记偏好），**测完切回原语言**，否则调试 Chrome 的偏好被留下改动
+- **站点源列表按语言过滤**：`/cn/search/<番号>` 不返回 `-english-subtitle` 卡片，`/en/search/<番号>` 反过来不返回 `-chinese-subtitle`，且中文字幕版裸番号页（实测 sdmf-008 / ipx-988 / fneo-014）在 /en 搜索里连自己的 id 都没有——分段器必须把当前页源补回，否则 /en 上没有当前档
+- **版本切换菜单只在裸番号主条目页**：`[aria-labelledby="download-option-menu-button"]` 只出现在 `/{lang}/<裸番号>` 的 SSR HTML 里（变体页实测全无），列的是全部兄弟源（含跨语言字幕版）；但**同语言**源集合与搜索页完全一致（8 个番号实测），故不纳入枚举
