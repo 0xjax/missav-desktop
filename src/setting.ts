@@ -109,6 +109,7 @@ function createSettingPanel(initial: View): HTMLElement {
           </select>
         </div>
         <div class="setting-actions dialog-footer">
+          <button class="dialog-close" type="button">${t('setting.close')}</button>
           <button id="setting-save" type="button">${t('setting.save')}</button>
         </div>
       </div>
@@ -147,6 +148,9 @@ function createSettingPanel(initial: View): HTMLElement {
           ${shortcutList
             .map(([key, desc]) => `<kbd>${key}</kbd><span>${t(desc)}</span>`)
             .join('')}
+        </div>
+        <div class="setting-actions dialog-footer">
+          <button class="dialog-close" type="button">${t('setting.close')}</button>
         </div>
       </div>
     `,
