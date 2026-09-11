@@ -262,8 +262,9 @@
 }
 
 .mx-seg {
-  padding: 2px 10px;
-  border: none;
+  padding: 1px 9px;
+  /* 常态留 1px 透明边框：未检测态要用虚线边框，否则加边框会撑大 2px 造成跳动 */
+  border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
   color: #e5e9f0;
@@ -291,14 +292,23 @@
   opacity: 0.85;
 }
 
-/* 尚未拉取过时的当前档：它同时是"检测其他源"的入口（站点不主动暴露兄弟源列表），
-   故当前档在 .mx-seg-current 的 cursor:default 之外要恢复可点观感 */
-.mx-seg-fetch {
+/* 未检测过的当前档：档位是按网站 URL 后缀推测的，兄弟源列表还没拉取。
+   虚线描边 + 无填充表示"未确认"，标签带 `?`；点它才去拉取（站点不主动暴露兄弟源）。
+   检测完成后变成实色无标记——两个状态必须一眼可分 */
+.mx-seg-guess {
+  background: transparent;
+  border-style: dashed;
+  opacity: 1;
+  /* .mx-seg-current 把它设成 default，可点状态要改回 pointer */
   cursor: pointer;
+  /* kind 色是为实色填充选的（白字压在上面的对比度），当描边/文字画在深色顶栏上
+     太暗（原版 #4c566a 实测几乎看不清），统一提亮 */
+  filter: brightness(1.7);
 }
 
-.mx-seg-fetch:hover {
-  filter: brightness(1.15);
+.mx-seg-guess:hover {
+  filter: brightness(2.1);
+  background: transparent;
 }
 
 .mx-seg-skeleton {

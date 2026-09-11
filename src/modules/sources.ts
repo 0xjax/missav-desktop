@@ -189,15 +189,21 @@ function renderSegmented(
         b.className = 'mx-seg' + (isCurrent ? ' mx-seg-current' : '')
         b.textContent = label
         if (isCurrent) {
-          // 当前档实色；未拉取过时可点（=拉取入口），单源时加锁定态（无切换意义，仅作标识）
-          b.style.background = color
+          // 两种当前档必须在视觉上分开，否则"还没检测时的推测"和"检测完只有这一个源"
+          // 长得一样（曾经只差透明度 1 / 0.85，实测分不出来）：
+          //   未检测 → 虚线描边 + 无填充 + 标签带 `?`（推测中，可点）
+          //   已检测 → 实色填充（单源再加锁定态）
           if (onFetch) {
             // 无新鲜缓存时这里就是唯一入口：站点不会在详情页暴露兄弟源列表，
             // 要主动请求裸番号页才拿得到。hover 提示说明点它是做什么的
-            b.classList.add('mx-seg-fetch')
+            b.classList.add('mx-seg-guess')
+            b.style.color = color
+            b.style.borderColor = color
+            b.textContent = `${label}?`
             b.title = t('source.fetch')
             b.addEventListener('click', onFetch)
           } else {
+            b.style.background = color
             b.disabled = true
             if (sources.length < 2) b.classList.add('mx-seg-locked')
           }

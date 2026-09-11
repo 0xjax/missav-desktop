@@ -59,7 +59,7 @@ const DICT = {
   'source.uncensored': ['无码', 'Uncensored'],
   'source.cnsub': ['中字', 'Chinese sub'],
   'source.ensub': ['英字', 'Eng sub'],
-  'source.fetch': ['点击检测该番号的其他源', 'Click to detect other sources'],
+  'source.fetch': ['档位为推测，点击检测该番号的全部源', 'Tier guessed — click to detect all sources'],
   'source.failed': ['多源检测失败，请重试', 'Source detection failed, please retry'],
 
   // ---- 收藏 / 片单反馈 ----
