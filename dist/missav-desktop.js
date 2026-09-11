@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.22
+// @version         1.36.23
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -1358,6 +1358,20 @@
 			});
 		});
 	}
+	function syncSavedCache(dvdId, data) {
+		let settle = 0;
+		const timer = setInterval(() => {
+			if (!performance.getEntriesByType("resource").some((r) => /\/api\/items\/[^/]+\/view/.test(r.name))) {
+				const cache = readCache$1();
+				if (dvdId in cache && data.saved === false) data.saved = cache[dvdId];
+				return;
+			}
+			if (++settle < 3) return;
+			clearInterval(timer);
+			if (dvdId in readCache$1() && typeof data.saved === "boolean") writeCache$1(dvdId, data.saved);
+		}, 100);
+		setTimeout(() => clearInterval(timer), 1e4);
+	}
 	function fastSave() {
 		waitDOMContentLoaded(() => {
 			listenToastChannel();
@@ -1365,15 +1379,11 @@
 				const alp = alpine$1();
 				const btn = [...document.querySelectorAll("button")].find((b) => alpineAction(b, "toggleSave"));
 				if (!alp || !btn) return;
-				clearInterval(timer);
-				if (performance.getEntriesByType("resource").some((r) => r.name.includes("/view"))) return;
 				const dvdId = dvdIdOf(btn);
-				if (!dvdId) return;
-				const cache = readCache$1();
-				if (dvdId in cache) {
-					const data = alp.$data(btn);
-					if (data && data.saved === false) data.saved = cache[dvdId];
-				}
+				const data = dvdId ? componentData(alp, btn) : null;
+				if (!dvdId || !data) return;
+				clearInterval(timer);
+				syncSavedCache(dvdId, data);
 			}, 100);
 			setTimeout(() => clearInterval(timer), 3e3);
 			document.addEventListener("click", (e) => {

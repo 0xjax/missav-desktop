@@ -294,29 +294,49 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
 
 // ---- 入口 ----
 
+// 收藏状态秒显 + 缓存自校正：
+// 1) 站点 /view 返回前，用 saved-cache 里的值先把图标点亮（只对"本浏览器操作过"的
+//    番号有缓存条目）；
+// 2) /view 返回后，把服务端真值**回写**已有条目。没有这一步，缓存里的 true 永远
+//    不会被覆盖：在别处取消过收藏的番号，这台机器每次进页面都会先闪一次错误的
+//    "已收藏"（实测语义，见 docs/dev-runbook.md）。
+// WARNING 回写必须等站点把 /view 响应赋进 Alpine 数据之后：资源计时条目先于
+// `.then` 里的赋值出现，立刻读会拿到初值 false，把本来正确的 true 覆盖掉
+function syncSavedCache(dvdId: string, data: ComponentData): void {
+  let settle = 0
+  const timer = setInterval(() => {
+    const viewDone = performance
+      .getEntriesByType('resource')
+      .some((r) => /\/api\/items\/[^/]+\/view/.test(r.name))
+    if (!viewDone) {
+      const cache = readCache()
+      if (dvdId in cache && data.saved === false) data.saved = cache[dvdId]
+      return
+    }
+    // 多等 3 拍（约 300ms）让站点完成赋值再回写；只校正已有条目，不新建
+    if (++settle < 3) return
+    clearInterval(timer)
+    if (dvdId in readCache() && typeof data.saved === 'boolean')
+      writeCache(dvdId, data.saved)
+  }, 100)
+  setTimeout(() => clearInterval(timer), 10000)
+}
+
 export function fastSave(): void {
   waitDOMContentLoaded(() => {
     listenToastChannel()
-    // 秒显收藏状态：Alpine 初始化后、/view 返回前把缓存值填进去
+    // 等 Alpine 与收藏按钮就绪后交给 syncSavedCache 持续校正（含秒显）
     const timer = setInterval(() => {
       const alp = alpine()
       const btn = [...document.querySelectorAll('button')].find((b) =>
         alpineAction(b, 'toggleSave'),
       )
       if (!alp || !btn) return
-      clearInterval(timer)
-      // /view 已返回则服务器真值就位，不用缓存覆盖
-      const viewDone = performance
-        .getEntriesByType('resource')
-        .some((r) => r.name.includes('/view'))
-      if (viewDone) return
       const dvdId = dvdIdOf(btn)
-      if (!dvdId) return
-      const cache = readCache()
-      if (dvdId in cache) {
-        const data = alp.$data(btn)
-        if (data && data.saved === false) data.saved = cache[dvdId]
-      }
+      const data = dvdId ? componentData(alp, btn) : null
+      if (!dvdId || !data) return
+      clearInterval(timer)
+      syncSavedCache(dvdId, data)
     }, 100)
     setTimeout(() => clearInterval(timer), 3000)
 
