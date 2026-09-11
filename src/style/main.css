@@ -311,9 +311,43 @@
   background: transparent;
 }
 
-.mx-seg-skeleton {
+/* 加载态：沿用未检测态的虚线框与档位色，只把标签换成居中转圈。
+   前后只变内容不变框（旧版清空容器类名画灰胶囊，整框会消失再回来） */
+.mx-seg-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 与常见档位（两颗 CJK 字 = 44×22）同尺寸，加载中 → 加载完不跳。
+     WARNING 空按钮转成 flex 容器后 .mx-seg 的 line-height:18px 不再撑高，必须显式
+     给 min-height；站点 Tailwind preflight 是 border-box，故这里要写总高 22 而非 18
+     （实测写 18 时加载态只有 18 高，常态 22） */
+  min-width: 44px;
+  min-height: 22px;
+  background: transparent;
+  border-style: dashed;
+  opacity: 1;
   cursor: default;
-  color: #d8dee9;
+  filter: brightness(1.7);
+}
+
+.mx-seg-loading:hover {
+  background: transparent;
+  filter: brightness(1.7);
+}
+
+.mx-seg-spin {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgb(229 233 240 / 25%);
+  border-top-color: currentcolor;
+  border-radius: 50%;
+  animation: mx-seg-spin 0.7s linear infinite;
+}
+
+@keyframes mx-seg-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 语言下拉浮窗：站点原始 max-h 近乎全屏（13 项全展开 644px+），压到视口 45%，

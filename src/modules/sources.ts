@@ -173,10 +173,20 @@ function renderSegmented(
       )
       group.insertBefore(seg, searchA ?? group.querySelector('[data-setting-icon]'))
     }
-    if (loading && !sources.length) {
-      // 骨架态：单颗灰胶囊，不拦截点击
-      seg.className = ''
-      seg.innerHTML = '<span class="mx-seg mx-seg-skeleton">…</span>'
+    if (loading) {
+      // 加载态：保留容器框与"未确认"的虚线框，只把标签位置换成居中转圈。
+      // 旧版清空容器类名再画一颗灰胶囊，整个框会消失再回来，前后断裂（用户反馈）
+      const [, color] = labelOf(sources[0]?.kind ?? 'original')
+      seg.className = 'mx-segmented'
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.className = 'mx-seg mx-seg-current mx-seg-loading'
+      b.style.color = color
+      b.style.borderColor = color
+      b.appendChild(
+        Object.assign(document.createElement('span'), { className: 'mx-seg-spin' }),
+      )
+      seg.replaceChildren(b)
       continue
     }
     seg.className = 'mx-segmented'
@@ -255,7 +265,8 @@ export function sources(): void {
   // 拉取兄弟源：**只在用户点击当前档时调用**（见文件头 WARNING）。
   // 菜单是权威兄弟列表；搜索页只供徽章，失败只影响裸番号的类型判定
   const load = async (): Promise<void> => {
-    renderSegmented([], id, true) // 骨架态：拉取中
+    // 传当前源进去：加载态沿用它的档位色（虚线框 + 转圈），与未检测态连贯
+    renderSegmented([current], id, true)
     try {
       const cached = readCache()[cacheKey]
       const [menuIds, badges] = await Promise.all([
