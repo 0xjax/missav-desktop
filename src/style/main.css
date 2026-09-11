@@ -264,6 +264,16 @@
   opacity: 0.85;
 }
 
+/* 尚未拉取过时的当前档：它同时是"检测其他源"的入口（站点不主动暴露兄弟源列表），
+   故当前档在 .mx-seg-current 的 cursor:default 之外要恢复可点观感 */
+.mx-seg-fetch {
+  cursor: pointer;
+}
+
+.mx-seg-fetch:hover {
+  filter: brightness(1.15);
+}
+
 .mx-seg-skeleton {
   cursor: default;
   color: #d8dee9;

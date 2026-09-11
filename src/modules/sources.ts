@@ -1,6 +1,7 @@
 import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { LANG_RE, currentLang } from '../utils/lang.ts'
 import { t, type I18nKey } from '../utils/i18n.ts'
+import { toast } from '../utils/toast.ts'
 
 // 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中字/英字），详情页拉一次，
 // 在顶栏搜索图标左侧渲染胶囊分段器，当前源实色档位，点档位直达对应源。
@@ -14,6 +15,10 @@ import { t, type I18nKey } from '../utils/i18n.ts'
 // NOTE 档位链接一律按当前站点语言拼 `/{lang}/{id}`：缓存不分语言，若存下别的语言的
 // 链接，点击会先跳英文页再被 lang-pref 弹回中文（实测页面中英来回跳）。
 // 顶栏是固定高度常驻区域，组件放这里从结构上杜绝下方内容布局跳动。
+// WARNING **不自动拉取**：这两个请求是整页 HTML（`/{lang}/{裸番号}` + 搜索页），
+// 属于"用户没在看的页面"，最像爬虫行为，是 Cloudflare 人机验证与限速的主要来源。
+// 故：缓存新鲜（7 天）直接渲染、0 请求；无新鲜缓存时只显示当前档，**点它才拉取**。
+// 新出的兄弟源靠缓存过期后重新点击拉取，不额外提供刷新入口（避免猜不到的交互）。
 
 interface Source {
   id: string
@@ -141,11 +146,13 @@ async function fetchBadges(base: string, lang: string): Promise<Map<string, Kind
 
 // 渲染/更新分段器。锚定顶栏按钮组（搜索 a 的父级 flex 行），与齿轮同位置体系。
 // 始终显示，按源数自适应形态：拉取中（单颗骨架档）、单源（单档锁定态，当前源
-// 实色但禁用）、多源（多档可选，当前档实色）。列表页（无番号）整组不渲染。
+// 实色但禁用）、多源（多档可选，当前档实色）；列表页（无番号）整组不渲染。
+// onFetch 非空 = 尚未拉取过：当前档那颗胶囊同时是拉取入口（可点，见 renderSegmented 内注释）
 function renderSegmented(
   sources: Source[],
   currentId: string,
   loading: boolean,
+  onFetch?: () => void,
 ): void {
   const lang = currentLang() ?? 'cn'
   // 两套响应式容器都要注入（同齿轮）；锚点组 = 搜索 a 的父级
@@ -182,10 +189,18 @@ function renderSegmented(
         b.className = 'mx-seg' + (isCurrent ? ' mx-seg-current' : '')
         b.textContent = label
         if (isCurrent) {
-          // 当前档实色；单源时额外加锁定态（无切换意义，仅作标识）
+          // 当前档实色；未拉取过时可点（=拉取入口），单源时加锁定态（无切换意义，仅作标识）
           b.style.background = color
-          b.disabled = true
-          if (sources.length < 2) b.classList.add('mx-seg-locked')
+          if (onFetch) {
+            // 无新鲜缓存时这里就是唯一入口：站点不会在详情页暴露兄弟源列表，
+            // 要主动请求裸番号页才拿得到。hover 提示说明点它是做什么的
+            b.classList.add('mx-seg-fetch')
+            b.title = t('source.fetch')
+            b.addEventListener('click', onFetch)
+          } else {
+            b.disabled = true
+            if (sources.length < 2) b.classList.add('mx-seg-locked')
+          }
         } else {
           b.addEventListener('click', () => {
             // 一律按当前站点语言拼链接，避免跳到别的语言页被 lang-pref 弹回
@@ -231,7 +246,38 @@ export function sources(): void {
   const lang = currentLang() ?? 'cn'
   const cacheKey = parsed.base
 
-  // 骨架态先行：顶栏一出就显示拉取中，无内容高度参与
+  // 拉取兄弟源：**只在用户点击当前档时调用**（见文件头 WARNING）。
+  // 菜单是权威兄弟列表；搜索页只供徽章，失败只影响裸番号的类型判定
+  const load = async (): Promise<void> => {
+    renderSegmented([], id, true) // 骨架态：拉取中
+    try {
+      const cached = readCache()[cacheKey]
+      const [menuIds, badges] = await Promise.all([
+        fetchMenuIds(parsed.base, lang),
+        fetchBadges(parsed.base, lang).catch(() => null),
+      ])
+      // 搜索页失败时用上次缓存的类型兜底，避免裸番号类型忽原忽中
+      const cachedKind = (x: string): Kind | undefined =>
+        cached?.list.find((s) => s.id === x)?.kind
+      const ids = new Set<string>([
+        parsed.base,
+        id,
+        ...(menuIds ?? []),
+        ...(badges?.keys() ?? []),
+      ])
+      const list = [...ids]
+        .map((x) => ({ id: x, kind: kindOfId(x, badges?.get(x) ?? cachedKind(x)) }))
+        .sort((a, b) => KIND_ORDER.get(a.kind)! - KIND_ORDER.get(b.kind)!)
+      // 搜索页没拿到徽章时不写缓存：裸番号类型可能判错，别固化 7 天
+      if (badges) writeCache(cacheKey, list)
+      renderSegmented(list, id, false)
+    } catch {
+      // 失败退回"可再点一次"的单档态并提示：点了毫无反应最像坏了
+      toast(t('source.failed'))
+      renderSegmented([current], id, false, () => void load())
+    }
+  }
+
   let injected = false
   const init = (): boolean => {
     if (injected) return true
@@ -240,43 +286,16 @@ export function sources(): void {
     )
     if (!hasGroup) return false
     injected = true
-    renderSegmented([], id, true)
 
-    // 有新鲜缓存则直接渲染完整分段器，后台静默校验
     const cached = readCache()[cacheKey]
     const cacheFresh = cached && Date.now() - cached.ts < CACHE_TTL
-    if (cacheFresh && cached.list.length) renderSegmented(cached.list, id, false)
-
-    ;(async () => {
-      try {
-        // 菜单是权威兄弟列表；搜索页只供徽章，失败只影响裸番号的类型判定
-        const [menuIds, badges] = await Promise.all([
-          fetchMenuIds(parsed.base, lang),
-          fetchBadges(parsed.base, lang).catch(() => null),
-        ])
-        // 搜索页失败时用上次缓存的类型兜底，避免裸番号类型忽原忽中
-        const cachedKind = (x: string): Kind | undefined =>
-          cached?.list.find((s) => s.id === x)?.kind
-        const ids = new Set<string>([
-          parsed.base,
-          id,
-          ...(menuIds ?? []),
-          ...(badges?.keys() ?? []),
-        ])
-        const list = [...ids]
-          .map((x) => ({ id: x, kind: kindOfId(x, badges?.get(x) ?? cachedKind(x)) }))
-          .sort((a, b) => KIND_ORDER.get(a.kind)! - KIND_ORDER.get(b.kind)!)
-        // 搜索页没拿到徽章时不写缓存：裸番号类型可能判错，别固化 7 天
-        if (badges) writeCache(cacheKey, list)
-        // 缓存命中时只有内容变化才重渲染，无变化零感知
-        if (!cacheFresh || list.map((s) => s.id).join() !== cached.list.map((s) => s.id).join()) {
-          renderSegmented(list, id, false)
-        }
-      } catch {
-        // 拉取失败：有缓存用缓存，否则只显示当前源（下页重试）
-        if (!cacheFresh) renderSegmented(cached?.list ?? [current], id, false)
-      }
-    })()
+    if (cacheFresh && cached.list.length) {
+      // 缓存新鲜：直接渲染完整分段器，0 请求（不再后台静默校验）
+      renderSegmented(cached.list, id, false)
+    } else {
+      // 无新鲜缓存：只显示当前档，点它才拉取（刷新入口 = 缓存过期后自然回到这个状态）
+      renderSegmented([current], id, false, () => void load())
+    }
     return true
   }
 
