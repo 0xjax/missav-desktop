@@ -8,6 +8,8 @@
    ```
    "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir=D:\chrome-debug-profile
    ```
+   **必须以后台任务启动**（`run_in_background`）：launcher 进程退出后 chrome 常驻、不受会话影响；用前台命令行启动的实例实测在会话被中断时被一并回收（人还没到实测就没了）。
+   **WARNING agent 沙箱（workspace-write）下起不来**：profile 在工作区外（`D:\chrome-debug-profile`），写入被拒 → 9222 不监听。需提权（danger-full-access）；同理 `bun run build` 会因 vite 在 Windows 上用 `child_process.exec` 探测真实路径被拒（`spawn EPERM`）而失败，也要提权跑。
    **WARNING 调试 Chrome 每次冷启动 = 扩展和登录态都可能不齐**，重启后必须先过一遍以下清单，否则后续实测会莫名失败白耗时间：
    - **Tampermonkey 扩展是 CDP `Extensions.loadUnpacked` 临时加载的，重启即丢**，必须重新加载：源用日常 Chrome 的安装目录复制到无空格路径再 load（路径含空格会报 `File path cannot be resolved`，如 `C:\Users\g1169\AppData\Local\Google\Chrome\User Data\...` 要先复制到 `D:\` 下）；复制源：`...User Data\Default\Extensions\dhdgffkkebhmkfjojejmpbldmpobfkfo\<版本>_0`；**path 参数用 `D:/xxx` 正斜杠形式（不带 `file://` 前缀，带前缀反而报 resolve 失败）**
    - 装好后**主动请用户配合**（比脚本摸黑操作快得多）：1) TM 详情页允许运行用户脚本/开发者模式；2) 打开 `.user.js` 安装 URL 后点确认安装
@@ -29,6 +31,8 @@ bun run dev        # 仅用于热改代码时快速试；实测必须用 dist（
 
 实测标准流程：`bun run build` → `bun scripts/dev/install-dist.ts` → 刷新 missav 页面。
 （手工等价步骤：复制 `dist/missav-desktop.js` 为 `.user.js` → 起静态服务 → 打开 `.user.js` URL → TM 弹窗点安装/更新）
+
+**NOTE 装完必须刷新 missav 页面**，TM 只在页面加载时注入，且刚 `loadUnpacked`/刚装完脚本时 TM 尚未就绪——此刻刷新会看不到注入（实测踩坑：误判成「脚本没生效」）。判断依据看页面里有没有 `style[data-mx-antiflicker]`，没有就再刷一次，别自己反复 CDP 刷新下结论。
 
 ## CDP 调试脚本（scripts/cdp/，9222 端口直连）
 
