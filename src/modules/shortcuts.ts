@@ -1,6 +1,5 @@
 import { GM_getValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
-import { t, type I18nKey } from '../utils/i18n.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toggleSettingPanel } from '../setting.ts'
 
@@ -84,39 +83,6 @@ function togglePlay(): void {
   else video.pause()
 }
 
-const shortcutList: [string, I18nKey][] = [
-  ['Space', 'help.playPause'],
-  ['S', 'help.save'],
-  ['P', 'help.playlist'],
-  ['/', 'help.search'],
-  ['G', 'help.home'],
-  ['B', 'help.saved'],
-  ['H', 'help.history'],
-  [',', 'help.settings'],
-  ['?', 'help.help'],
-  ['F', 'help.fullscreen'],
-]
-
-function toggleHelpPanel(): void {
-  const exist = document.getElementById('shortcut-help')
-  if (exist) {
-    exist.remove()
-    return
-  }
-  const panel = Object.assign(document.createElement('div'), {
-    id: 'shortcut-help',
-    innerHTML: `
-      <div class="help-title">${t('help.title')}</div>
-      <div class="help-list">
-        ${shortcutList
-          .map(([key, desc]) => `<kbd>${key}</kbd><span>${t(desc)}</span>`)
-          .join('')}
-      </div>
-    `,
-  })
-  document.body.appendChild(panel)
-}
-
 export function shortcuts(): void {
   waitDOMContentLoaded(() => {
     // 夺回空格键：站点的弹窗广告绑在 window 的 keyup.space 上，
@@ -152,8 +118,9 @@ export function shortcuts(): void {
           break
         case 'Slash':
           e.preventDefault()
-          // Shift+/ 即 ?，弹快捷键帮助
-          if (e.shiftKey) toggleHelpPanel()
+          // Shift+/ 即 ?：打开设置弹窗的快捷键帮助子页（帮助不再是独立浮层，
+          // 否则"不知道快捷键的人永远打不开帮助"）
+          if (e.shiftKey) toggleSettingPanel('help')
           else focusSearch()
           break
         case 'Comma':

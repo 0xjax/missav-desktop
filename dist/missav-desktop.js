@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.23
+// @version         1.36.24
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -29,7 +29,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel #setting-view,#setting-panel #backup-view,#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel .setting-row{border-top:1px solid #3a3a3a;justify-content:space-between;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-row select{color:#eee;cursor:pointer;background:#2a2a2a;border:1px solid #555;border-radius:4px;padding:4px 8px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:none;border-radius:8px;padding:2px 10px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-locked{opacity:.85}.mx-seg-fetch{cursor:pointer}.mx-seg-fetch:hover{filter:brightness(1.15)}.mx-seg-skeleton{cursor:default;color:#d8dee9}[x-show*=showLocaleSwitcher]{max-height:45vh!important}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:flex-start;gap:8px;display:flex;position:fixed;top:80px;left:24px}.mx-toast{color:#e5e9f0;background:#2e3440;border:1px solid #4c566a;border-left:3px solid #7b88a1;border-radius:8px;align-items:center;gap:10px;max-width:min(340px,100vw - 48px);padding:9px 14px;font-size:14px;transition:opacity .3s,transform .3s;animation:.18s ease-out mx-toast-in;display:flex;box-shadow:0 6px 20px #0000008c}.mx-toast-success{border-left-color:#8fbc6a}.mx-toast-error{border-left-color:#d06a6a}.mx-toast-code{color:#d8dee9;letter-spacing:.02em;background:#ffffff14;border-radius:4px;padding:1px 7px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}.mx-toast-out{opacity:0;transform:translate(-8px)}@keyframes mx-toast-in{0%{opacity:0;transform:translate(-12px)}to{opacity:1;transform:none}}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>a{order:-2;grid-column:1/-1;margin-bottom:8px}fieldset.mx-pl-grid>hr{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-docked{height:520px;max-height:calc(100vh - 6rem);overflow-y:auto;padding:.75rem!important;display:block!important}.mx-pl-dock-slot{flex-shrink:0;height:520px}.mx-pl-docked fieldset.mx-pl-grid{grid-template-columns:minmax(0,1fr)}:has(>.mx-pl-docked){flex-direction:column!important}*{scrollbar-width:thin;scrollbar-color:#4c566a transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#4c566a;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#5e81ac}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-view,#setting-panel .setting-menu{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-menu button{color:#eee;text-align:left;cursor:pointer;background:0 0;border:none;border-bottom:1px solid #333;border-radius:0;justify-content:space-between;align-items:center;padding:14px 12px;font-size:15px;display:flex}#setting-panel .setting-menu button:hover:not(:disabled){filter:none;background:#2a2a2a}#setting-panel .menu-arrow{color:#888}#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{justify-content:flex-end;gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-close{background:#444}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel .setting-row{border-top:1px solid #3a3a3a;justify-content:space-between;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-row select{color:#eee;cursor:pointer;background:#2a2a2a;border:1px solid #555;border-radius:4px;padding:4px 8px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:none;border-radius:8px;padding:2px 10px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-locked{opacity:.85}.mx-seg-fetch{cursor:pointer}.mx-seg-fetch:hover{filter:brightness(1.15)}.mx-seg-skeleton{cursor:default;color:#d8dee9}[x-show*=showLocaleSwitcher]{max-height:45vh!important}#setting-panel .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;min-height:0;font-size:14px;display:grid;overflow-y:auto}#setting-panel .help-list kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:flex-start;gap:8px;display:flex;position:fixed;top:80px;left:24px}.mx-toast{color:#e5e9f0;background:#2e3440;border:1px solid #4c566a;border-left:3px solid #7b88a1;border-radius:8px;align-items:center;gap:10px;max-width:min(340px,100vw - 48px);padding:9px 14px;font-size:14px;transition:opacity .3s,transform .3s;animation:.18s ease-out mx-toast-in;display:flex;box-shadow:0 6px 20px #0000008c}.mx-toast-success{border-left-color:#8fbc6a}.mx-toast-error{border-left-color:#d06a6a}.mx-toast-code{color:#d8dee9;letter-spacing:.02em;background:#ffffff14;border-radius:4px;padding:1px 7px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}.mx-toast-out{opacity:0;transform:translate(-8px)}@keyframes mx-toast-in{0%{opacity:0;transform:translate(-12px)}to{opacity:1;transform:none}}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>a{order:-2;grid-column:1/-1;margin-bottom:8px}fieldset.mx-pl-grid>hr{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-docked{height:520px;max-height:calc(100vh - 6rem);overflow-y:auto;padding:.75rem!important;display:block!important}.mx-pl-dock-slot{flex-shrink:0;height:520px}.mx-pl-docked fieldset.mx-pl-grid{grid-template-columns:minmax(0,1fr)}:has(>.mx-pl-docked){flex-direction:column!important}*{scrollbar-width:thin;scrollbar-color:#4c566a transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#4c566a;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#5e81ac}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -168,9 +168,10 @@
 	}
 	var DICT = {
 		"setting.title": ["脚本设置", "Script Settings"],
-		"setting.cancel": ["取消", "Cancel"],
+		"setting.close": ["关闭", "Close"],
 		"setting.save": ["保存", "Save"],
 		"setting.export": ["导出备份", "Export Backup"],
+		"menu.options": ["可选功能", "Features"],
 		"setting.back": ["← 返回", "← Back"],
 		"setting.backupHint": ["立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载", "A backup takes about 1–3 minutes. Don't close this tab; when done it overwrites today's snapshot and downloads it."],
 		"setting.backupNow": ["立即备份", "Back Up Now"],
@@ -455,12 +456,44 @@
 		"playlist-dock": true,
 		"topbar-ui": true
 	};
-	function createSettingPanel() {
+	var shortcutList = [
+		["Space", "help.playPause"],
+		["S", "help.save"],
+		["P", "help.playlist"],
+		["/", "help.search"],
+		["G", "help.home"],
+		["B", "help.saved"],
+		["H", "help.history"],
+		[",", "help.settings"],
+		["?", "help.help"],
+		["F", "help.fullscreen"]
+	];
+	var subHeader = (title) => `
+        <div class="dialog-header">
+          <button class="dialog-back" type="button" data-back>${t("setting.back")}</button>
+          <span class="setting-title">${title}</span>
+        </div>`;
+	function createSettingPanel(initial) {
+		const snapshots = readSnapshots();
 		const panel = Object.assign(document.createElement("div"), {
 			id: "setting-panel",
 			innerHTML: `
-      <div id="setting-view">
+      <div class="setting-view" data-view="menu">
         <div class="setting-title">${t("setting.title")}</div>
+        <div class="setting-menu">
+          ${[
+				["options", "menu.options"],
+				["backup", "setting.export"],
+				["help", "help.title"]
+			].map(([view, label]) => `<button type="button" data-goto="${view}"><span>${t(label)}</span><span class="menu-arrow">›</span></button>`).join("")}
+        </div>
+        <div class="setting-actions dialog-footer">
+          <button class="dialog-close" type="button">${t("setting.close")}</button>
+        </div>
+      </div>
+
+      <div class="setting-view" data-view="options" style="display: none">
+        ${subHeader(t("menu.options"))}
         <div class="setting-checkboxes">
           ${Object.entries(keyValues).map(([key, label]) => `
             <label><input type="checkbox" data-key="${key}"><span>${t(label)}</span></label>
@@ -475,14 +508,54 @@
           </select>
         </div>
         <div class="setting-actions dialog-footer">
-          <button class="dialog-cancel" type="button">${t("setting.cancel")}</button>
-          <button id="setting-export" type="button">${t("setting.export")}</button>
           <button id="setting-save" type="button">${t("setting.save")}</button>
         </div>
       </div>
-      <div id="backup-view" style="display: none"></div>
+
+      <div class="setting-view" id="backup-view" data-view="backup" style="display: none">
+        <div class="backup-render">
+          ${subHeader(t("setting.export"))}
+          <div class="backup-hint">${t("setting.backupHint")}</div>
+          <div class="setting-actions backup-latest">
+            <button id="backup-latest-btn" type="button">${t("setting.backupNow")}</button>
+          </div>
+          ${`<div class="backup-list">${[
+				0,
+				1,
+				2,
+				3,
+				4
+			].map((i) => {
+				const s = snapshots[i];
+				if (!s) return `<div class="backup-row backup-empty"><span>${t("setting.emptySlot")}</span></div>`;
+				return `
+              <div class="backup-row">
+                <span><b>${fmtTs(s.ts)}</b> · ${snapshotStat(s)}</span>
+                <button type="button" data-i="${i}">${t("setting.download")}</button>
+              </div>`;
+			}).join("")}</div>`}
+          <div class="setting-actions dialog-footer">
+            <button class="dialog-close" type="button">${t("setting.close")}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="setting-view" data-view="help" style="display: none">
+        ${subHeader(t("help.title"))}
+        <div class="help-list">
+          ${shortcutList.map(([key, desc]) => `<kbd>${key}</kbd><span>${t(desc)}</span>`).join("")}
+        </div>
+      </div>
     `
 		});
+		const views = [...panel.querySelectorAll(".setting-view")];
+		const show = (view) => {
+			for (const el of views) el.style.display = el.dataset.view === view ? "" : "none";
+		};
+		show(initial);
+		panel.querySelectorAll("[data-goto]").forEach((btn) => btn.addEventListener("click", () => show(btn.dataset.goto)));
+		panel.querySelectorAll("[data-back]").forEach((btn) => btn.addEventListener("click", () => show("menu")));
+		panel.querySelectorAll(".dialog-close").forEach((btn) => btn.addEventListener("click", () => panel.remove()));
 		const checkboxes = panel.querySelectorAll(".setting-checkboxes input[type=\"checkbox\"]");
 		checkboxes.forEach((checkbox) => {
 			const key = checkbox.dataset.key;
@@ -490,12 +563,6 @@
 		});
 		const sortSelect = panel.querySelector("#setting-playlist-sort");
 		sortSelect.value = GM_getValue$1("playlist-sort", "recent");
-		panel.querySelector(".dialog-cancel")?.addEventListener("click", () => {
-			panel.remove();
-		});
-		panel.querySelector("#setting-export")?.addEventListener("click", () => {
-			showBackupView(panel);
-		});
 		panel.querySelector("#setting-save")?.addEventListener("click", () => {
 			checkboxes.forEach((checkbox) => {
 				const key = checkbox.dataset.key;
@@ -505,80 +572,33 @@
 			panel.remove();
 			location.reload();
 		});
+		panel.querySelector("#backup-latest-btn")?.addEventListener("click", () => {
+			panel.remove();
+			backupNow();
+		});
+		panel.querySelectorAll(".backup-row button").forEach((b) => {
+			b.addEventListener("click", () => {
+				const s = readSnapshots()[Number(b.dataset.i)];
+				if (s) {
+					downloadSnapshot(s);
+					toast(t("setting.exported"));
+				}
+				panel.remove();
+			});
+		});
 		return panel;
 	}
-	function showBackupView(panel) {
-		const backupView = panel.querySelector("#backup-view");
-		const settingView = panel.querySelector("#setting-view");
-		if (!backupView || backupView.style.display !== "none") return;
-		const render = () => {
-			const snapshots = readSnapshots();
-			const view = Object.assign(document.createElement("div"), {
-				className: "backup-render",
-				innerHTML: `
-        <div class="dialog-header">
-          <button class="dialog-back" type="button">${t("setting.back")}</button>
-          <span class="setting-title">${t("setting.export")}</span>
-        </div>
-        <div class="backup-hint">${t("setting.backupHint")}</div>
-        <div class="setting-actions backup-latest">
-          <button id="backup-latest-btn" type="button">${t("setting.backupNow")}</button>
-        </div>
-        ${`<div class="backup-list">${[
-					0,
-					1,
-					2,
-					3,
-					4
-				].map((i) => {
-					const s = snapshots[i];
-					if (!s) return `<div class="backup-row backup-empty"><span>${t("setting.emptySlot")}</span></div>`;
-					return `
-              <div class="backup-row">
-                <span><b>${fmtTs(s.ts)}</b> · ${snapshotStat(s)}</span>
-                <button type="button" data-i="${i}">${t("setting.download")}</button>
-              </div>`;
-				}).join("")}</div>`}
-        <div class="setting-actions dialog-footer">
-          <button class="dialog-cancel" type="button">${t("setting.cancel")}</button>
-        </div>
-      `
-			});
-			view.querySelector(".dialog-back")?.addEventListener("click", () => {
-				view.style.display = "none";
-				backupView.style.display = "none";
-				settingView.style.display = "";
-			});
-			view.querySelector(".dialog-cancel")?.addEventListener("click", () => {
-				panel.remove();
-			});
-			view.querySelector("#backup-latest-btn")?.addEventListener("click", () => {
-				panel.remove();
-				backupNow();
-			});
-			view.querySelectorAll(".backup-row button").forEach((b) => {
-				b.addEventListener("click", () => {
-					const s = readSnapshots()[Number(b.dataset.i)];
-					if (s) {
-						downloadSnapshot(s);
-						toast(t("setting.exported"));
-					}
-					panel.remove();
-				});
-			});
-			return view;
-		};
-		settingView.style.display = "none";
-		backupView.style.display = "";
-		backupView.replaceChildren(render());
-	}
-	function toggleSettingPanel() {
+	function toggleSettingPanel(view = "menu") {
 		const exist = document.getElementById("setting-panel");
 		if (exist) {
-			exist.remove();
+			if (view === "menu") {
+				exist.remove();
+				return;
+			}
+			exist.querySelector(`[data-goto="${view}"]`)?.click();
 			return;
 		}
-		document.body.appendChild(createSettingPanel());
+		document.body.appendChild(createSettingPanel(view));
 	}
 	function registerSettingMenu() {
 		GM_registerMenuCommand$1(t("setting.title"), () => {
@@ -1026,35 +1046,6 @@
 		if (video.paused) video.play();
 		else video.pause();
 	}
-	var shortcutList = [
-		["Space", "help.playPause"],
-		["S", "help.save"],
-		["P", "help.playlist"],
-		["/", "help.search"],
-		["G", "help.home"],
-		["B", "help.saved"],
-		["H", "help.history"],
-		[",", "help.settings"],
-		["?", "help.help"],
-		["F", "help.fullscreen"]
-	];
-	function toggleHelpPanel() {
-		const exist = document.getElementById("shortcut-help");
-		if (exist) {
-			exist.remove();
-			return;
-		}
-		const panel = Object.assign(document.createElement("div"), {
-			id: "shortcut-help",
-			innerHTML: `
-      <div class="help-title">${t("help.title")}</div>
-      <div class="help-list">
-        ${shortcutList.map(([key, desc]) => `<kbd>${key}</kbd><span>${t(desc)}</span>`).join("")}
-      </div>
-    `
-		});
-		document.body.appendChild(panel);
-	}
 	function shortcuts() {
 		waitDOMContentLoaded(() => {
 			window.addEventListener("keyup", (e) => {
@@ -1081,7 +1072,7 @@
 						break;
 					case "Slash":
 						e.preventDefault();
-						if (e.shiftKey) toggleHelpPanel();
+						if (e.shiftKey) toggleSettingPanel("help");
 						else focusSearch();
 						break;
 					case "Comma":

@@ -37,12 +37,60 @@ const keyDefaults: Record<string, boolean> = {
   'topbar-ui': true,
 }
 
-function createSettingPanel(): HTMLElement {
+// 快捷键帮助的内容表（键位 → 文案）。按键处理在 modules/shortcuts.ts，这里只管显示。
+// NOTE 帮助页是设置弹窗的子页、不是独立浮层——旧版只能靠 `?` 打开，等于
+// "不知道快捷键的人永远看不到帮助"（有内容没入口）
+const shortcutList: [string, I18nKey][] = [
+  ['Space', 'help.playPause'],
+  ['S', 'help.save'],
+  ['P', 'help.playlist'],
+  ['/', 'help.search'],
+  ['G', 'help.home'],
+  ['B', 'help.saved'],
+  ['H', 'help.history'],
+  [',', 'help.settings'],
+  ['?', 'help.help'],
+  ['F', 'help.fullscreen'],
+]
+
+// 一级菜单 + 三个二级页，全部在同一个弹窗外壳内切换（尺寸恒定，切换不跳动）
+type View = 'menu' | 'options' | 'backup' | 'help'
+
+// 二级页统一头部：返回 + 页标题
+const subHeader = (title: string): string => `
+        <div class="dialog-header">
+          <button class="dialog-back" type="button" data-back>${t('setting.back')}</button>
+          <span class="setting-title">${title}</span>
+        </div>`
+
+function createSettingPanel(initial: View): HTMLElement {
+  const snapshots = readSnapshots()
   const panel = Object.assign(document.createElement('div'), {
     id: 'setting-panel',
     innerHTML: `
-      <div id="setting-view">
+      <div class="setting-view" data-view="menu">
         <div class="setting-title">${t('setting.title')}</div>
+        <div class="setting-menu">
+          ${(
+            [
+              ['options', 'menu.options'],
+              ['backup', 'setting.export'],
+              ['help', 'help.title'],
+            ] as [View, I18nKey][]
+          )
+            .map(
+              ([view, label]) =>
+                `<button type="button" data-goto="${view}"><span>${t(label)}</span><span class="menu-arrow">›</span></button>`,
+            )
+            .join('')}
+        </div>
+        <div class="setting-actions dialog-footer">
+          <button class="dialog-close" type="button">${t('setting.close')}</button>
+        </div>
+      </div>
+
+      <div class="setting-view" data-view="options" style="display: none">
+        ${subHeader(t('menu.options'))}
         <div class="setting-checkboxes">
           ${Object.entries(keyValues)
             .map(
@@ -61,14 +109,67 @@ function createSettingPanel(): HTMLElement {
           </select>
         </div>
         <div class="setting-actions dialog-footer">
-          <button class="dialog-cancel" type="button">${t('setting.cancel')}</button>
-          <button id="setting-export" type="button">${t('setting.export')}</button>
           <button id="setting-save" type="button">${t('setting.save')}</button>
         </div>
       </div>
-      <div id="backup-view" style="display: none"></div>
+
+      <div class="setting-view" id="backup-view" data-view="backup" style="display: none">
+        <div class="backup-render">
+          ${subHeader(t('setting.export'))}
+          <div class="backup-hint">${t('setting.backupHint')}</div>
+          <div class="setting-actions backup-latest">
+            <button id="backup-latest-btn" type="button">${t('setting.backupNow')}</button>
+          </div>
+          ${
+            // 固定渲染 5 个槽位，高度恒定；行内"时间 + 统计"单行排布保持紧凑
+            `<div class="backup-list">${[0, 1, 2, 3, 4]
+              .map((i) => {
+                const s = snapshots[i]
+                if (!s)
+                  return `<div class="backup-row backup-empty"><span>${t('setting.emptySlot')}</span></div>`
+                return `
+              <div class="backup-row">
+                <span><b>${fmtTs(s.ts)}</b> · ${snapshotStat(s)}</span>
+                <button type="button" data-i="${i}">${t('setting.download')}</button>
+              </div>`
+              })
+              .join('')}</div>`
+          }
+          <div class="setting-actions dialog-footer">
+            <button class="dialog-close" type="button">${t('setting.close')}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="setting-view" data-view="help" style="display: none">
+        ${subHeader(t('help.title'))}
+        <div class="help-list">
+          ${shortcutList
+            .map(([key, desc]) => `<kbd>${key}</kbd><span>${t(desc)}</span>`)
+            .join('')}
+        </div>
+      </div>
     `,
   })
+
+  const views = [...panel.querySelectorAll<HTMLElement>('.setting-view')]
+  const show = (view: View): void => {
+    for (const el of views)
+      el.style.display = el.dataset.view === view ? '' : 'none'
+  }
+  show(initial)
+
+  // 一级菜单 → 二级页；二级页头部的「← 返回」→ 一级菜单
+  panel.querySelectorAll<HTMLElement>('[data-goto]').forEach((btn) =>
+    btn.addEventListener('click', () => show(btn.dataset.goto as View)),
+  )
+  panel.querySelectorAll<HTMLElement>('[data-back]').forEach((btn) =>
+    btn.addEventListener('click', () => show('menu')),
+  )
+  // 「关闭」移除弹窗：没点「保存」的改动不落盘（等价于旧的「取消」）
+  panel.querySelectorAll<HTMLElement>('.dialog-close').forEach((btn) =>
+    btn.addEventListener('click', () => panel.remove()),
+  )
 
   const checkboxes = panel.querySelectorAll(
     '.setting-checkboxes input[type="checkbox"]',
@@ -83,14 +184,6 @@ function createSettingPanel(): HTMLElement {
   const sortSelect = panel.querySelector('#setting-playlist-sort') as HTMLSelectElement
   sortSelect.value = GM_getValue('playlist-sort', 'recent')
 
-  panel.querySelector('.dialog-cancel')?.addEventListener('click', () => {
-    panel.remove()
-  })
-
-  panel.querySelector('#setting-export')?.addEventListener('click', () => {
-    showBackupView(panel)
-  })
-
   panel.querySelector('#setting-save')?.addEventListener('click', () => {
     checkboxes.forEach((checkbox) => {
       const key = checkbox.dataset.key as string
@@ -103,84 +196,37 @@ function createSettingPanel(): HTMLElement {
     location.reload()
   })
 
+  panel.querySelector('#backup-latest-btn')?.addEventListener('click', () => {
+    panel.remove()
+    backupNow()
+  })
+
+  panel.querySelectorAll<HTMLButtonElement>('.backup-row button').forEach((b) => {
+    b.addEventListener('click', () => {
+      const s = readSnapshots()[Number(b.dataset.i)]
+      if (s) {
+        downloadSnapshot(s)
+        toast(t('setting.exported'))
+      }
+      panel.remove()
+    })
+  })
+
   return panel
 }
 
-// 备份子视图：在同一弹窗内导航层级切换（设置 → 备份 → 返回），
-// 替代原先两个独立弹窗的割裂感
-function showBackupView(panel: HTMLElement): void {
-  const backupView = panel.querySelector('#backup-view') as HTMLElement
-  const settingView = panel.querySelector('#setting-view') as HTMLElement
-  if (!backupView || backupView.style.display !== 'none') return
-  const render = (): HTMLElement => {
-    const snapshots = readSnapshots()
-    const view = Object.assign(document.createElement('div'), {
-      className: 'backup-render',
-      innerHTML: `
-        <div class="dialog-header">
-          <button class="dialog-back" type="button">${t('setting.back')}</button>
-          <span class="setting-title">${t('setting.export')}</span>
-        </div>
-        <div class="backup-hint">${t('setting.backupHint')}</div>
-        <div class="setting-actions backup-latest">
-          <button id="backup-latest-btn" type="button">${t('setting.backupNow')}</button>
-        </div>
-        ${
-          // 固定渲染 5 个槽位，高度恒定；行内"时间 + 统计"单行排布保持紧凑
-          `<div class="backup-list">${[0, 1, 2, 3, 4]
-            .map((i) => {
-              const s = snapshots[i]
-              if (!s)
-                return `<div class="backup-row backup-empty"><span>${t('setting.emptySlot')}</span></div>`
-              return `
-              <div class="backup-row">
-                <span><b>${fmtTs(s.ts)}</b> · ${snapshotStat(s)}</span>
-                <button type="button" data-i="${i}">${t('setting.download')}</button>
-              </div>`
-            })
-            .join('')}</div>`
-        }
-        <div class="setting-actions dialog-footer">
-          <button class="dialog-cancel" type="button">${t('setting.cancel')}</button>
-        </div>
-      `,
-    })
-    view.querySelector('.dialog-back')?.addEventListener('click', () => {
-      view.style.display = 'none'
-      backupView.style.display = 'none'
-      settingView.style.display = ''
-    })
-    view.querySelector('.dialog-cancel')?.addEventListener('click', () => {
-      panel.remove()
-    })
-    view.querySelector('#backup-latest-btn')?.addEventListener('click', () => {
-      panel.remove()
-      backupNow()
-    })
-    view.querySelectorAll<HTMLButtonElement>('.backup-row button').forEach((b) => {
-      b.addEventListener('click', () => {
-        const s = readSnapshots()[Number(b.dataset.i)]
-        if (s) {
-          downloadSnapshot(s)
-          toast(t('setting.exported'))
-        }
-        panel.remove()
-      })
-    })
-    return view
-  }
-  settingView.style.display = 'none'
-  backupView.style.display = ''
-  backupView.replaceChildren(render())
-}
-
-export function toggleSettingPanel(): void {
+export function toggleSettingPanel(view: View = 'menu'): void {
   const exist = document.getElementById('setting-panel')
   if (exist) {
-    exist.remove()
+    // 「,」是开关：已开则关闭；「?」是导航：已开则切到帮助页，不关掉
+    if (view === 'menu') {
+      exist.remove()
+      return
+    }
+    exist.querySelector<HTMLElement>(`[data-goto="${view}"]`)?.click()
     return
   }
-  document.body.appendChild(createSettingPanel())
+  document.body.appendChild(createSettingPanel(view))
 }
 
 // 通过油猴菜单注册设置入口

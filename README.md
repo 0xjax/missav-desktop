@@ -21,7 +21,7 @@ bun run typecheck  # tsc --noEmit
 ```
 src/
 ├── main.ts        # 入口：顶级窗口检查、样式导入、功能分发
-├── setting.ts     # 设置项注册与设置面板（keyValues 加键即新增开关）
+├── setting.ts     # 设置弹窗（一级菜单 + 可选功能/导出备份/快捷键帮助三个子页）
 ├── utils/
 │   ├── gm.ts      # GM API 兜底层（调用时解析 + localStorage 兜底）
 │   └── wait.ts    # DOM 就绪等通用工具

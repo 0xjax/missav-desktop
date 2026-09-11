@@ -21,13 +21,44 @@
   font-size: 15px;
 }
 
-/* 视图容器自身滚动，弹窗外壳尺寸恒定 */
-#setting-panel #setting-view,
-#setting-panel #backup-view {
+/* 视图容器自身滚动，弹窗外壳尺寸恒定（一级菜单 + 三个二级页共用） */
+#setting-panel .setting-view {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+}
+
+/* 一级菜单：整行可点入口（列表项观感，非按钮），右侧箭头提示可进入 */
+#setting-panel .setting-menu {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+#setting-panel .setting-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 12px;
+  border: none;
+  border-bottom: 1px solid #333;
+  border-radius: 0;
+  background: transparent;
+  color: #eee;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+#setting-panel .setting-menu button:hover:not(:disabled) {
+  background: #2a2a2a;
+  filter: none;
+}
+
+#setting-panel .menu-arrow {
+  color: #888;
 }
 
 /* 备份子视图内容包裹层：同样纵向弹性，footer 才能钉底 */
@@ -73,15 +104,16 @@
 
 /* 底部按钮行：取消固定左下角（退出不触发保存），主动作靠右；
    两个视图的 footer 都钉在弹窗底部 */
+/* 底部按钮行：钉在弹窗底部（一级菜单与各子页都只有一个动作按钮时靠右） */
 #setting-panel .dialog-footer {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
   margin-top: auto;
   padding-top: 12px;
 }
 
-#setting-panel .dialog-footer .dialog-cancel {
-  margin-right: auto;
+#setting-panel .dialog-footer .dialog-close {
   background: #444;
 }
 
@@ -152,11 +184,6 @@
 
 #setting-panel button:active:not(:disabled) {
   filter: brightness(0.95);
-}
-
-#setting-panel button#setting-export {
-  margin-right: 8px;
-  background: #444;
 }
 
 #setting-panel button:disabled {
@@ -285,35 +312,18 @@
   max-height: 45vh !important;
 }
 
-#shortcut-help {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 99999;
-  min-width: 240px;
-  padding: 16px;
-  background: #1e1e1e;
-  color: #eee;
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
-  font-size: 14px;
-}
-
-#shortcut-help .help-title {
-  margin-bottom: 12px;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-#shortcut-help .help-list {
+/* 快捷键帮助子页：键位双列网格，内容多时页内滚动 */
+#setting-panel .help-list {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 8px 12px;
   align-items: center;
+  overflow-y: auto;
+  min-height: 0;
+  font-size: 14px;
 }
 
-#shortcut-help kbd {
+#setting-panel .help-list kbd {
   padding: 2px 8px;
   background: #333;
   border: 1px solid #555;

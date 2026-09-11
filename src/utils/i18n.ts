@@ -7,9 +7,10 @@ import { currentLang } from './lang.ts'
 const DICT = {
   // ---- 设置面板 ----
   'setting.title': ['脚本设置', 'Script Settings'],
-  'setting.cancel': ['取消', 'Cancel'],
+  'setting.close': ['关闭', 'Close'],
   'setting.save': ['保存', 'Save'],
   'setting.export': ['导出备份', 'Export Backup'],
+  'menu.options': ['可选功能', 'Features'],
   'setting.back': ['← 返回', '← Back'],
   'setting.backupHint': [
     '立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载',
