@@ -12,11 +12,12 @@
    **WARNING agent 沙箱（workspace-write）下起不来**：profile 在工作区外（`D:\chrome-debug-profile`），写入被拒 → 9222 不监听。需提权（danger-full-access）；同理 `bun run build` 会因 vite 在 Windows 上用 `child_process.exec` 探测真实路径被拒（`spawn EPERM`）而失败，也要提权跑。
    **WARNING 调试 Chrome 每次冷启动 = 扩展和登录态都可能不齐**，重启后必须先过一遍以下清单，否则后续实测会莫名失败白耗时间：
    - **Tampermonkey 扩展是 CDP `Extensions.loadUnpacked` 临时加载的，重启即丢**，必须重新加载：源用日常 Chrome 的安装目录复制到无空格路径再 load（路径含空格会报 `File path cannot be resolved`，如 `C:\Users\g1169\AppData\Local\Google\Chrome\User Data\...` 要先复制到 `D:\` 下）；复制源：`...User Data\Default\Extensions\dhdgffkkebhmkfjojejmpbldmpobfkfo\<版本>_0`；**path 参数用 `D:/xxx` 正斜杠形式（不带 `file://` 前缀，带前缀反而报 resolve 失败）**
-   - 装好后**主动请用户配合**（比脚本摸黑操作快得多）：1) TM 详情页允许运行用户脚本/开发者模式；2) 打开 `.user.js` 安装 URL 后点确认安装
+   - **每次冷启动的第 0 步：请用户手动开「允许运行用户脚本」**（`chrome://extensions/?id=dhdgffkkebhmkfjojejmpbldmpobfkfo` 详情页底部，比脚本摸黑操作快得多）。**这不是一次性设置**：Chrome 对 CDP 临时加载的 unpacked 扩展不保留 `userScripts` 授权，重启后 `Secure Preferences` 里 `extensions.settings.<id>.user_scripts_enabled` 这个键**直接消失**（不是 False）→ 全站零注入。实测证据：开关关着 + 脚本已装 + 页面已加载 = `antiflicker:0 mxIcon:0`；开完刷新即 `antiflicker:1 mxIcon:3`
+   - 再装脚本：打开 `.user.js` 安装 URL 后点确认安装（`bun scripts/dev/install-dist.ts` 自动做）
    - **登录自动化**：`bun scripts/dev/login-debug-chrome.ts <tab子串>`——从仓库根 `.env` 读测试账号自动登录，已登录则跳过。新设备：复制 `.env.example` 为 `.env` 填入账号（`.env` 已 gitignore 不进仓库）；没 `.env` 则脚本跳过，请用户手动登录。跑完用 `/cn/saved` 页无「登录」链接确认成功
    - 验证链路齐了再开工：页面里能找到脚本注入痕迹（如 `.mx-segmented`）+ `/api/me` 返回 200
 2. **Tampermonkey**（装在调试 Chrome 上）：
-   - 扩展管理页打开「开发者模式」→ 详情里打开「允许运行用户脚本」
+   - 扩展管理页打开「开发者模式」（一次性）；**「允许运行用户脚本」每次冷启动都要重开**（见上，掉了就是零注入）
    - **实测一律装 `dist/missav-desktop.js`（本地静态服务或文件导入），不用 `bun run dev` 的 dev 壳脚本**——历史上多次出现 dev 与 build 产物行为不一致，dev 实测通过不代表生产行为，以 dist 实测为唯一标准
    - 安装方式：`bun run build` 后把 `dist/missav-desktop.js` 复制为 `dist/missav-desktop.user.js`，经本地静态服务（如 `bun -e "Bun.serve(...)"`）以 `.user.js` URL 打开让 TM 捕获安装；每次改代码 → build → 重开安装 URL（TM 同名自动覆盖更新）
    - **省事路径**：`bun scripts/dev/install-dist.ts`——自起临时静态服务（随机端口，不落 `.user.js` 文件）+ 打开安装 URL + 自动点 TM 的「安装/重新安装」弹窗，一条命令搞定；TM 自动更新时安装页自行关闭，脚本按「已自动更新」正常返回
@@ -32,7 +33,11 @@ bun run dev        # 仅用于热改代码时快速试；实测必须用 dist（
 实测标准流程：`bun run build` → `bun scripts/dev/install-dist.ts` → 刷新 missav 页面。
 （手工等价步骤：复制 `dist/missav-desktop.js` 为 `.user.js` → 起静态服务 → 打开 `.user.js` URL → TM 弹窗点安装/更新）
 
-**NOTE 装完必须刷新 missav 页面**，TM 只在页面加载时注入，且刚 `loadUnpacked`/刚装完脚本时 TM 尚未就绪——此刻刷新会看不到注入（实测踩坑：误判成「脚本没生效」）。判断依据看页面里有没有 `style[data-mx-antiflicker]`，没有就再刷一次，别自己反复 CDP 刷新下结论。
+**NOTE 注入缺失的排查顺序**（别跳步，实测踩坑）：
+1. **「允许运行用户脚本」开关**——冷启动后必掉，是零注入的第一嫌疑（查 `Secure Preferences` 的 `user_scripts_enabled`，缺键=关）；开关关着时跟「TM 没就绪」「脚本没装」长得一模一样
+2. **页面是否刷新过**——TM 只在页面加载时注入，loadUnpacked/装脚本之后刷太早也看不到
+3. TM 里到底有没有这个脚本（`install-dist.ts` 输出「已安装/已更新」）
+判定依据：页面里有没有 `style[data-mx-antiflicker]`（有=脚本在跑），详情页另有 `.mx-segmented`。别自己反复 CDP 刷新就下结论。
 
 ## CDP 调试脚本（scripts/cdp/，9222 端口直连）
 
