@@ -3,7 +3,6 @@ import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toastBroadcast, listenToastChannel } from '../utils/toast.ts'
 import { t } from '../utils/i18n.ts'
 import { recordPlaylistOp } from './playlist-panel.ts'
-import { applyChangeToLatestSnapshot } from './backup-export.ts'
 
 // 站点收藏/片单的问题：1) 收藏状态要等 /api/items/{id}/view 返回才显示；
 // 2) toggleSave 乐观翻转 UI 但请求无失败处理，关标签页可能丢请求；
@@ -12,9 +11,10 @@ import { applyChangeToLatestSnapshot } from './backup-export.ts'
 // NOTE 站点自己的点击处理器同样是 Alpine 绑定的——Alpine 未就绪时它根本没绑定，
 // 所以"读不到 Alpine 就放行站点原生流程"放行也没人接，反而让请求丢掉 keepalive。
 // 故 Alpine 只作"状态来源的首选"，不是拦截的前提。
-// WARNING 反馈（跨标签 toast / 秒显缓存 / 备份快照）必须乐观写在请求发出之后，
+// WARNING 反馈（跨标签 toast / 秒显缓存）必须乐观写在请求发出之后，
 // 不能等响应：关标签页后 .then() 永不执行，反馈会全丢（实测 gm:mx-toast 与
 // saved-cache 均无写入，而服务器已收藏成功）。失败时若页面还在再回滚。
+// NOTE 本地只存"收藏状态秒显"这一件事；备份快照不回写（见 backup-export.ts 的 NOTE）
 
 interface ComponentData {
   user?: unknown
@@ -71,15 +71,6 @@ function dvdIdOf(el: Element): string | null {
     cur = cur.parentElement
   }
   return fromUrl
-}
-
-// 当前视频信息：操作成功后回写最新备份快照用
-function currentVideo(dvdId: string): { id: string; title: string; url: string } {
-  return {
-    id: dvdId,
-    title: document.querySelector('h1')?.textContent?.trim() || dvdId,
-    url: location.href,
-  }
 }
 
 // ---- 请求：keepalive 保证关标签页后仍送达 ----
@@ -201,7 +192,6 @@ function onSaveClick(e: MouseEvent, btn: Element): void {
   const commit = (saved: boolean): void => {
     if (!dvdId) return
     writeCache(dvdId, saved)
-    applyChangeToLatestSnapshot(currentVideo(dvdId), saved)
   }
   commit(target)
   toastBroadcast(target ? t('save.saved') : t('save.unsaved'), {
@@ -233,18 +223,7 @@ function onSaveClick(e: MouseEvent, btn: Element): void {
 
 interface PlaylistItem {
   key: string
-  name?: string
   is_added: boolean
-}
-
-// 片单名：Alpine 数据（实测字段 {is_added, key, name}）优先，其次面板行 label。
-// 快照里没有该片单时要靠它补建条目（名字错就没法回溯是哪个片单）
-function playlistName(input: HTMLInputElement, item?: PlaylistItem): string | undefined {
-  if (item?.name) return item.name
-  return (
-    input.closest('div.relative')?.querySelector('label')?.textContent?.trim() ||
-    undefined
-  )
 }
 
 function onPlaylistOpenClick(e: MouseEvent, btn: Element): void {
@@ -274,13 +253,11 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
   const list = data?.playlists as PlaylistItem[] | undefined
   const item = list?.find((p) => p.key === input.id)
   const target = item ? !item.is_added : checkedByUser
-  const name = playlistName(input, item)
   const code = avCode(dvdId)
 
   const setLocal = (on: boolean): void => {
     if (item) item.is_added = on
     input.checked = on
-    applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id, name)
   }
   if (item) item.is_added = target
   // 这些行的 x-model 数据→DOM effect 会部分失效（实测：is_added=true 但 checked

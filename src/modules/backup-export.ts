@@ -6,7 +6,7 @@ import { stickyToast, toast } from '../utils/toast.ts'
 // 收藏与片单的备份导出：顺序抓取自己账号的分页列表页
 // （服务端渲染 HTML，无内部列表接口），解析视频卡片后下载 JSON。
 // 每页间隔 400ms，与正常翻页浏览相当，避免给服务器额外压力。
-// 按"日"占槽（同日覆盖，最多 5 份）；收藏/片单操作成功后动态回写最新快照，保持近乎最新。
+// 按"日"占槽（同日覆盖，最多 5 份），快照只由抓取产生，不做本地回写（见下方 NOTE）。
 // NOTE 只在用户点「立即备份」时抓取，不做自动备份：实测每次备份约 130 个请求
 // （收藏全量分页 + 片单列表分页 + 每个片单的每一页），是 Cloudflare 人机验证与
 // 限速的主要来源，而它唯一的消费方"片单数量"已随排序改造移除（见 playlist-panel.ts）。
@@ -172,40 +172,11 @@ function saveSnapshot(s: Snapshot): void {
   GM_setValue(LAST_BACKUP_KEY, s.ts)
 }
 
-// 收藏/片单操作成功后回写最新快照：立即备份一次，后续操作让快照保持近乎最新。
-// 没有任何快照时是空操作
-// NOTE 片单不在快照里是常态：上次备份之后新建的片单快照当然没有，此时必须
-// 补建条目，否则这次更新会被静默丢弃，且此后该片单的勾选/取消全部失效
-// （实测：快照 34 个片单、面板 36 个，差的两个正是新建后没进快照的）
-export function applyChangeToLatestSnapshot(
-  video: { id: string; title: string; url: string },
-  added: boolean,
-  playlistKey?: string,
-  playlistName?: string,
-): void {
-  const list = readSnapshots()
-  const latest = list[0]
-  if (!latest) return
-  if (playlistKey === undefined) {
-    latest.saved = added
-      ? [video, ...latest.saved.filter((v) => v.id !== video.id)]
-      : latest.saved.filter((v) => v.id !== video.id)
-  } else {
-    let pl = latest.playlists.find((p) => p.key === playlistKey)
-    if (!pl) {
-      // 取消勾选时没有可删的东西，不必建条目
-      if (!added) return
-      // 插队首：站点片单列表页是新的在前，抓取顺序即快照顺序，这样与下次
-      // 真备份的排列一致（不是随意的顺序）
-      pl = { key: playlistKey, name: playlistName || playlistKey, videos: [] }
-      latest.playlists.unshift(pl)
-    }
-    pl.videos = added
-      ? [video, ...pl.videos.filter((v) => v.id !== video.id)]
-      : pl.videos.filter((v) => v.id !== video.id)
-  }
-  GM_setValue(SNAPSHOTS_KEY, list)
-}
+// NOTE 快照是「那一刻服务端真实状态」的留档，**不做本地回写**。
+// 旧版在收藏/片单操作后回写最新快照（当时是为了让片单数量跟着动），但那些写入
+// 是**请求发出后不等响应的乐观写**，且当时靠「每 3 天自动重爬」把漂移纠正回来。
+// 自动备份移除后漂移再无纠正机会，快照会变成「服务端真值 + 本地推测」的混合体，
+// 导出结果不可信——故随自动备份一并删除：想要新数据就重新手动备份一次。
 
 // 备份抓取耗时较长，期间挂 beforeunload：
 // 关标签会弹浏览器原生"离开页面？"确认，确认离开则抛弃本次备份
