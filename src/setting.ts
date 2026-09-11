@@ -18,7 +18,6 @@ const keyValues: Record<string, I18nKey> = {
   'search-pref': 'opt.search-pref',
   'shortcut-keys': 'opt.shortcut-keys',
   'fast-save': 'opt.fast-save',
-  'auto-backup': 'opt.auto-backup',
   'sources': 'opt.sources',
   'playlist-panel': 'opt.playlist-panel',
   'playlist-dock': 'opt.playlist-dock',
@@ -32,7 +31,6 @@ const keyDefaults: Record<string, boolean> = {
   'search-pref': true,
   'shortcut-keys': true,
   'fast-save': true,
-  'auto-backup': true,
   'sources': true,
   'playlist-panel': true,
   'playlist-dock': true,
@@ -54,6 +52,14 @@ function createSettingPanel(): HTMLElement {
             )
             .join('')}
         </div>
+        <div class="setting-row">
+          <span>${t('opt.playlist-sort')}</span>
+          <select id="setting-playlist-sort">
+            <option value="recent">${t('sort.recent')}</option>
+            <option value="name">${t('sort.name')}</option>
+            <option value="viewed">${t('sort.viewed')}</option>
+          </select>
+        </div>
         <div class="setting-actions dialog-footer">
           <button class="dialog-cancel" type="button">${t('setting.cancel')}</button>
           <button id="setting-export" type="button">${t('setting.export')}</button>
@@ -73,6 +79,10 @@ function createSettingPanel(): HTMLElement {
     checkbox.checked = GM_getValue(key, keyDefaults[key] ?? false)
   })
 
+  // 片单第三级排序：三选一，非布尔值，单独一行（不进 keyValues）
+  const sortSelect = panel.querySelector('#setting-playlist-sort') as HTMLSelectElement
+  sortSelect.value = GM_getValue('playlist-sort', 'recent')
+
   panel.querySelector('.dialog-cancel')?.addEventListener('click', () => {
     panel.remove()
   })
@@ -87,6 +97,8 @@ function createSettingPanel(): HTMLElement {
       if (checkbox.checked !== GM_getValue(key, keyDefaults[key] ?? false))
         GM_setValue(key, checkbox.checked)
     })
+    if (sortSelect.value !== GM_getValue('playlist-sort', 'recent'))
+      GM_setValue('playlist-sort', sortSelect.value)
     panel.remove()
     location.reload()
   })

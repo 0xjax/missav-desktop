@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.19
+// @version         1.36.20
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -29,7 +29,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel #setting-view,#setting-panel #backup-view,#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:none;border-radius:8px;padding:2px 10px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-locked{opacity:.85}.mx-seg-skeleton{cursor:default;color:#d8dee9}[x-show*=showLocaleSwitcher]{max-height:45vh!important}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:flex-start;gap:8px;display:flex;position:fixed;top:80px;left:24px}.mx-toast{color:#e5e9f0;background:#2e3440;border:1px solid #4c566a;border-left:3px solid #7b88a1;border-radius:8px;align-items:center;gap:10px;max-width:min(340px,100vw - 48px);padding:9px 14px;font-size:14px;transition:opacity .3s,transform .3s;animation:.18s ease-out mx-toast-in;display:flex;box-shadow:0 6px 20px #0000008c}.mx-toast-success{border-left-color:#8fbc6a}.mx-toast-error{border-left-color:#d06a6a}.mx-toast-code{color:#d8dee9;letter-spacing:.02em;background:#ffffff14;border-radius:4px;padding:1px 7px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}.mx-toast-out{opacity:0;transform:translate(-8px)}@keyframes mx-toast-in{0%{opacity:0;transform:translate(-12px)}to{opacity:1;transform:none}}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>a{order:-2;grid-column:1/-1;margin-bottom:8px}fieldset.mx-pl-grid>hr{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-count{color:#d8dee9;opacity:.5;margin-left:.3rem;font-size:.75rem}.mx-pl-docked{height:520px;max-height:calc(100vh - 6rem);overflow-y:auto;padding:.75rem!important;display:block!important}.mx-pl-dock-slot{flex-shrink:0;height:520px}.mx-pl-docked fieldset.mx-pl-grid{grid-template-columns:minmax(0,1fr)}:has(>.mx-pl-docked){flex-direction:column!important}*{scrollbar-width:thin;scrollbar-color:#4c566a transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#4c566a;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#5e81ac}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel #setting-view,#setting-panel #backup-view,#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-cancel{background:#444;margin-right:auto}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel .setting-row{border-top:1px solid #3a3a3a;justify-content:space-between;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-row select{color:#eee;cursor:pointer;background:#2a2a2a;border:1px solid #555;border-radius:4px;padding:4px 8px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button#setting-export{background:#444;margin-right:8px}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:none;border-radius:8px;padding:2px 10px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-locked{opacity:.85}.mx-seg-skeleton{cursor:default;color:#d8dee9}[x-show*=showLocaleSwitcher]{max-height:45vh!important}#shortcut-help{z-index:99999;color:#eee;background:#1e1e1e;border-radius:8px;min-width:240px;padding:16px;font-size:14px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#shortcut-help .help-title{margin-bottom:12px;font-size:16px;font-weight:700}#shortcut-help .help-list{grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;display:grid}#shortcut-help kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:flex-start;gap:8px;display:flex;position:fixed;top:80px;left:24px}.mx-toast{color:#e5e9f0;background:#2e3440;border:1px solid #4c566a;border-left:3px solid #7b88a1;border-radius:8px;align-items:center;gap:10px;max-width:min(340px,100vw - 48px);padding:9px 14px;font-size:14px;transition:opacity .3s,transform .3s;animation:.18s ease-out mx-toast-in;display:flex;box-shadow:0 6px 20px #0000008c}.mx-toast-success{border-left-color:#8fbc6a}.mx-toast-error{border-left-color:#d06a6a}.mx-toast-code{color:#d8dee9;letter-spacing:.02em;background:#ffffff14;border-radius:4px;padding:1px 7px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}.mx-toast-out{opacity:0;transform:translate(-8px)}@keyframes mx-toast-in{0%{opacity:0;transform:translate(-12px)}to{opacity:1;transform:none}}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>a{order:-2;grid-column:1/-1;margin-bottom:8px}fieldset.mx-pl-grid>hr{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-docked{height:520px;max-height:calc(100vh - 6rem);overflow-y:auto;padding:.75rem!important;display:block!important}.mx-pl-dock-slot{flex-shrink:0;height:520px}.mx-pl-docked fieldset.mx-pl-grid{grid-template-columns:minmax(0,1fr)}:has(>.mx-pl-docked){flex-direction:column!important}*{scrollbar-width:thin;scrollbar-color:#4c566a transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#4c566a;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#5e81ac}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -175,16 +175,19 @@
 		"setting.backupHint": ["立即备份约需 1–3 分钟，期间请勿关闭本标签页；完成后会覆盖今日快照并下载", "A backup takes about 1–3 minutes. Don't close this tab; when done it overwrites today's snapshot and downloads it."],
 		"setting.backupNow": ["立即备份", "Back Up Now"],
 		"setting.download": ["下载", "Download"],
-		"setting.emptySlot": ["（空槽位，等待自动备份）", "(empty slot, awaiting auto backup)"],
+		"setting.emptySlot": ["（空槽位）", "(empty slot)"],
 		"setting.exported": ["已导出历史备份", "Historical backup exported"],
 		"opt.block-ads": ["去广告", "Block Ads"],
 		"opt.lang-pref": ["语言偏好", "Language Preference"],
 		"opt.search-pref": ["搜索偏好", "Search Preference"],
 		"opt.shortcut-keys": ["快捷操作", "Keyboard Shortcuts"],
 		"opt.fast-save": ["收藏片单增强", "Enhanced Save & Playlists"],
-		"opt.auto-backup": ["自动备份（每 3 天）", "Auto Backup (every 3 days)"],
 		"opt.sources": ["多源显示切换", "Multi-source Switcher"],
 		"opt.playlist-panel": ["片单面板优化", "Playlist Panel Tuning"],
+		"opt.playlist-sort": ["片单排序（第三级）", "Playlist Order (third level)"],
+		"sort.recent": ["按最近操作", "By recent action"],
+		"sort.name": ["按名称", "By name"],
+		"sort.viewed": ["按最近观看", "By recently viewed"],
 		"opt.playlist-dock": ["片单右侧栏（宽屏自动展开）", "Playlist Sidebar (auto-expand on wide screens)"],
 		"opt.topbar-ui": ["顶栏增强（设置入口 + 图标统一）", "Topbar Enhancements (settings entry + unified icons)"],
 		"help.title": ["快捷键", "Shortcuts"],
@@ -218,8 +221,6 @@
 		"backup.running": ["备份进行中，请稍候", "Backup already running, please wait"],
 		"backup.confirm": ["距离上次备份仅 {min} 分钟，数据可能没什么变化。确定要重新备份吗？", "The last backup was only {min} minutes ago, so data may be unchanged. Back up again?"],
 		"backup.failed": ["备份失败：{msg}", "Backup failed: {msg}"],
-		"backup.autoStart": ["开始自动备份收藏与片单…", "Starting auto backup of saved items and playlists…"],
-		"backup.autoFailed": ["自动备份失败：{msg}", "Auto backup failed: {msg}"],
 		"backup.netError": ["网络异常", "network error"],
 		"backup.denied": ["HTTP {status}（重试后仍被拒绝）", "HTTP {status} (still refused after retries)"],
 		"ad.manga": ["漫画", "Manga"]
@@ -231,86 +232,6 @@
 		let s = DICT[key][uiLang() === "cn" ? 0 : 1];
 		if (params) for (const [k, v] of Object.entries(params)) s = s.replaceAll(`{${k}}`, String(v));
 		return s;
-	}
-	var COUNTS_KEY = "playlist-counts";
-	var ITEM_SEL = "input[x-model=\"playlist.is_added\"]";
-	function readPlaylistCounts() {
-		const map = GM_getValue$1(COUNTS_KEY, {});
-		if (Object.keys(map).length) return map;
-		GM_getValue$1("backup-snapshots", [])[0]?.playlists?.forEach((p) => map[p.key] = p.videos.length);
-		return map;
-	}
-	function setPlaylistCounts(map) {
-		GM_setValue$1(COUNTS_KEY, map);
-	}
-	function adjustPlaylistCount(key, delta) {
-		const map = readPlaylistCounts();
-		if (!(key in map)) return;
-		map[key] = Math.max(0, map[key] + delta);
-		GM_setValue$1(COUNTS_KEY, map);
-		const span = document.querySelector(`input[id="${key}"]`)?.closest("div.relative")?.querySelector(".mx-pl-count");
-		if (span) span.textContent = `(${map[key]})`;
-	}
-	function enhancePanel(fieldset) {
-		const inputs = [...fieldset.querySelectorAll(ITEM_SEL)];
-		if (!inputs.length) return;
-		const counts = readPlaylistCounts();
-		const title = (document.querySelector("h1")?.textContent || "").toUpperCase();
-		const videoId = (location.pathname.split("/").filter(Boolean).pop() || "").toUpperCase();
-		const rows = [];
-		for (const input of inputs) {
-			const el = input.closest("div.flex")?.parentElement;
-			if (!el || !el.classList.contains("relative")) continue;
-			const name = el.querySelector("label")?.textContent?.trim() || "";
-			rows.push({
-				el,
-				key: input.id,
-				name,
-				checked: input.checked,
-				count: counts[input.id]
-			});
-		}
-		if (!rows.length) return;
-		const matched = (name) => name.length >= 2 && (title.includes(name.toUpperCase()) || videoId.startsWith(name.toUpperCase() + "-"));
-		const tier = (r) => r.checked ? 0 : matched(r.name) ? 1 : 2;
-		rows.sort((a, b) => tier(a) - tier(b) || (b.count ?? -1) - (a.count ?? -1) || a.name.localeCompare(b.name, "zh"));
-		const orderSame = fieldset.classList.contains("mx-pl-grid") && rows.every((r, i) => r.el.style.order === String(i));
-		const spansOk = rows.every((r) => {
-			if (r.count === void 0) return true;
-			return r.el.querySelector(".mx-pl-count")?.textContent === `(${r.count})`;
-		});
-		if (orderSame && spansOk) return;
-		fieldset.classList.add("mx-pl-grid");
-		rows.forEach((r, i) => {
-			r.el.style.order = String(i);
-			const label = r.el.querySelector("label");
-			if (!label || r.count === void 0) return;
-			let span = r.el.querySelector(".mx-pl-count");
-			if (!span) {
-				span = Object.assign(document.createElement("span"), { className: "mx-pl-count" });
-				label.after(span);
-			}
-			span.textContent = `(${r.count})`;
-		});
-	}
-	function scan(root) {
-		const input = root instanceof Element && root.matches(ITEM_SEL) ? root : root.querySelector?.(ITEM_SEL);
-		if (!input) return;
-		const fieldset = input.closest("fieldset");
-		if (fieldset) enhancePanel(fieldset);
-	}
-	function playlistPanel() {
-		waitDOMContentLoaded(() => {
-			scan(document);
-			new MutationObserver((mutations) => {
-				for (const m of mutations) m.addedNodes.forEach((n) => {
-					if (n.nodeType === Node.ELEMENT_NODE) scan(n);
-				});
-			}).observe(document.body, {
-				childList: true,
-				subtree: true
-			});
-		});
 	}
 	var exporting = false;
 	var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -438,18 +359,12 @@
 			videos
 		});
 	}
-	function syncCounts(s) {
-		const counts = {};
-		s.playlists.forEach((p) => counts[p.key] = p.videos.length);
-		setPlaylistCounts(counts);
-	}
 	function saveSnapshot(s) {
 		const list = readSnapshots();
 		if (list[0] && localDay(list[0].ts) === localDay(s.ts)) list[0] = s;
 		else list.unshift(s);
 		GM_setValue$1(SNAPSHOTS_KEY, list.slice(0, MAX_SNAPSHOTS));
 		GM_setValue$1(LAST_BACKUP_KEY, s.ts);
-		syncCounts(s);
 	}
 	function applyChangeToLatestSnapshot(video, added, playlistKey, playlistName) {
 		const list = readSnapshots();
@@ -470,7 +385,6 @@
 			pl.videos = added ? [video, ...pl.videos.filter((v) => v.id !== video.id)] : pl.videos.filter((v) => v.id !== video.id);
 		}
 		GM_setValue$1(SNAPSHOTS_KEY, list);
-		syncCounts(latest);
 	}
 	function preventUnload(e) {
 		e.preventDefault();
@@ -537,32 +451,12 @@
 			exporting = false;
 		}
 	}
-	var AUTO_INTERVAL = 2592e5;
-	function autoBackup() {
-		waitDOMContentLoaded(() => {
-			setTimeout(() => {
-				if (exporting) return;
-				const last = GM_getValue$1(LAST_BACKUP_KEY, 0);
-				if (Date.now() - last < AUTO_INTERVAL) return;
-				GM_setValue$1(LAST_BACKUP_KEY, Date.now());
-				exporting = true;
-				toast(t("backup.autoStart"));
-				runBackup().catch((err) => {
-					GM_setValue$1(LAST_BACKUP_KEY, last);
-					toast(t("backup.autoFailed", { msg: err instanceof Error ? err.message : t("backup.netError") }));
-				}).finally(() => {
-					exporting = false;
-				});
-			}, 8e3);
-		});
-	}
 	var keyValues = {
 		"block-ads": "opt.block-ads",
 		"lang-pref": "opt.lang-pref",
 		"search-pref": "opt.search-pref",
 		"shortcut-keys": "opt.shortcut-keys",
 		"fast-save": "opt.fast-save",
-		"auto-backup": "opt.auto-backup",
 		"sources": "opt.sources",
 		"playlist-panel": "opt.playlist-panel",
 		"playlist-dock": "opt.playlist-dock",
@@ -574,7 +468,6 @@
 		"search-pref": true,
 		"shortcut-keys": true,
 		"fast-save": true,
-		"auto-backup": true,
 		"sources": true,
 		"playlist-panel": true,
 		"playlist-dock": true,
@@ -591,6 +484,14 @@
             <label><input type="checkbox" data-key="${key}"><span>${t(label)}</span></label>
           `).join("")}
         </div>
+        <div class="setting-row">
+          <span>${t("opt.playlist-sort")}</span>
+          <select id="setting-playlist-sort">
+            <option value="recent">${t("sort.recent")}</option>
+            <option value="name">${t("sort.name")}</option>
+            <option value="viewed">${t("sort.viewed")}</option>
+          </select>
+        </div>
         <div class="setting-actions dialog-footer">
           <button class="dialog-cancel" type="button">${t("setting.cancel")}</button>
           <button id="setting-export" type="button">${t("setting.export")}</button>
@@ -605,6 +506,8 @@
 			const key = checkbox.dataset.key;
 			checkbox.checked = GM_getValue$1(key, keyDefaults[key] ?? false);
 		});
+		const sortSelect = panel.querySelector("#setting-playlist-sort");
+		sortSelect.value = GM_getValue$1("playlist-sort", "recent");
 		panel.querySelector(".dialog-cancel")?.addEventListener("click", () => {
 			panel.remove();
 		});
@@ -616,6 +519,7 @@
 				const key = checkbox.dataset.key;
 				if (checkbox.checked !== GM_getValue$1(key, keyDefaults[key] ?? false)) GM_setValue$1(key, checkbox.checked);
 			});
+			if (sortSelect.value !== GM_getValue$1("playlist-sort", "recent")) GM_setValue$1("playlist-sort", sortSelect.value);
 			panel.remove();
 			location.reload();
 		});
@@ -1212,6 +1116,85 @@
 			});
 		});
 	}
+	var USAGE_KEY = "playlist-usage";
+	var SORT_KEY = "playlist-sort";
+	var ITEM_SEL = "input[x-model=\"playlist.is_added\"]";
+	function readUsage() {
+		return GM_getValue$1(USAGE_KEY, {});
+	}
+	function stamp(key, field) {
+		const map = readUsage();
+		map[key] = {
+			...map[key],
+			[field]: Date.now()
+		};
+		const keys = Object.keys(map);
+		if (keys.length > 300) keys.slice(0, 100).forEach((k) => delete map[k]);
+		GM_setValue$1(USAGE_KEY, map);
+	}
+	function recordPlaylistOp(key) {
+		stamp(key, "op");
+	}
+	function recordPlaylistView() {
+		const parts = location.pathname.split("/").filter(Boolean);
+		const key = parts[parts.length - 1];
+		if (!key || key === "create" || parts[parts.length - 2] !== "playlists") return;
+		stamp(key, "view");
+	}
+	function enhancePanel(fieldset) {
+		const inputs = [...fieldset.querySelectorAll(ITEM_SEL)];
+		if (!inputs.length) return;
+		const title = (document.querySelector("h1")?.textContent || "").toUpperCase();
+		const videoId = (location.pathname.split("/").filter(Boolean).pop() || "").toUpperCase();
+		const rows = [];
+		for (const input of inputs) {
+			const el = input.closest("div.flex")?.parentElement;
+			if (!el || !el.classList.contains("relative")) continue;
+			const name = el.querySelector("label")?.textContent?.trim() || "";
+			rows.push({
+				el,
+				key: input.id,
+				name,
+				checked: input.checked
+			});
+		}
+		if (!rows.length) return;
+		const matched = (name) => name.length >= 2 && (title.includes(name.toUpperCase()) || videoId.startsWith(name.toUpperCase() + "-"));
+		const tier = (r) => r.checked ? 0 : matched(r.name) ? 1 : 2;
+		const mode = GM_getValue$1(SORT_KEY, "recent");
+		const usage = readUsage();
+		const usageTs = (key) => {
+			if (mode === "name") return 0;
+			const u = usage[key];
+			return (mode === "viewed" ? u?.view : u?.op) ?? 0;
+		};
+		rows.sort((a, b) => tier(a) - tier(b) || usageTs(b.key) - usageTs(a.key) || a.name.localeCompare(b.name, "zh"));
+		if (fieldset.classList.contains("mx-pl-grid") && rows.every((r, i) => r.el.style.order === String(i))) return;
+		fieldset.classList.add("mx-pl-grid");
+		rows.forEach((r, i) => {
+			r.el.style.order = String(i);
+		});
+	}
+	function scan(root) {
+		const input = root instanceof Element && root.matches(ITEM_SEL) ? root : root.querySelector?.(ITEM_SEL);
+		if (!input) return;
+		const fieldset = input.closest("fieldset");
+		if (fieldset) enhancePanel(fieldset);
+	}
+	function playlistPanel() {
+		recordPlaylistView();
+		waitDOMContentLoaded(() => {
+			scan(document);
+			new MutationObserver((mutations) => {
+				for (const m of mutations) m.addedNodes.forEach((n) => {
+					if (n.nodeType === Node.ELEMENT_NODE) scan(n);
+				});
+			}).observe(document.body, {
+				childList: true,
+				subtree: true
+			});
+		});
+	}
 	function alpine$1() {
 		const w = window.Alpine;
 		if (w) return w;
@@ -1372,10 +1355,9 @@
 		const target = item ? !item.is_added : checkedByUser;
 		const name = playlistName(input, item);
 		const code = avCode(dvdId);
-		const setLocal = (on, delta) => {
+		const setLocal = (on) => {
 			if (item) item.is_added = on;
 			input.checked = on;
-			adjustPlaylistCount(input.id, delta);
 			applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id, name);
 		};
 		if (item) item.is_added = target;
@@ -1383,7 +1365,8 @@
 			if (item) item.is_added = target;
 			input.checked = target;
 		}, 0);
-		setLocal(target, target ? 1 : -1);
+		setLocal(target);
+		recordPlaylistOp(input.id);
 		toastBroadcast(target ? t("save.added") : t("save.removed"), {
 			code,
 			type: "success"
@@ -1393,14 +1376,14 @@
 			key: input.id
 		}).then((r) => {
 			if (r.ok) return;
-			setLocal(!target, target ? -1 : 1);
+			setLocal(!target);
 			if (r.status === 401) openLoginModal(data ?? {});
 			else toastBroadcast(t("save.failed"), {
 				code,
 				type: "error"
 			});
 		}).catch(() => {
-			setLocal(!target, target ? -1 : 1);
+			setLocal(!target);
 			toastBroadcast(t("save.netError"), {
 				code,
 				type: "error"
@@ -1823,7 +1806,6 @@
 		if (GM_getValue$1("search-pref", true)) searchPref();
 		if (GM_getValue$1("shortcut-keys", true)) shortcuts();
 		if (GM_getValue$1("fast-save", true)) fastSave();
-		if (GM_getValue$1("auto-backup", true)) autoBackup();
 		if (GM_getValue$1("sources", true)) sources();
 		if (GM_getValue$1("playlist-panel", true)) playlistPanel();
 		if (GM_getValue$1("playlist-dock", true)) playlistDock();

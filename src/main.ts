@@ -9,7 +9,6 @@ import { preferLang } from './modules/lang-pref.js'
 import { searchPref } from './modules/search-pref.js'
 import { shortcuts } from './modules/shortcuts.js'
 import { fastSave } from './modules/fast-save.js'
-import { autoBackup } from './modules/backup-export.js'
 import { sources } from './modules/sources.js'
 import { playlistPanel } from './modules/playlist-panel.js'
 import { playlistDock } from './modules/playlist-dock.js'
@@ -32,7 +31,6 @@ import { playlistDock } from './modules/playlist-dock.js'
   if (GM_getValue('search-pref', true)) searchPref()
   if (GM_getValue('shortcut-keys', true)) shortcuts()
   if (GM_getValue('fast-save', true)) fastSave()
-  if (GM_getValue('auto-backup', true)) autoBackup()
   if (GM_getValue('sources', true)) sources()
   if (GM_getValue('playlist-panel', true)) playlistPanel()
   if (GM_getValue('playlist-dock', true)) playlistDock()

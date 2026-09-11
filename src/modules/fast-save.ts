@@ -2,7 +2,7 @@ import { GM_getValue, GM_setValue, readMainWorld } from '../utils/gm.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
 import { toastBroadcast, listenToastChannel } from '../utils/toast.ts'
 import { t } from '../utils/i18n.ts'
-import { adjustPlaylistCount } from './playlist-panel.ts'
+import { recordPlaylistOp } from './playlist-panel.ts'
 import { applyChangeToLatestSnapshot } from './backup-export.ts'
 
 // 站点收藏/片单的问题：1) 收藏状态要等 /api/items/{id}/view 返回才显示；
@@ -277,10 +277,9 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
   const name = playlistName(input, item)
   const code = avCode(dvdId)
 
-  const setLocal = (on: boolean, delta: number): void => {
+  const setLocal = (on: boolean): void => {
     if (item) item.is_added = on
     input.checked = on
-    adjustPlaylistCount(input.id, delta)
     applyChangeToLatestSnapshot(currentVideo(dvdId), on, input.id, name)
   }
   if (item) item.is_added = target
@@ -291,7 +290,8 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
     input.checked = target
   }, 0)
   // 乐观写：关标签页后 .then() 不会执行，反馈只能在这里落地
-  setLocal(target, target ? 1 : -1)
+  setLocal(target)
+  recordPlaylistOp(input.id)
   toastBroadcast(target ? t('save.added') : t('save.removed'), {
     code,
     type: 'success',
@@ -305,12 +305,12 @@ function onPlaylistToggle(e: MouseEvent, input: HTMLInputElement): void {
     .then((r) => {
       if (r.ok) return
       // 回滚（页面还在才有意义）
-      setLocal(!target, target ? -1 : 1)
+      setLocal(!target)
       if (r.status === 401) openLoginModal(data ?? {})
       else toastBroadcast(t('save.failed'), { code, type: 'error' })
     })
     .catch(() => {
-      setLocal(!target, target ? -1 : 1)
+      setLocal(!target)
       toastBroadcast(t('save.netError'), { code, type: 'error' })
     })
 }

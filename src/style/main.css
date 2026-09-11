@@ -116,6 +116,25 @@
   text-align: right;
 }
 
+/* 排序行：非布尔设置项，与 checkbox 行同规格单列一行 */
+#setting-panel .setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 2px;
+  border-top: 1px solid #3a3a3a;
+}
+
+#setting-panel .setting-row select {
+  padding: 4px 8px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #2a2a2a;
+  color: #eee;
+  cursor: pointer;
+}
+
 #setting-panel button {
   padding: 6px 18px;
   border: none;
@@ -392,14 +411,6 @@ fieldset.mx-pl-grid > hr {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-/* 数量沿用站点 label 的 nord4 浅色，降不透明度作次要信息 */
-.mx-pl-count {
-  margin-left: 0.3rem;
-  font-size: 0.75rem;
-  color: #d8dee9;
-  opacity: 0.5;
-}
-
 /* 片单面板停靠右栏：收紧留白；高度对齐主视频（924×520 视频同 top
    起始，等高对齐），内部滚动（置顶排序保证目标片单在前几行）；
    300px 栏宽下单列排布。

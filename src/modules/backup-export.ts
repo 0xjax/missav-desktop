@@ -2,14 +2,14 @@ import { GM_getValue, GM_setValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 import { t } from '../utils/i18n.ts'
 import { stickyToast, toast } from '../utils/toast.ts'
-import { waitDOMContentLoaded } from '../utils/wait.ts'
-import { setPlaylistCounts } from './playlist-panel.ts'
 
 // 收藏与片单的备份导出：顺序抓取自己账号的分页列表页
 // （服务端渲染 HTML，无内部列表接口），解析视频卡片后下载 JSON。
 // 每页间隔 400ms，与正常翻页浏览相当，避免给服务器额外压力。
-// 快照是唯一事实来源：立即备份与自动备份同一体系，按"日"占槽（同日覆盖，
-// 最多 5 份）；收藏/片单操作成功后动态回写最新快照，保持近乎最新。
+// 按"日"占槽（同日覆盖，最多 5 份）；收藏/片单操作成功后动态回写最新快照，保持近乎最新。
+// NOTE 只在用户点「立即备份」时抓取，不做自动备份：实测每次备份约 130 个请求
+// （收藏全量分页 + 片单列表分页 + 每个片单的每一页），是 Cloudflare 人机验证与
+// 限速的主要来源，而它唯一的消费方"片单数量"已随排序改造移除（见 playlist-panel.ts）。
 
 interface VideoItem {
   id: string
@@ -163,12 +163,6 @@ export function snapshotStat(s: Snapshot): string {
   return t('backup.stat', { saved: s.saved.length, lists: s.playlists.length, videos })
 }
 
-function syncCounts(s: Snapshot): void {
-  const counts: Record<string, number> = {}
-  s.playlists.forEach((p) => (counts[p.key] = p.videos.length))
-  setPlaylistCounts(counts)
-}
-
 // 快照按"日"为槽位：与最新快照同日则覆盖（一天最多一份），否则新起一槽
 function saveSnapshot(s: Snapshot): void {
   const list = readSnapshots()
@@ -176,7 +170,6 @@ function saveSnapshot(s: Snapshot): void {
   else list.unshift(s)
   GM_setValue(SNAPSHOTS_KEY, list.slice(0, MAX_SNAPSHOTS))
   GM_setValue(LAST_BACKUP_KEY, s.ts)
-  syncCounts(s)
 }
 
 // 收藏/片单操作成功后回写最新快照：立即备份一次，后续操作让快照保持近乎最新。
@@ -212,7 +205,6 @@ export function applyChangeToLatestSnapshot(
       : pl.videos.filter((v) => v.id !== video.id)
   }
   GM_setValue(SNAPSHOTS_KEY, list)
-  syncCounts(latest)
 }
 
 // 备份抓取耗时较长，期间挂 beforeunload：
@@ -274,7 +266,7 @@ export async function backupNow(): Promise<void> {
     toast(t('backup.running'))
     return
   }
-  // 距最近一次备份（立即或自动）不足 10 分钟时二次确认
+  // 距最近一次备份不足 10 分钟时二次确认
   const last = GM_getValue<number>(LAST_BACKUP_KEY, 0)
   const gapMin = Math.round((Date.now() - last) / 60000)
   if (gapMin < 10) {
@@ -289,36 +281,4 @@ export async function backupNow(): Promise<void> {
   } finally {
     exporting = false
   }
-}
-
-// ---- 自动备份：距上次超过 3 天则在打开页面时自动导出 ----
-
-const AUTO_INTERVAL = 3 * 24 * 3600 * 1000
-
-export function autoBackup(): void {
-  waitDOMContentLoaded(() => {
-    // 延迟启动，不与页面首屏加载争抢请求
-    setTimeout(() => {
-      if (exporting) return
-      const last = GM_getValue<number>(LAST_BACKUP_KEY, 0)
-      if (Date.now() - last < AUTO_INTERVAL) return
-      // 先写入时间戳占位，其他标签页看到新鲜值就会跳过
-      GM_setValue(LAST_BACKUP_KEY, Date.now())
-      exporting = true
-      toast(t('backup.autoStart'))
-      runBackup()
-        .catch((err) => {
-          // 失败则回滚时间戳，下次打开页面重试
-          GM_setValue(LAST_BACKUP_KEY, last)
-          toast(
-            t('backup.autoFailed', {
-              msg: err instanceof Error ? err.message : t('backup.netError'),
-            }),
-          )
-        })
-        .finally(() => {
-          exporting = false
-        })
-    }, 8000)
-  })
 }
