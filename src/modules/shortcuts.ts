@@ -1,7 +1,7 @@
 import { GM_getValue } from '../utils/gm.ts'
 import { currentLang } from '../utils/lang.ts'
 import { waitDOMContentLoaded } from '../utils/wait.ts'
-import { toggleSettingPanel } from '../setting.ts'
+import { toggleSettingPanel, closeSettingPanel } from '../setting.ts'
 
 // 只有"真的在输入文字"才算：播放器里有点击后获得焦点的 input[type=range]
 // （Seek / Volume 滑块），把它当输入框会让 S/P 等快捷键在播放器上失效（实测）
@@ -95,8 +95,10 @@ export function shortcuts(): void {
       true,
     )
     window.addEventListener('keydown', (e) => {
-      // Esc：输入框失焦；顶栏搜索条若展开则一并收起（一次按键完成关闭）
+      // Esc：优先关掉设置弹窗（含帮助各子页）——"关掉眼前这一层"的通用预期；
+      // 没开弹窗时才是原有的：输入框失焦、顶栏搜索条收起
       if (e.code === 'Escape') {
+        if (closeSettingPanel()) return
         if (isTyping()) (document.activeElement as HTMLElement).blur()
         if (document.querySelector('.content-with-search'))
           clickByAlpineAction('toggleSearch')
@@ -118,8 +120,8 @@ export function shortcuts(): void {
           break
         case 'Slash':
           e.preventDefault()
-          // Shift+/ 即 ?：打开设置弹窗的快捷键帮助子页（帮助不再是独立浮层，
-          // 否则"不知道快捷键的人永远打不开帮助"）
+          // Shift+/ 即 ?：帮助开关——已在帮助页则关闭，否则打开/切到帮助页
+          // （帮助不再是独立浮层：只能靠快捷键打开、又关不掉的话就是死路）
           if (e.shiftKey) toggleSettingPanel('help')
           else focusSearch()
           break

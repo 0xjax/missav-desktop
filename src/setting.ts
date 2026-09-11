@@ -219,18 +219,34 @@ function createSettingPanel(initial: View): HTMLElement {
   return panel
 }
 
+// 当前可见的子页
+function currentView(panel: HTMLElement): string | undefined {
+  return [...panel.querySelectorAll<HTMLElement>('.setting-view')].find(
+    (el) => el.style.display !== 'none',
+  )?.dataset.view
+}
+
+// 关掉设置弹窗（含各子页）；返回是否真的关掉了。ESC 与"同一按键再按一次"都走它
+export function closeSettingPanel(): boolean {
+  const exist = document.getElementById('setting-panel')
+  if (!exist) return false
+  exist.remove()
+  return true
+}
+
+// 「,」= 开关：未开则开在菜单，已开则关闭（无论当前在哪个子页）。
+// 「?」= 帮助开关：未开则开在帮助页；已开在**别的**子页则切过去；已开在帮助页则关闭
 export function toggleSettingPanel(view: View = 'menu'): void {
   const exist = document.getElementById('setting-panel')
-  if (exist) {
-    // 「,」是开关：已开则关闭；「?」是导航：已开则切到帮助页，不关掉
-    if (view === 'menu') {
-      exist.remove()
-      return
-    }
-    exist.querySelector<HTMLElement>(`[data-goto="${view}"]`)?.click()
+  if (!exist) {
+    document.body.appendChild(createSettingPanel(view))
     return
   }
-  document.body.appendChild(createSettingPanel(view))
+  if (view === 'menu' || currentView(exist) === view) {
+    exist.remove()
+    return
+  }
+  exist.querySelector<HTMLElement>(`[data-goto="${view}"]`)?.click()
 }
 
 // 通过油猴菜单注册设置入口

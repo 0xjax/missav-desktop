@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.25
+// @version         1.36.26
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -592,17 +592,26 @@
 		});
 		return panel;
 	}
+	function currentView(panel) {
+		return [...panel.querySelectorAll(".setting-view")].find((el) => el.style.display !== "none")?.dataset.view;
+	}
+	function closeSettingPanel() {
+		const exist = document.getElementById("setting-panel");
+		if (!exist) return false;
+		exist.remove();
+		return true;
+	}
 	function toggleSettingPanel(view = "menu") {
 		const exist = document.getElementById("setting-panel");
-		if (exist) {
-			if (view === "menu") {
-				exist.remove();
-				return;
-			}
-			exist.querySelector(`[data-goto="${view}"]`)?.click();
+		if (!exist) {
+			document.body.appendChild(createSettingPanel(view));
 			return;
 		}
-		document.body.appendChild(createSettingPanel(view));
+		if (view === "menu" || currentView(exist) === view) {
+			exist.remove();
+			return;
+		}
+		exist.querySelector(`[data-goto="${view}"]`)?.click();
 	}
 	function registerSettingMenu() {
 		GM_registerMenuCommand$1(t("setting.title"), () => {
@@ -1057,6 +1066,7 @@
 			}, true);
 			window.addEventListener("keydown", (e) => {
 				if (e.code === "Escape") {
+					if (closeSettingPanel()) return;
 					if (isTyping()) document.activeElement.blur();
 					if (document.querySelector(".content-with-search")) clickByAlpineAction("toggleSearch");
 					return;
