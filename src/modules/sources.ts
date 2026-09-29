@@ -3,20 +3,22 @@ import { LANG_RE, currentLang } from '../utils/lang.ts'
 import { t, type I18nKey } from '../utils/i18n.ts'
 import { toast } from '../utils/toast.ts'
 
-// 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中字/英字），详情页拉一次，
-// 在顶栏搜索图标左侧渲染胶囊分段器，当前源实色档位，点档位直达对应源。
+// 多源显示与切换：同一番号在站点有多个源（原版/无码流出/中字/英字），在顶栏搜索
+// 图标左侧渲染胶囊分段器，当前源实色档位，点档位直达对应源。
 // 兄弟源列表以**站点自己的版本切换菜单**为准（`[aria-labelledby=download-option-menu-button]`，
-// 只出现在裸番号主条目页的 SSR 里；实测每个番号都有裸页，菜单列的就是全部兄弟源）；
-// 同语言搜索页只用来给裸番号定类型（徽章）。源类型判据：URL 后缀（自带字幕语言，最精确）
-// → 搜索卡片左下角徽章 class（只判"是否字幕/无码"）→ 原版兜底。
+// 只出现在裸番号主条目页的 SSR 里；实测每个番号都有裸页，菜单列的就是全部兄弟源）。
+// 源类型判据只有 URL 后缀（自带字幕语言）：后缀判不出的一律先按原版**猜**，不为此
+// 再发搜索页请求。
 // WARNING 不能只靠搜索页：实测 sdmf-009 / har-050 / umd-971 / har-068 等番号搜索页
 // 一张匹配卡片都不返回，而站点菜单列着兄弟源——只用搜索页时分段器只剩当前档。
-// NOTE 无后缀 id 也可能是字幕版（如 fneo-014），纯后缀判断会误判成原版。
+// NOTE 无后缀 id 也可能是字幕版（如 fneo-014），按后缀判会标成原版：这是刻意接受的
+// 代价（v1.36.30 取消搜索页请求）。它只影响标签文字，兄弟源列表不受影响——列表来自
+// 菜单，与类型无关。切到带后缀的兄弟页面后标签即正确。
 // NOTE 档位链接一律按当前站点语言拼 `/{lang}/{id}`：缓存不分语言，若存下别的语言的
 // 链接，点击会先跳英文页再被 lang-pref 弹回中文（实测页面中英来回跳）。
 // 顶栏是固定高度常驻区域，组件放这里从结构上杜绝下方内容布局跳动。
-// WARNING **不自动拉取**：这两个请求是整页 HTML（`/{lang}/{裸番号}` + 搜索页），
-// 属于"用户没在看的页面"，最像爬虫行为，是 Cloudflare 人机验证与限速的主要来源。
+// WARNING **不自动拉取**：这个请求是整页 HTML（`/{lang}/{裸番号}`），属于"用户没在看
+// 的页面"，最像爬虫行为，是 Cloudflare 人机验证与限速的主要来源。
 // 故：缓存新鲜（7 天）直接渲染、0 请求；无新鲜缓存时只显示当前档，**点它才拉取**。
 // 新出的兄弟源靠缓存过期后重新点击拉取，不额外提供刷新入口（避免猜不到的交互）。
 
@@ -45,32 +47,9 @@ const SUFFIX_KIND: [string, Kind][] = [
   ['-english-subtitle', 'ensub'],
 ]
 
-// 搜索卡片左下角徽章 class：红=字幕版、蓝=无码版。徽章文本会本地化
-// （中文字幕/English subtitle/…），class 跨语言稳定；但它不区分字幕语言。
-// WARNING 只能读搜索页的 SSR 卡片：详情页的推荐卡片每张同时含 3 个徽章 span
-// （中文字幕/英文字幕/无码影片，靠站点 x-show 切换可见性），在活 DOM 上
-// querySelector 会永远命中第一个 bg-red-800，把全部条目判成字幕版
-const BADGE_SEL = 'span.absolute.bottom-1.left-1'
-const BADGE_KIND: [string, 'subtitle' | 'uncensored'][] = [
-  ['bg-red-800', 'subtitle'],
-  ['bg-blue-800', 'uncensored'],
-]
-
-function kindOf(id: string, badgeCls: string | null, lang: string): Kind {
-  const bySuffix = SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1]
-  if (bySuffix) return bySuffix
-  const byBadge = badgeCls
-    ? BADGE_KIND.find(([cls]) => badgeCls.includes(cls))?.[1]
-    : undefined
-  if (byBadge === 'uncensored') return 'uncensored'
-  // 裸番号带字幕徽章：搜索页按语言过滤，出现在 /cn 的是中字版、/en 的是英字版
-  if (byBadge === 'subtitle') return lang === 'cn' ? 'cnsub' : 'ensub'
-  return 'original'
-}
-
-// 源类型：后缀最精确（自带字幕语言）→ 搜索页徽章（给裸番号定类型）→ 原版
-function kindOfId(id: string, badgeKind: Kind | undefined): Kind {
-  return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? badgeKind ?? 'original'
+// 源类型：只看 URL 后缀。后缀判不出的交由调用方按原版猜
+function kindOfId(id: string): Kind {
+  return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? 'original'
 }
 
 function labelOf(kind: Kind): [string, string] {
@@ -122,24 +101,6 @@ async function fetchMenuIds(base: string, lang: string): Promise<string[] | null
   return [...menu.querySelectorAll('a[href]')]
     .map((a) => a.getAttribute('href')?.split('/').filter(Boolean).pop() || '')
     .filter((id) => id === base || SUFFIX_KIND.some(([suffix]) => id === base + suffix))
-}
-
-// 搜索页只取类型（徽章）：裸番号可能是中字版（fneo-014），后缀判不出来
-async function fetchBadges(base: string, lang: string): Promise<Map<string, Kind>> {
-  const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, {
-    credentials: 'include',
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const doc = new DOMParser().parseFromString(await res.text(), 'text/html')
-  const badges = new Map<string, Kind>()
-  doc.querySelectorAll('.thumbnail').forEach((card) => {
-    const id = card.querySelector('a[href]')?.getAttribute('href')?.split('/').filter(Boolean).pop() || ''
-    // 只收本番号及其已知后缀的源，排除 sone-6690 这类误匹配
-    if (id !== base && !SUFFIX_KIND.some(([suffix]) => id === base + suffix)) return
-    if (badges.has(id)) return
-    badges.set(id, kindOf(id, card.querySelector(BADGE_SEL)?.className ?? null, lang))
-  })
-  return badges
 }
 
 // ---- 顶栏胶囊分段器 ----
@@ -263,30 +224,26 @@ export function sources(): void {
   const cacheKey = parsed.base
 
   // 拉取兄弟源：**只在用户点击当前档时调用**（见文件头 WARNING）。
-  // 菜单是权威兄弟列表；搜索页只供徽章，失败只影响裸番号的类型判定
+  // 唯一的请求：裸番号页的版本菜单。类型由 id 后缀直接得出，无后缀即猜原版
   const load = async (): Promise<void> => {
     // 传当前源进去：加载态沿用它的档位色（虚线框 + 转圈），与未检测态连贯
     renderSegmented([current], id, true)
     try {
       const cached = readCache()[cacheKey]
-      const [menuIds, badges] = await Promise.all([
-        fetchMenuIds(parsed.base, lang),
-        fetchBadges(parsed.base, lang).catch(() => null),
-      ])
-      // 搜索页失败时用上次缓存的类型兜底，避免裸番号类型忽原忽中
+      const menuIds = await fetchMenuIds(parsed.base, lang)
+      // 缓存只作无后缀 id 的兜底（保留上一次标定的类型），不参与有后缀 id 的判定
       const cachedKind = (x: string): Kind | undefined =>
         cached?.list.find((s) => s.id === x)?.kind
-      const ids = new Set<string>([
-        parsed.base,
-        id,
-        ...(menuIds ?? []),
-        ...(badges?.keys() ?? []),
-      ])
+      // 后缀是 id 自带的判据、优先于缓存；无后缀时才回退到缓存标定的类型
+      const kindOf = (x: string): Kind => {
+        const bySuffix = kindOfId(x)
+        return bySuffix === 'original' ? (cachedKind(x) ?? bySuffix) : bySuffix
+      }
+      const ids = new Set<string>([parsed.base, id, ...(menuIds ?? [])])
       const list = [...ids]
-        .map((x) => ({ id: x, kind: kindOfId(x, badges?.get(x) ?? cachedKind(x)) }))
+        .map((x) => ({ id: x, kind: kindOf(x) }))
         .sort((a, b) => KIND_ORDER.get(a.kind)! - KIND_ORDER.get(b.kind)!)
-      // 搜索页没拿到徽章时不写缓存：裸番号类型可能判错，别固化 7 天
-      if (badges) writeCache(cacheKey, list)
+      writeCache(cacheKey, list)
       renderSegmented(list, id, false)
     } catch {
       // 失败退回"可再点一次"的单档态并提示：点了毫无反应最像坏了

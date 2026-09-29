@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.29
+// @version         1.36.30
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -1433,18 +1433,8 @@
 		["-chinese-subtitle", "cnsub"],
 		["-english-subtitle", "ensub"]
 	];
-	var BADGE_SEL = "span.absolute.bottom-1.left-1";
-	var BADGE_KIND = [["bg-red-800", "subtitle"], ["bg-blue-800", "uncensored"]];
-	function kindOf(id, badgeCls, lang) {
-		const bySuffix = SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1];
-		if (bySuffix) return bySuffix;
-		const byBadge = badgeCls ? BADGE_KIND.find(([cls]) => badgeCls.includes(cls))?.[1] : void 0;
-		if (byBadge === "uncensored") return "uncensored";
-		if (byBadge === "subtitle") return lang === "cn" ? "cnsub" : "ensub";
-		return "original";
-	}
-	function kindOfId(id, badgeKind) {
-		return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? badgeKind ?? "original";
+	function kindOfId(id) {
+		return SUFFIX_KIND.find(([suffix]) => id.endsWith(suffix))?.[1] ?? "original";
 	}
 	function labelOf(kind) {
 		const def = KINDS.find(([k]) => k === kind);
@@ -1483,19 +1473,6 @@
 		const menu = new DOMParser().parseFromString(await res.text(), "text/html").querySelector(MENU_SEL);
 		if (!menu) return null;
 		return [...menu.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")?.split("/").filter(Boolean).pop() || "").filter((id) => id === base || SUFFIX_KIND.some(([suffix]) => id === base + suffix));
-	}
-	async function fetchBadges(base, lang) {
-		const res = await fetch(`${location.origin}/${lang}/search/${base}?filters=individual`, { credentials: "include" });
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		const doc = new DOMParser().parseFromString(await res.text(), "text/html");
-		const badges = new Map();
-		doc.querySelectorAll(".thumbnail").forEach((card) => {
-			const id = card.querySelector("a[href]")?.getAttribute("href")?.split("/").filter(Boolean).pop() || "";
-			if (id !== base && !SUFFIX_KIND.some(([suffix]) => id === base + suffix)) return;
-			if (badges.has(id)) return;
-			badges.set(id, kindOf(id, card.querySelector(BADGE_SEL)?.className ?? null, lang));
-		});
-		return badges;
 	}
 	function renderSegmented(sources, currentId, loading, onFetch) {
 		const lang = currentLang() ?? "cn";
@@ -1591,18 +1568,21 @@
 			renderSegmented([current], id, true);
 			try {
 				const cached = readCache()[cacheKey];
-				const [menuIds, badges] = await Promise.all([fetchMenuIds(parsed.base, lang), fetchBadges(parsed.base, lang).catch(() => null)]);
+				const menuIds = await fetchMenuIds(parsed.base, lang);
 				const cachedKind = (x) => cached?.list.find((s) => s.id === x)?.kind;
+				const kindOf = (x) => {
+					const bySuffix = kindOfId(x);
+					return bySuffix === "original" ? cachedKind(x) ?? bySuffix : bySuffix;
+				};
 				const list = [...new Set([
 					parsed.base,
 					id,
-					...menuIds ?? [],
-					...badges?.keys() ?? []
+					...menuIds ?? []
 				])].map((x) => ({
 					id: x,
-					kind: kindOfId(x, badges?.get(x) ?? cachedKind(x))
+					kind: kindOf(x)
 				})).sort((a, b) => KIND_ORDER.get(a.kind) - KIND_ORDER.get(b.kind));
-				if (badges) writeCache(cacheKey, list);
+				writeCache(cacheKey, list);
 				renderSegmented(list, id, false);
 			} catch {
 				toast(t("source.failed"));
