@@ -2,7 +2,7 @@
 // @name            missav 桌面端
 // @name:en         MissAV Desktop
 // @namespace       https://github.com/0xjax/missav-desktop
-// @version         1.36.28
+// @version         1.36.29
 // @author          0xjax
 // @description     增强 missav 网站的桌面端浏览体验。
 // @description:en  Enhanced desktop browsing experience for missav.
@@ -29,7 +29,7 @@
 			else (document.head || document.documentElement).appendChild(document.createElement("style")).append(c);
 		})(t);
 	};
-	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-view,#setting-panel .setting-menu{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-menu button{color:#eee;text-align:left;cursor:pointer;background:0 0;border:none;border-bottom:1px solid #333;border-radius:0;justify-content:space-between;align-items:center;padding:14px 12px;font-size:15px;display:flex}#setting-panel .setting-menu button:hover:not(:disabled){filter:none;background:#2a2a2a}#setting-panel .menu-arrow{color:#888}#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{justify-content:flex-end;gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-close{background:#444}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel .setting-row{border-top:1px solid #3a3a3a;justify-content:space-between;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-row select{color:#eee;cursor:pointer;background:#2a2a2a;border:1px solid #555;border-radius:4px;padding:4px 8px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:1px solid #0000;border-radius:8px;padding:1px 9px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-locked{opacity:.85}.mx-seg-guess{opacity:1;cursor:pointer;filter:brightness(1.7);background:0 0;border-style:dashed}.mx-seg-guess:hover{filter:brightness(2.1);background:0 0}.mx-seg-loading{opacity:1;cursor:default;filter:brightness(1.7);background:0 0;border-style:dashed;justify-content:center;align-items:center;min-width:44px;min-height:22px;display:inline-flex}.mx-seg-loading:hover{filter:brightness(1.7);background:0 0}.mx-seg-spin{border:2px solid #e5e9f040;border-top-color:currentColor;border-radius:50%;width:12px;height:12px;animation:.7s linear infinite mx-seg-spin}@keyframes mx-seg-spin{to{transform:rotate(360deg)}}[x-show*=showLocaleSwitcher]{max-height:45vh!important}#setting-panel .help-list{flex:1;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;min-height:0;font-size:14px;display:grid;overflow-y:auto}#setting-panel .help-list kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:flex-start;gap:8px;display:flex;position:fixed;top:80px;left:24px}.mx-toast{color:#e5e9f0;background:#2e3440;border:1px solid #4c566a;border-left:3px solid #7b88a1;border-radius:8px;align-items:center;gap:10px;max-width:min(340px,100vw - 48px);padding:9px 14px;font-size:14px;transition:opacity .3s,transform .3s;animation:.18s ease-out mx-toast-in;display:flex;box-shadow:0 6px 20px #0000008c}.mx-toast-success{border-left-color:#8fbc6a}.mx-toast-error{border-left-color:#d06a6a}.mx-toast-code{color:#d8dee9;letter-spacing:.02em;background:#ffffff14;border-radius:4px;padding:1px 7px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}.mx-toast-out{opacity:0;transform:translate(-8px)}@keyframes mx-toast-in{0%{opacity:0;transform:translate(-12px)}to{opacity:1;transform:none}}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>a{order:-2;grid-column:1/-1;margin-bottom:8px}fieldset.mx-pl-grid>hr{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-docked{height:520px;max-height:calc(100vh - 6rem);overflow-y:auto;padding:.75rem!important;display:block!important}.mx-pl-dock-slot{flex-shrink:0;height:520px}.mx-pl-docked fieldset.mx-pl-grid{grid-template-columns:minmax(0,1fr)}:has(>.mx-pl-docked){flex-direction:column!important}*{scrollbar-width:thin;scrollbar-color:#4c566a transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#4c566a;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#5e81ac}");
+	_css("#setting-panel{z-index:99999;color:#eee;background:#1e1e1e;border:1px solid #555;border-radius:8px;flex-direction:column;width:448px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 48px);padding:20px 20px 18px;font-size:15px;display:flex;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #00000080}#setting-panel .setting-view,#setting-panel .setting-menu{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-menu button{color:#eee;text-align:left;cursor:pointer;background:0 0;border:none;border-bottom:1px solid #333;border-radius:0;justify-content:space-between;align-items:center;padding:14px 12px;font-size:15px;display:flex}#setting-panel .setting-menu button:hover:not(:disabled){filter:none;background:#2a2a2a}#setting-panel .menu-arrow{color:#888}#setting-panel .backup-render{flex-direction:column;flex:1;min-height:0;display:flex}#setting-panel .setting-checkboxes{flex:1;min-height:0;overflow-y:auto}#setting-panel .dialog-header{align-items:center;gap:10px;margin-bottom:12px;display:flex}#setting-panel .dialog-header .setting-title{margin-bottom:0}#setting-panel .dialog-back{color:#ccc;cursor:pointer;background:#444;border:none;border-radius:4px;padding:2px 10px;font-size:13px}#setting-panel .dialog-back:hover{color:#fff;background:#555}#setting-panel .dialog-footer{justify-content:flex-end;gap:8px;margin-top:auto;padding-top:12px;display:flex}#setting-panel .dialog-footer .dialog-close{background:#444}#setting-panel .setting-title{margin-bottom:14px;font-size:17px;font-weight:700}#setting-panel .setting-checkboxes{flex-direction:column;justify-content:space-evenly;display:flex}#setting-panel .setting-checkboxes label{cursor:pointer;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-checkboxes input{width:16px;height:16px}#setting-panel .setting-actions{text-align:right;margin-top:12px}#setting-panel .setting-row{border-top:1px solid #3a3a3a;justify-content:space-between;align-items:center;gap:10px;padding:5px 2px;display:flex}#setting-panel .setting-row select{color:#eee;cursor:pointer;background:#2a2a2a;border:1px solid #555;border-radius:4px;padding:4px 8px}#setting-panel button{color:#fff;cursor:pointer;background:#f06292;border:none;border-radius:4px;padding:6px 18px;transition:filter .15s}#setting-panel button:hover:not(:disabled){filter:brightness(1.15)}#setting-panel button:active:not(:disabled){filter:brightness(.95)}#setting-panel button:disabled{opacity:.5;cursor:default}#setting-panel .backup-hint{color:#999;margin-bottom:14px;font-size:13px;line-height:1.5}#setting-panel .backup-list{flex:1;min-height:0;margin:6px 0 0;overflow-y:auto}#setting-panel .backup-row{border-top:1px solid #333;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;font-size:13px;line-height:1.4;display:flex}#setting-panel .backup-row>span{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}#setting-panel .backup-row>span b{color:#fff;font-weight:600}#setting-panel .backup-row button{white-space:nowrap;padding:4px 14px;font-size:13px}#setting-panel .backup-empty{color:#555;padding:10px 2px}#setting-panel #backup-view .setting-actions.dialog-footer{margin-top:auto}#setting-panel .backup-latest{text-align:left}.mx-segmented{background:#2e3440;border:1px solid #4c566a;border-radius:10px;align-items:center;gap:2px;padding:2px;display:flex}.mx-seg{color:#e5e9f0;opacity:.7;white-space:nowrap;cursor:pointer;background:0 0;border:1px solid #0000;border-radius:8px;padding:1px 9px;font-size:12px;line-height:18px;transition:opacity .15s,background .15s}.mx-seg:hover{opacity:1;background:#3b4252}.mx-seg-current{opacity:1;cursor:default;color:#fff}.mx-seg-locked{opacity:.85}.mx-seg-guess{opacity:1;cursor:pointer;filter:brightness(1.7);background:0 0;border-style:dashed}.mx-seg-guess:hover{filter:brightness(2.1);background:0 0}.mx-seg-loading{opacity:1;cursor:default;filter:brightness(1.7);background:0 0;border-style:dashed;justify-content:center;align-items:center;min-width:44px;min-height:22px;display:inline-flex}.mx-seg-loading:hover{filter:brightness(1.7);background:0 0}.mx-seg-spin{border:2px solid #e5e9f040;border-top-color:currentColor;border-radius:50%;width:12px;height:12px;animation:.7s linear infinite mx-seg-spin}@keyframes mx-seg-spin{to{transform:rotate(360deg)}}[x-show*=showLocaleSwitcher]{max-height:45vh!important}#setting-panel .help-list{flex:1;grid-template-columns:auto 1fr;align-items:center;gap:8px 12px;min-height:0;font-size:14px;display:grid;overflow-y:auto}#setting-panel .help-list kbd{text-align:center;background:#333;border:1px solid #555;border-radius:4px;padding:2px 8px;font-family:inherit}#mx-toast-box{z-index:99999;pointer-events:none;flex-direction:column;align-items:flex-start;gap:8px;display:flex;position:fixed;top:80px;left:24px}.mx-toast{color:#e5e9f0;background:#2e3440;border:1px solid #4c566a;border-left:3px solid #7b88a1;border-radius:8px;align-items:center;gap:10px;max-width:min(340px,100vw - 48px);padding:9px 14px;font-size:14px;transition:opacity .3s,transform .3s;animation:.18s ease-out mx-toast-in;display:flex;box-shadow:0 6px 20px #0000008c}.mx-toast-success{border-left-color:#8fbc6a}.mx-toast-error{border-left-color:#d06a6a}.mx-toast-code{color:#d8dee9;letter-spacing:.02em;background:#ffffff14;border-radius:4px;padding:1px 7px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}.mx-toast-out{opacity:0;transform:translate(-8px)}@keyframes mx-toast-in{0%{opacity:0;transform:translate(-12px)}to{opacity:1;transform:none}}.mx-toast-sticky{border-left:3px solid #e8a0bf}:is(div:has(>iframe[src*=mayzaent]),div:has(>iframe[src*=rallytrck])){display:none}fieldset.mx-pl-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.5rem;display:grid}fieldset.mx-pl-grid>a{order:-2;grid-column:1/-1;margin-bottom:8px}fieldset.mx-pl-grid>hr{order:-1;grid-column:1/-1}@media (width<=1280px){fieldset.mx-pl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.mx-pl-docked{height:520px;max-height:calc(100vh - 6rem);overflow-y:auto;padding:.75rem!important}.mx-pl-docked fieldset.mx-pl-grid{grid-template-columns:minmax(0,1fr)}:has(>.mx-pl-docked){flex-direction:column!important}*{scrollbar-width:thin;scrollbar-color:#4c566a transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#4c566a;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#5e81ac}");
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_registerMenuCommand = (() => typeof GM_registerMenuCommand != "undefined" ? GM_registerMenuCommand : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -189,7 +189,7 @@
 		"sort.recent": ["按最近操作", "By recent action"],
 		"sort.name": ["按名称", "By name"],
 		"sort.viewed": ["按最近观看", "By recently viewed"],
-		"opt.playlist-dock": ["片单右侧栏（宽屏自动展开）", "Playlist Sidebar (auto-expand on wide screens)"],
+		"opt.playlist-dock": ["片单右侧栏", "Playlist Sidebar"],
 		"opt.topbar-ui": ["顶栏增强（设置入口 + 图标统一）", "Topbar Enhancements (settings entry + unified icons)"],
 		"help.title": ["快捷键", "Shortcuts"],
 		"help.playPause": ["播放 / 暂停", "Play / Pause"],
@@ -1182,7 +1182,7 @@
 			});
 		});
 	}
-	function alpine$1() {
+	function alpine() {
 		const w = window.Alpine;
 		if (w) return w;
 		return readMainWorld("Alpine");
@@ -1269,7 +1269,7 @@
 		if (!url) return;
 		e.preventDefault();
 		e.stopImmediatePropagation();
-		const alp = alpine$1();
+		const alp = alpine();
 		const data = alp ? componentData(alp, btn) : null;
 		const target = (data ? data.saved : domSavedState(btn)) !== true;
 		const dvdId = dvdIdOf(btn);
@@ -1310,7 +1310,7 @@
 		});
 	}
 	function onPlaylistOpenClick(e, btn) {
-		const alp = alpine$1();
+		const alp = alpine();
 		if (!alp) return;
 		const data = alp.$data(btn);
 		if (!data || data.user || typeof data.togglePanel !== "function") return;
@@ -1324,7 +1324,7 @@
 		const checkedByUser = input.checked;
 		e.preventDefault();
 		e.stopImmediatePropagation();
-		const alp = alpine$1();
+		const alp = alpine();
 		const data = alp ? componentData(alp, input) : null;
 		const item = (data?.playlists)?.find((p) => p.key === input.id);
 		const target = item ? !item.is_added : checkedByUser;
@@ -1381,7 +1381,7 @@
 		waitDOMContentLoaded(() => {
 			listenToastChannel();
 			const timer = setInterval(() => {
-				const alp = alpine$1();
+				const alp = alpine();
 				const btn = [...document.querySelectorAll("button")].find((b) => alpineAction(b, "toggleSave"));
 				if (!alp || !btn) return;
 				const dvdId = dvdIdOf(btn);
@@ -1631,11 +1631,6 @@
 		setTimeout(() => obs.disconnect(), 15e3);
 	}
 	var LG_QUERY = "(min-width: 1024px)";
-	function alpine() {
-		const w = window.Alpine;
-		if (w) return w;
-		return readMainWorld("Alpine");
-	}
 	function playlistOpenBtn() {
 		return [...document.querySelectorAll("button")].find((b) => b.getAttributeNames().some((n) => n.startsWith("@click") && b.getAttribute(n) === "togglePlaylist") && !b.closest("fieldset")) ?? null;
 	}
@@ -1649,149 +1644,42 @@
 		if (!flex) return null;
 		return flex.querySelector(":scope > [class*=\"hidden\"][class*=\"lg:flex\"]") ?? null;
 	}
-	function expand(alp) {
-		for (const el of document.querySelectorAll("[x-data]")) {
-			let d;
-			try {
-				d = alp.$data(el);
-			} catch {
-				continue;
-			}
-			if (d && "showPanel" in d) {
-				d.showPanel = "playlist";
-				return true;
-			}
-		}
-		return false;
-	}
-	function ensurePlaylistLoaded(alp) {
-		const slug = location.pathname.split("/").filter(Boolean).pop();
-		if (!slug) return;
-		const url = `${location.origin}/api/playlists/${slug}`;
-		let tries = 0;
-		const timer = setInterval(() => {
-			tries++;
-			if (tries > 40) {
-				clearInterval(timer);
-				return;
-			}
-			const shell = document.querySelector("fieldset.mx-pl-grid, fieldset")?.closest("div.mb-5");
-			if (!shell) return;
-			let d;
-			try {
-				d = alp.$data(shell);
-			} catch {
-				return;
-			}
-			const loading = d?.loading;
-			const playlists = d?.playlists;
-			if (!d || !loading || !playlists) return;
-			if (playlists.length > 0) {
-				clearInterval(timer);
-				return;
-			}
-			if (loading.playlist) return;
-			loading.playlist = true;
-			fetch(url, {
-				credentials: "include",
-				headers: { Accept: "application/json" }
-			}).then((r) => r.ok ? r.json() : Promise.reject(r.status)).then((j) => {
-				const list = j.data ?? [];
-				if (d.playlists.length === 0) d.playlists = list;
-			}).catch(() => {}).finally(() => {
-				loading.playlist = false;
-			});
-		}, 250);
-		setTimeout(() => clearInterval(timer), 11e3);
-	}
 	function playlistDock() {
 		waitDOMContentLoaded(() => {
 			const mq = window.matchMedia(LG_QUERY);
 			let homeAnchor = null;
 			let docked = false;
-			let slot = null;
-			let slotTimer;
-			const reserveSlot = () => {
-				const sidebar = findSidebar();
-				if (!sidebar || slot?.isConnected) return;
-				slot = document.createElement("div");
-				slot.className = "mx-pl-dock-slot";
-				sidebar.insertBefore(slot, sidebar.firstChild);
-				clearTimeout(slotTimer);
-				slotTimer = setTimeout(() => {
-					slot?.remove();
-					slot = null;
-				}, 8e3);
-			};
-			const setBtnDisabled = (disabled) => {
-				const btn = playlistOpenBtn();
-				if (!btn) return;
-				btn.disabled = disabled;
-				btn.style.color = disabled ? "#9aa5b6" : "";
-				btn.style.cursor = disabled ? "default" : "";
-			};
+			const visible = (panel) => !!panel && panel.offsetParent !== null;
 			const dock = () => {
 				const panel = findPanel();
+				if (!mq.matches || docked || !visible(panel)) return;
 				const sidebar = findSidebar();
-				if (!panel || !sidebar || docked) return;
+				if (!sidebar) return;
 				homeAnchor = panel.nextSibling;
 				sidebar.insertBefore(panel, sidebar.firstChild);
 				docked = true;
 				panel.classList.add("mx-pl-docked");
-				slot?.remove();
-				slot = null;
-				clearTimeout(slotTimer);
-				setBtnDisabled(true);
 			};
 			const undock = () => {
 				const panel = findPanel();
-				setBtnDisabled(false);
-				if (panel && homeAnchor?.parentElement) homeAnchor.parentElement.insertBefore(panel, homeAnchor);
+				if (!docked) return;
 				panel?.classList.remove("mx-pl-docked");
+				if (panel && homeAnchor?.parentElement) homeAnchor.parentElement.insertBefore(panel, homeAnchor);
 				docked = false;
 				homeAnchor = null;
 			};
-			let obs = null;
-			const watch = () => {
-				if (obs) return;
-				obs = new MutationObserver(() => {
-					if (!findPanel()) return;
-					obs?.disconnect();
-					obs = null;
-					dock();
-				});
-				obs.observe(document.body, {
-					childList: true,
-					subtree: true
-				});
-				setTimeout(() => {
-					obs?.disconnect();
-					obs = null;
-				}, 2e4);
-			};
-			const apply = () => {
-				const alp = alpine();
-				if (mq.matches) {
-					reserveSlot();
-					if (alp) {
-						if (expand(alp)) ensurePlaylistLoaded(alp);
-					}
-					dock();
-					watch();
-				} else undock();
-			};
-			mq.addEventListener("change", apply);
-			const boot = async () => {
-				if (!mq.matches) return;
-				let alp;
-				for (let i = 0; i < 100 && !alp; i++) {
-					alp = alpine();
-					if (!alp) await new Promise((r) => setTimeout(r, 100));
+			setInterval(() => {
+				if (!mq.matches) {
+					undock();
+					return;
 				}
-				if (!alp) return;
-				apply();
-			};
-			boot();
+				if (visible(findPanel())) dock();
+				else undock();
+			}, 300);
+			mq.addEventListener("change", () => {
+				if (mq.matches) dock();
+				else undock();
+			});
 		});
 	}
 	(function() {

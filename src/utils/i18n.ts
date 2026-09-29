@@ -31,10 +31,7 @@ const DICT = {
   'sort.recent': ['按最近操作', 'By recent action'],
   'sort.name': ['按名称', 'By name'],
   'sort.viewed': ['按最近观看', 'By recently viewed'],
-  'opt.playlist-dock': [
-    '片单右侧栏（宽屏自动展开）',
-    'Playlist Sidebar (auto-expand on wide screens)',
-  ],
+  'opt.playlist-dock': ['片单右侧栏', 'Playlist Sidebar'],
   'opt.topbar-ui': [
     '顶栏增强（设置入口 + 图标统一）',
     'Topbar Enhancements (settings entry + unified icons)',

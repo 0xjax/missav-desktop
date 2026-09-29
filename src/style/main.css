@@ -479,6 +479,8 @@ fieldset.mx-pl-grid > hr {
 /* 片单面板停靠右栏：收紧留白；高度对齐主视频（924×520 视频同 top
    起始，等高对齐），内部滚动（置顶排序保证目标片单在前几行）；
    300px 栏宽下单列排布。
+   NOTE 不再强制 display 常驻（v1.36.29）：常驻是配宽屏自动展开的，
+   现在面板只跟随用户点击，压过 x-show 会导致收起按钮失效。
    WARNING 右栏原是 flex-row，面板搬入后主轴宽度会塌缩到 min-content
    （width/flex-basis 均无效，实测踩坑），必须改为 column 布局 */
 .mx-pl-docked {
@@ -486,15 +488,8 @@ fieldset.mx-pl-grid > hr {
   max-height: calc(100vh - 6rem);
   height: 520px;
   overflow-y: auto;
-  /* 常驻：压过 x-show 切换（切分享面板/状态复位）的内联 display:none */
-  display: block !important;
 }
 
-/* 停靠槽位：面板懒渲染期间在右栏顶预留同尺寸空间，防布局跳动 */
-.mx-pl-dock-slot {
-  height: 520px;
-  flex-shrink: 0;
-}
 .mx-pl-docked fieldset.mx-pl-grid {
   grid-template-columns: minmax(0, 1fr);
 }
